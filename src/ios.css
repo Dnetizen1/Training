@@ -555,3 +555,52 @@ details.grp .form{box-shadow:none;border-radius:0;padding-top:4px}
 .help-t{font-size:15px;color:var(--mute);background:var(--card);border-radius:12px;padding:10px 12px}
 .save{justify-content:center;margin:8px 0 0}
 .corr-item input{order:2;margin-left:auto}.corr h3{font-size:20px}
+
+/* ===== v3: «Сводка» и «Неделя» по макету, панель из 4 вкладок ===== */
+.tabbar{grid-template-columns:repeat(4,1fr);padding-top:8px}
+.tabbar button{font-size:10px;font-weight:600}
+.tb-ask{color:var(--mute)}
+.home,.weekscr{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding-bottom:10px}
+.large{padding:30px 4px 14px}
+.home .card,.weekscr .card{margin-bottom:0}
+.today{gap:14px}
+.today-txt b{font-size:22px;line-height:28px;font-weight:700}
+.today-txt span{font-size:15px;color:var(--mute)}
+.today-txt small{font-size:13px;color:var(--mute)}
+.plist li span:first-child{flex:1}
+.sec{margin:28px 4px 8px}
+.card.week-card{display:flex;align-items:center;gap:18px;padding:16px}
+.ringlegend{gap:10px}
+.ringlegend dt{font-size:15px;font-weight:600;color:var(--ink)}
+.ringlegend dd{font-size:22px;line-height:26px;font-weight:700}
+.card.prog{gap:8px;padding:14px 16px}
+.prog-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.prog-n{display:flex;align-items:baseline;gap:4px}
+.prog-n .big{font-size:34px;line-height:40px}
+.prog-n span{font-size:17px;color:var(--mute)}
+.lrow .plate{width:12px;height:12px}
+.seg3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--fill);border-radius:9px;padding:2px;margin-bottom:16px}
+.seg3 button{min-height:30px;border:0;border-radius:7px;background:transparent;font-size:13px;color:var(--ink)}
+.seg3 button[aria-pressed="true"]{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.card.eff{gap:12px}
+.effg{display:grid;gap:8px}
+.effg-t{font-size:12px;font-weight:600;color:var(--mute)}
+.effr{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) 48px;align-items:center;gap:10px;font-size:15px}
+.effr > span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.effb{position:relative;height:10px;border-radius:5px;background:var(--fill);overflow:hidden}
+.effb i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.effr b{text-align:right;font-size:15px;font-weight:600}
+.efflg{display:flex;gap:16px;font-size:13px;color:var(--mute)}
+.efflg span{display:flex;align-items:center;gap:6px}
+.efflg i{width:10px;height:10px;border-radius:5px}
+.card.tip{display:flex;gap:12px;align-items:flex-start;margin-top:14px}
+.tip-i{color:var(--acc);flex:none}
+.tip-b{display:grid;gap:4px}
+.tip-b b{font-size:15px;font-weight:600}
+.tip-b span{font-size:15px;color:var(--ink2)}
+.softbtn{justify-self:start;margin-top:4px;height:34px;padding:0 14px;border-radius:17px;border:0;background:var(--acc-soft);color:var(--acc);font-size:15px;font-weight:600}
+.weekscr details.grp{margin-top:14px}
+.weekscr details .bars,.weekscr details .tbl{box-shadow:none;margin:0 12px 12px}
+.weekscr details .meta,.weekscr details h3,.weekscr details .review,.weekscr details .note{margin-inline:12px}
+.ttl h1{font-size:34px;line-height:41px}
+.effr{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 44px}.effr > span:first-child{white-space:normal;line-height:1.2}

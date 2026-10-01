@@ -395,7 +395,7 @@ function textLog(s){
 }
 
 /* ---------- Неделя ---------- */
-function WeekView({date}){
+function WeekView({date,embedded}){
   const [pw,setPw]=useState(null);
   const wk=pw||weekFromDate(date), ws=weekStart(date), we=weekEnd(date);
   const inWeek=sessions().filter(x=>x.date>=ws&&x.date<=we);
@@ -409,13 +409,13 @@ function WeekView({date}){
   const wid="w_"+ws, wdoc=S.data[wid];
   const max=Math.max(16,...totF,...fact);
   return html`<div>
-    <header class="wk">
+    ${embedded?null:html`    <header class="wk">
       <div class="wk-top"><div class="wk-name"><h1>Неделя</h1></div><span class="elapsed mute">${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}</span></div>
       <div class="wk-meta">
         <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setPw(Math.max(1,wk-1))}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setPw(Math.min(6,wk+1))}>+</button></div>
         <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
       </div>
-    </header>
+    </header>`}
     <${MuscleBars} zone=${true} rows=${Object.fromEntries(MUS.map((_,k)=>[k,{plan:totF[k],fact:fact[k]}]))}/>
     <div class="tbl"><table>
       <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Эфф.</th><th>Факт</th></tr></thead>
@@ -434,10 +434,11 @@ function WeekView({date}){
 }
 
 /* ---------- История ---------- */
-function HistoryView(){
+function HistoryView({go}){
   const list=sessions().filter(hasData).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
   return html`<div>
-    <header class="wk"><div class="wk-top"><div class="wk-name"><h1>История</h1></div><span class="elapsed mute">${list.length} трен.</span></div></header>
+    <nav class="navrow"><button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Сводка</button></nav>
+    <header class="ttl"><h1>Все тренировки</h1><span class="ttl-s">${list.length} в журнале</span></header>
     ${!list.length?html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`:html`<div class="list">${list.map(s=>{
       const cnt=s.ex.reduce((a,e)=>a+doneOf(e),0);
       return html`<details class="sess" key=${s.id}><summary><span class="d"><${Plate} k=${s.day}/>${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${s.ex.length} упр. · ${cnt} подх.${s.dur?" · "+s.dur+" мин":""}</span></summary>
@@ -459,7 +460,8 @@ function BodyView({toast,go}){
   const submit=ev=>{ ev.preventDefault(); const d=f.date||todayStr(); const rec={kind:"body",date:d}; BF.forEach(([k])=>rec[k]=(f[k]||"").trim()); putDoc("b_"+d,rec); setF({date:todayStr()}); };
   const del=r=>{ const keep=clone(S.data[r.id]); putDoc(r.id,undefined); toast({text:"Замер за "+dmy(r.date)+" удалён",action:"Вернуть",run:()=>putDoc(r.id,keep)}); };
   return html`<div>
-    <header class="wk"><button class="back" onClick=${()=>go("home")}><${Icon} n="left" size=${20}/> Сводка</button><div class="wk-top"><div class="wk-name"><h1>Замеры</h1></div></div></header>
+    <nav class="navrow"><button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Сводка</button></nav>
+    <header class="ttl"><h1>Вес и замеры</h1></header>
     <form class="form" onSubmit=${submit}>
       <label class="full">Дата<input type="date" value=${f.date} onChange=${ev=>setF(Object.assign({},f,{date:ev.target.value}))}/></label>
       ${BF.map(([k,l])=>html`<label key=${k}>${l}<input type="text" inputmode=${k==="bp"?"text":"decimal"} value=${f[k]||""} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))}/></label>`)}
@@ -577,7 +579,7 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["home","Сводка","rings"],["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"]];
+  const tabs=[["home","Сводка","rings"],["train","Тренировка","dumbbell"],["week","Неделя","bars"]];
   const go=v=>{ setView(v); window.scrollTo(0,0); };
   return html`<${React.Fragment}>
     ${(timer&&!(ui==="focus"&&view==="train"))||toast?html`<div class="topbar">
@@ -592,12 +594,12 @@ function App(){
       </div>`:null}
       ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi} openHistory=${setHist} go=${go}/>`
         :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openHistory=${setHist}/>`
-        :view==="week"?html`<${WeekView} date=${date}/>`
-        :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
+        :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
+        :view==="hist"?html`<${HistoryView} go=${go}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
     </main>
     <nav class="tabbar" role="tablist">
-      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k||(k==="home"&&view==="body"))} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
-      <button class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><span class="tb-ask-i"><${Icon} n="spark" size=${22}/></span><span>Тренер</span></button>
+      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k||(k==="home"&&(view==="body"||view==="hist")))} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
+      <button class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${24}/><span>Тренер</span></button>
     </nav>
     ${hist?html`<${ExerciseHistory} name=${hist} onClose=${()=>setHist(null)}/>`:null}
     ${ask?html`<${AskSheet} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk(null)}/>`:null}

@@ -40,13 +40,17 @@ function weekData(date){
   return {wk,ws,we,plan,fact,pSets,dSets,done:Math.min(done,4),used,full};
 }
 
+// Сводка — по экрану «Сводка» макета
 function HomeView({date,day,go,openHistory}){
   const s=getSession(date,day), w=weekData(date);
   const rows=s.ex.reduce((a,e)=>a+rowsOf(s,e),0), doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0);
-  const prs=sessions().filter(x=>x.date<=date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).flatMap(sessionPRs).slice(0,4);
-  const lifts=[...new Set(ORDER.map(k=>P[k].ex[0][0]))].map(n=>({name:n,h:exerciseHistory(n)})).filter(x=>x.h.length);
-  const body=Object.values(S.data).filter(v=>v&&v.kind==="body"&&num(v.w)!==null).sort((a,b)=>a.date.localeCompare(b.date));
   const started=hasData(s);
+  const prs=sessions().filter(x=>x.date<=date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).flatMap(sessionPRs).slice(0,3);
+  const lifts=[...new Set(ORDER.map(k=>P[k].ex[0][0]))].map(n=>({name:n,h:exerciseHistory(n)})).filter(x=>x.h.length);
+  const main=lifts.slice().sort((a,b)=>b.h[b.h.length-1].date.localeCompare(a.h[a.h.length-1].date))[0];
+  const recent=sessions().filter(hasData).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const body=Object.values(S.data).filter(v=>v&&v.kind==="body"&&num(v.w)!==null).sort((a,b)=>a.date.localeCompare(b.date));
+  const topSet=h=>h.sets.reduce((b,x)=>e1rm(x.w,x.r)>e1rm(b.w,b.r)?x:b,h.sets[0]);
   return html`<div class="home">
     <header class="large">
       <span class="eyebrow">${longDate(date)}</span>
@@ -54,65 +58,129 @@ function HomeView({date,day,go,openHistory}){
     </header>
 
     <section class="card today">
-      <div class="card-h"><span class="card-t acc">Тренировка сегодня</span><span class="card-s">Неделя ${w.wk} из 6 · ${WEEKS[w.wk]}</span></div>
+      <div class="card-h"><span class="card-t acc">Тренировка сегодня</span><span class="card-s">Неделя ${w.wk} из 6</span></div>
       <div class="today-main">
         <${Rings} size=${76} stroke=${10} label=${"Сделано подходов: "+doneSets+" из "+rows} rings=${[{p:rows?doneSets/rows:0,color:"var(--acc)",track:"var(--acc-track)"}]}/>
         <div class="today-txt">
           <b>${P[day].name}</b>
           <span>${s.ex.length} упражнений · ${rows} подходов</span>
-          <span>${s.done?"Завершена":started?"Сделано "+doneSets+" из "+rows+" подходов":"Цель: запас "+rirFor("3",w.wk)+" повтора"}</span>
+          <small>${s.done?"Тренировка завершена":started?"Сделано "+doneSets+" из "+rows+" подходов":"Цель недели: запас "+rirFor("3",w.wk)+" повтора"}</small>
         </div>
       </div>
       <ul class="plist">${s.ex.slice(0,3).map(e=>{ const inf=xinfo(s,e); return html`<li key=${e.uid}><span>${inf.name}</span><span class="num">${rowsOf(s,e)} × ${inf.plan.lo}–${inf.plan.hi}</span></li>`; })}</ul>
-      ${s.ex.length>3?html`<span class="card-s">и ещё ${s.ex.length-3}</span>`:null}
+      ${s.ex.length>3?html`<span class="card-s">и ещё ${s.ex.length-3} упражнения</span>`:null}
       <button class="cta" onClick=${()=>go("train")}>${s.done?"Посмотреть итог":started?"Продолжить тренировку":"Начать тренировку"}</button>
     </section>
 
-    <section>
-      <h2 class="sec">Эта неделя</h2>
-      <button class="card week-card" onClick=${()=>go("week")} aria-label="Открыть неделю">
-        <${Rings} size=${116} stroke=${11} label="Кольца недели" rings=${[
-          {p:w.done/4,color:"var(--acc)",track:"var(--acc-track)"},
-          {p:w.pSets?w.dSets/w.pSets:0,color:"var(--grn)",track:"var(--grn-track)"},
-          {p:w.used.length?w.full.length/w.used.length:0,color:"var(--pur)",track:"var(--pur-track)"}]}/>
-        <dl class="ringlegend">
-          <div><dt><i style=${{background:"var(--acc)"}}></i>Тренировки</dt><dd class="num">${w.done}<small>/4</small></dd></div>
-          <div><dt><i style=${{background:"var(--grn)"}}></i>Подходы</dt><dd class="num">${w.dSets}<small>/${w.pSets}</small></dd></div>
-          <div><dt><i style=${{background:"var(--pur)"}}></i>Объём набран</dt><dd class="num">${w.full.length}<small>/${w.used.length} мышц</small></dd></div>
-        </dl>
-      </button>
-    </section>
+    <h2 class="sec">Эта неделя</h2>
+    <button class="card week-card" onClick=${()=>go("week")} aria-label="Открыть неделю">
+      <${Rings} size=${112} stroke=${11} label="Кольца недели" rings=${[
+        {p:w.done/4,color:"var(--acc)",track:"var(--acc-track)"},
+        {p:w.pSets?w.dSets/w.pSets:0,color:"var(--grn)",track:"var(--grn-track)"},
+        {p:w.used.length?w.full.length/w.used.length:0,color:"var(--pur)",track:"var(--pur-track)"}]}/>
+      <dl class="ringlegend">
+        <div><dt>Тренировки</dt><dd class="num" style=${{color:"var(--acc)"}}>${w.done}/4</dd></div>
+        <div><dt>Подходы</dt><dd class="num" style=${{color:"var(--grn)"}}>${w.dSets}/${w.pSets}</dd></div>
+        <div><dt>Объём набран</dt><dd class="num" style=${{color:"var(--pur)"}}>${w.full.length}/${w.used.length} мышц</dd></div>
+      </dl>
+    </button>
 
-    <section>
-      <h2 class="sec">Рекорды</h2>
-      <div class="card list">
-        ${prs.length?prs.map((r,k)=>html`<button key=${k} class="lrow" onClick=${()=>openHistory(r.name)}>
-            <span class="badge">${I_TROPHY}</span>
-            <span class="lmain"><b>${r.name}</b><small>${dm(r.date)} · ${r.w?fmt(num(r.w))+" кг × ":""}${r.r} · 1ПМ ≈ ${kgf(r.v)} кг (+${kgf(r.v-r.prev)})</small></span>
-            <${Icon} n="right" size=${18}/></button>`)
-          :html`<p class="empty-row">Рекорд появится, когда побьёшь свой прошлый результат в упражнении. Считаем по расчётному 1ПМ, так что 60 × 10 лучше, чем 62,5 × 6.</p>`}
+    ${main?html`<h2 class="sec">Прогресс</h2>
+    <button class="card prog" onClick=${()=>openHistory(main.name)}>
+      <div class="card-h"><span class="card-t">${main.name}</span><span class="card-s">${main.h.length} ${main.h.length===1?"тренировка":main.h.length<5?"тренировки":"тренировок"}</span></div>
+      <div class="prog-row">
+        <div class="prog-n"><b class="big">${topSet(main.h[main.h.length-1]).w?fmt(num(topSet(main.h[main.h.length-1]).w)):"б/в"}</b><span>${topSet(main.h[main.h.length-1]).w?"кг × ":"× "}${topSet(main.h[main.h.length-1]).r}</span></div>
+        <${Spark} values=${main.h.map(x=>x.best)} w=${150} h=${44}/>
       </div>
-    </section>
+    </button>`:null}
 
-    ${lifts.length?html`<section>
-      <h2 class="sec">Прогресс</h2>
-      <div class="card list">${lifts.map(l=>{ const last=l.h[l.h.length-1], top=last.sets.reduce((b,x)=>e1rm(x.w,x.r)>e1rm(b.w,b.r)?x:b,last.sets[0]);
-        return html`<button key=${l.name} class="lrow" onClick=${()=>openHistory(l.name)}>
-          <span class="lmain"><b>${l.name}</b><small>${dm(last.date)} · ${top.w?fmt(num(top.w))+" кг × ":""}${top.r}</small></span>
-          <${Spark} values=${l.h.map(x=>x.best)} w=${96} h=${34}/>
-          <${Icon} n="right" size=${18}/></button>`; })}</div>
-    </section>`:null}
+    ${prs.length?html`<h2 class="sec">Рекорды</h2>
+    <div class="card list">${prs.map((r,k)=>html`<button key=${k} class="lrow" onClick=${()=>openHistory(r.name)}>
+        <span class="badge">${I_TROPHY}</span>
+        <span class="lmain"><b>${r.name}</b><small>${dm(r.date)} · ${r.w?fmt(num(r.w))+" кг × ":""}${r.r} · 1ПМ ≈ ${kgf(r.v)} кг</small></span>
+        <${Icon} n="right" size=${18}/></button>`)}</div>`:null}
 
-    <section>
-      <h2 class="sec">Тело</h2>
-      <button class="card lrow solo" onClick=${()=>go("body")}>
-        <span class="lmain"><b>Вес и замеры</b><small>${body.length?"Последний: "+fmt(num(body[body.length-1].w))+" кг, "+dm(body[body.length-1].date):"Пока нет замеров. Добавь вес утром натощак."}</small></span>
-        ${body.length>1?html`<${Spark} values=${body.map(b=>num(b.w))} w=${96} h=${34}/>`:null}
-        <${Icon} n="right" size=${18}/>
-      </button>
-    </section>
+    <h2 class="sec">Журнал</h2>
+    <div class="card list">
+      ${recent.map(x=>html`<button key=${x.id} class="lrow" onClick=${()=>go("hist")}>
+        <${Plate} k=${x.day}/>
+        <span class="lmain"><b>${P[x.day].name}</b><small>${longDate(x.date)} · ${x.ex.reduce((a,e)=>a+doneOf(e),0)} подх.</small></span>
+        <${Icon} n="right" size=${18}/></button>`)}
+      <button class="lrow" onClick=${()=>go("hist")}><span class="lmain"><b>Все тренировки</b></span><${Icon} n="right" size=${18}/></button>
+      <button class="lrow" onClick=${()=>go("body")}><span class="lmain"><b>Вес и замеры</b><small>${body.length?fmt(num(body[body.length-1].w))+" кг, "+dm(body[body.length-1].date):"Пока нет замеров"}</small></span>
+        ${body.length>1?html`<${Spark} values=${body.map(b=>num(b.w))} w=${80} h=${30}/>`:null}<${Icon} n="right" size=${18}/></button>
+    </div>
   </div>`;
 }
+
+// Неделя — по экрану «Неделя» макета
+function lagTip(date){
+  const w=weekData(date), ws=w.ws, we=w.we;
+  const inWeek=sessions().filter(x=>x.date>=ws&&x.date<=we&&hasData(x));
+  if(!inWeek.length) return null;
+  const doneDays=new Set(inWeek.map(x=>x.day)), left=ORDER.filter(k=>!doneDays.has(k));
+  // план только по уже проведённым дням: что из них не добрали
+  const planDone=MUS.map(()=>0);
+  ORDER.filter(k=>doneDays.has(k)).forEach(k=>{ const real=inWeek.filter(x=>x.day===k).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    muscleCount(real,e=>rowsOf(real,e)).forEach((c,m)=>{ planDone[m]+=c.f; }); });
+  let best=null;
+  MUS_ORDER.forEach(m=>{ const gap=planDone[m]-w.fact[m]; if(gap>=1&&(!best||gap>best.gap)) best={m,gap}; });
+  if(!best) return null;
+  const day=left.find(k=>P[k].ex.some((r,i)=>(LV[k][i][best.m]||0)>=7));
+  const bi=day?P[day].ex.findIndex((r,i)=>(LV[day][i][best.m]||0)>=7):-1;
+  const n=Math.min(2,Math.ceil(best.gap));
+  return {m:best.m,fact:w.fact[best.m],plan:w.plan[best.m],gap:best.gap,
+    mod:day?{id:rid(),day,type:"add_sets",base:bi,n,from:inWeek.map(x=>x.date).sort().slice(-1)[0],reason:`не добрано ${fmt(best.gap)} подх. на «${MUS[best.m]}»`}:null};
+}
+function WeekScreen({date,toast}){
+  const [mode,setMode]=useState("now");
+  const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
+  const ref=d.toLocaleDateString("sv-SE"), w=weekData(ref), tip=mode==="now"?lagTip(date):null;
+  // мезоцикл: среднее в неделю по неделям, где были тренировки
+  let rows=MUS_ORDER.map(m=>({m,v:w.fact[m],plan:w.plan[m]}));
+  if(mode==="meso"){
+    const weeks=[...new Set(sessions().filter(hasData).map(x=>weekStart(x.date)))];
+    const acc=MUS.map(()=>0); weeks.forEach(ws=>{ const wd=weekData(ws); MUS.forEach((_,m)=>{ acc[m]+=wd.fact[m]; }); });
+    rows=MUS_ORDER.map(m=>({m,v:weeks.length?acc[m]/weeks.length:0,plan:w.plan[m]}));
+  }
+  const max=16;
+  const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.plan>0||r.v>0))]).filter(g=>g[1].length);
+  const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
+  return html`<div class="weekscr">
+    <header class="large">
+      <span class="eyebrow">${dmy(w.ws).slice(0,5)} – ${dmy(w.we).slice(0,5)}</span>
+      <h1>${mode==="meso"?"Мезоцикл":"Неделя "+w.wk}</h1>
+    </header>
+    <div class="seg3" role="group" aria-label="Период">
+      ${[["now","Эта неделя"],["prev","Прошлая"],["meso","Мезоцикл"]].map(([k,l])=>html`<button key=${k} aria-pressed=${String(mode===k)} onClick=${()=>setMode(k)}>${l}</button>`)}
+    </div>
+    <section class="card eff">
+      <div class="card-h"><span class="card-t">Эффективные подходы${mode==="meso"?" в среднем за неделю":""}</span><span class="card-s">цель 10–16</span></div>
+      ${!groups.length?html`<p class="st">Пока нет данных.</p>`:groups.map(([g,rs])=>html`<div key=${g} class="effg">
+        <span class="effg-t">${g}</span>
+        ${rs.map(r=>{ const target=Math.min(10,r.plan||10), ok=r.v>=target-0.01; return html`<div key=${r.m} class="effr">
+          <span>${MUS[r.m]}</span>
+          <span class="effb"><i style=${{width:Math.min(100,r.v/max*100)+"%",background:ok?"var(--grn)":"var(--acc)"}}></i></span>
+          <b class="num">${fmt(Math.round(r.v*4)/4)}</b>
+        </div>`; })}
+      </div>`)}
+      <div class="efflg"><span><i style=${{background:"var(--acc)"}}></i>ниже нормы</span><span><i style=${{background:"var(--grn)"}}></i>в норме</span></div>
+    </section>
+    ${tip?html`<section class="card tip">
+      <span class="tip-i">${I_SPARK}</span>
+      <div class="tip-b">
+        <b>${MUS[tip.m]} отстаёт</b>
+        <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>
+        ${tip.mod?(sent?html`<span class="mute">Добавлено в план</span>`:html`<button class="softbtn" onClick=${()=>{ addMods([tip.mod]); toast({text:"Добавлено в план: "+P[tip.mod.day].name}); }}>Добавить в план</button>`):null}
+      </div>
+    </section>`:null}
+    <details class="grp more">
+      <summary class="grp-row">Подробно по дням</summary>
+      <${WeekView} date=${ref} embedded=${true}/>
+    </details>
+  </div>`;
+}
+const I_SPARK=html`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>`;
 const I_TROPHY=html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>`;
 
 // История упражнения: график расчётного 1ПМ и все тренировки
