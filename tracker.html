@@ -1,8 +1,7 @@
 <title>Дневник тренировок</title>
 <style>
-/* Направление: тренировочный журнал. Палитра — цвета дисков IWF (25 красный, 20 синий, 15 жёлтый, 10 зелёный),
-   у каждого дня свой диск и он же акцент. Острые углы (4–6px), линии вместо теней, цифры моноширинным.
-   Шрифты: Unbounded (заголовки), Golos Text (текст), JetBrains Mono (цифры). */
+/* Раскладка по образцу Strong/Hevy (см. DESIGN.md): журнал без карточек, таблица подходов, шторки, нижние вкладки.
+   Палитра: цвета дисков IWF, у каждого дня свой диск и он же акцент. Шрифты: Unbounded / Golos Text / JetBrains Mono. */
 :root{
   --bg:#eceef0; --surface:#ffffff; --sunk:#f4f5f7; --line:#d2d6dc; --rule:#e5e8ec;
   --ink:#111418; --mute:#5a626d; --inv:#ffffff;
@@ -37,137 +36,134 @@
 :root[data-theme="dark"][data-day="LB"]{--day-soft:#15301f}
 
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-inline:16px;padding-block:0 120px;max-width:720px;margin-inline:auto;-webkit-font-smoothing:antialiased}
+html{scroll-padding-bottom:140px}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-inline:16px;padding-block:0 calc(150px + env(safe-area-inset-bottom,0px));max-width:680px;margin-inline:auto;-webkit-font-smoothing:antialiased}
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--day);outline-offset:2px}
-.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-
-/* шапка */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 0;display:grid;gap:12px}
-.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-h1{font:700 19px/1.1 var(--display);letter-spacing:-.01em;margin:0}
-.save{font:500 12px var(--mono);color:var(--mute);display:inline-flex;align-items:center;gap:6px}
-.save::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
-.save.bad::before{background:var(--warn)}
-.save.bad{color:var(--warn)}
-.nav{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
-.nav button{border:0;background:transparent;padding:10px 2px 11px;font-size:14.5px;font-weight:600;color:var(--mute);border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .2s var(--ease),border-color .2s var(--ease)}
-.nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--day)}
-
-/* дни: диски */
-main{padding-top:14px}
-.days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.days button{display:grid;justify-items:start;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-card);padding:10px 9px;text-align:left;transition:background .2s var(--ease),border-color .2s var(--ease)}
-.days b{font:700 13px/1 var(--display);white-space:nowrap}
-.days button{min-width:0;overflow:hidden}
-.days small{font-size:11.5px;line-height:1.2;color:var(--mute);overflow-wrap:anywhere;hyphens:auto;max-width:100%}
-.plate{width:16px;height:16px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 4px color-mix(in srgb,var(--c) 70%,#000 30%),inset 0 0 0 6px var(--c)}
-.plate::after{content:"";display:block;width:4px;height:4px;margin:6px;border-radius:50%;background:var(--surface)}
-.days button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--inv)}
-.days button[aria-pressed="true"] small{color:inherit;opacity:.7}
-.days button[aria-pressed="true"] .plate::after{background:var(--ink)}
-
-/* сводка мышц сегодня */
-.mchips{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);font-size:13.5px}
-.mchips span b{font:600 13.5px var(--mono);margin-right:4px}
-.mchips span.ind{color:var(--mute)}
-.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
-.chip{font:600 12.5px var(--mono);padding:5px 8px;border-radius:var(--r);background:var(--day-soft);color:var(--ink)}
-.chip.warn{background:var(--warn-soft)}
-.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
-.stepper button{border:0;background:transparent;width:34px;height:34px;font-size:18px}
-.stepper span{min-width:76px;text-align:center;font:600 13px var(--mono)}
-input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;font:500 14px var(--mono);height:36px}
-
-/* карточки упражнений */
-.cards{display:grid;gap:10px;margin-top:12px}
-.ex{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px 14px 12px;display:grid;gap:10px;min-width:0;transition:border-color .25s var(--ease)}
-.ex.complete{border-color:var(--ok)}
-.ex-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start}
-.idx{font:600 13px/26px var(--mono);color:var(--mute);min-width:22px}
-.ex.complete .idx{color:var(--ok)}
-.ex-title{min-width:0}
-.ex h2{font:600 18px/1.25 var(--body);margin:2px 0 0;letter-spacing:-.005em}
-.sub{font-size:13px;color:var(--mute);margin-top:2px}
-.sub b{color:var(--warn);font-weight:600}
-.mv{display:flex;gap:2px;flex:none}
-.ibtn{display:inline-grid;place-items:center;width:34px;height:34px;border:0;background:transparent;border-radius:var(--r);color:var(--mute);padding:0;transition:background .15s var(--ease),color .15s var(--ease)}
-.ibtn:hover{background:var(--sunk);color:var(--ink)}
-.ibtn:disabled{opacity:.3;cursor:default;background:transparent}
-.ibtn.ai{color:var(--day)}
-.ibtn.danger:hover,.ibtn.danger:focus-visible{color:var(--p-red)}
-.plan{color:var(--mute);font-size:13.5px;display:flex;flex-wrap:wrap;gap:2px 14px}
-.plan b{color:var(--ink);font-weight:600}
-.plan.spec{font-family:var(--mono);font-size:13px}
-.hint{font:500 12.5px var(--mono);border-radius:var(--r);padding:7px 10px;background:var(--sunk);color:var(--mute);display:flex;gap:8px;align-items:center}
-.hint.up{background:var(--ok-soft);color:var(--ink)}
-.hint svg{flex:none;color:var(--ok)}
-
-/* журнал подходов */
-.sets{display:grid}
-.set{display:grid;grid-template-columns:22px minmax(0,.8fr) minmax(0,1fr) minmax(0,1fr) 44px;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--rule)}
-.set.head{border-top:0;padding:0 0 4px;font:500 11px var(--mono);color:var(--mute);text-align:center}
-.set.head span:first-child{text-align:left}
-.set .n{font:600 14px var(--mono);color:var(--mute)}
-.set .prev{font:500 12.5px var(--mono);color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.set input[type=text]{width:100%;min-width:0;height:42px;background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:0 4px;font:600 18px var(--mono);text-align:center;transition:border-color .15s var(--ease),background .15s var(--ease)}
-.set input[type=text]:focus{background:var(--surface);border-color:var(--day);outline:0}
-.set input::placeholder{color:var(--mute);opacity:.55;font-weight:500}
-.tick{width:44px;height:42px;border-radius:var(--r);border:1.5px solid var(--line);background:transparent;color:var(--line);display:grid;place-items:center;transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
-.tick:hover{border-color:var(--mute);color:var(--mute)}
-.tick[aria-pressed="true"]{background:var(--day);border-color:var(--day);color:var(--day-ink)}
-
-/* кнопки */
-.row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:8px 12px;font-size:14px;font-weight:600;transition:background .15s var(--ease),border-color .15s var(--ease),transform .1s var(--ease)}
-.btn:hover{border-color:var(--mute)}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--inv)}
-.btn.primary svg{color:var(--day)}
-.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
-.btn.quiet{border-color:transparent;background:transparent;color:var(--mute);padding-inline:8px}
-.btn.quiet:hover{color:var(--ink);background:var(--sunk)}
-.btn:disabled{opacity:.55;cursor:default}
-textarea{width:100%;background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:8px 10px;font-size:15px;resize:vertical;min-height:40px}
-textarea:focus,.ririn:focus{border-color:var(--day);background:var(--surface);outline:0}
-.ririn{background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:8px 10px;font-size:15px;width:100%}
-
-/* панели в карточке */
-.swap{display:grid;gap:10px;background:var(--sunk);border-radius:var(--r);padding:10px}
-.opts{display:flex;flex-wrap:wrap;gap:6px}
-.opts button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;font-size:14px;text-align:left;transition:border-color .15s var(--ease)}
-.opts button:hover{border-color:var(--day)}
-.own{display:flex;gap:6px}
-.own input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;font-size:15px}
-.mus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-.mus button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;text-align:left;font-size:14px;display:flex;justify-content:space-between;gap:6px;align-items:baseline}
-.mus button small{color:var(--mute);font:500 11px var(--mono)}
-.mus button.s{border-color:var(--day);box-shadow:inset 3px 0 0 var(--day)}
-.mus button.p{background:var(--day);border-color:var(--day);color:var(--day-ink)}
-.mus button.p small{color:inherit;opacity:.8}
-.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)}
-.chk input{width:18px;height:18px;accent-color:var(--day)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}
+.empty{color:var(--mute);padding:28px 8px;text-align:center}
 .st{color:var(--mute);font-size:13.5px}
 .st.bad{color:var(--warn)}
 
-/* добавление */
-.addbox{border:1.5px dashed var(--line);border-radius:var(--r-card);padding:10px;display:grid;gap:10px}
-.addbox > .btn{justify-self:start}
-.adform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.adform label,.form label{display:grid;gap:4px;font-size:13px;color:var(--mute);min-width:0}
-.adform input[type=text],.form input{background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:9px 10px;font-size:16px;width:100%;min-width:0}
-.adform .full,.form .full{grid-column:1/-1}
-.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.seg button{border:0;background:var(--surface);padding:9px;font-weight:600;font-size:14px;color:var(--mute)}
-.seg button + button{border-left:1px solid var(--line)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
-.seg button:disabled{opacity:.4}
+/* статус сохранения: тихо в углу */
+.save{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:12px;z-index:6;font:500 11px var(--mono);color:var(--mute);display:flex;align-items:center;gap:6px;pointer-events:none}
+.save::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.save.bad,.save.bad::before{color:var(--warn);background:none}
+.save.bad::before{background:var(--warn)}
 
-/* подвал тренировки */
-.foot{display:grid;gap:12px;margin-top:18px}
-.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px}
-h3{font:700 14px var(--display);margin:22px 0 0;letter-spacing:-.005em}
+/* шапка экрана */
+.wk{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:26px 10px;display:grid;gap:10px;border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+.wk-top{display:flex;align-items:center;gap:12px}
+.wk-name{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+h1{font:700 22px/1.05 var(--display);letter-spacing:-.02em;margin:0;white-space:nowrap}
+.elapsed{font:600 17px var(--mono);font-variant-numeric:tabular-nums}
+.days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.days button{display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;padding:8px 2px;font-size:13.5px;font-weight:600;color:var(--mute);white-space:nowrap;transition:background .2s var(--ease),color .2s var(--ease)}
+.days button + button{border-left:1px solid var(--line)}
+.days button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
+.plate{flex:none;display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--c) 72%,#000 28%),inset 0 0 0 5px var(--c);position:relative}
+.plate::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--bg)}
+.wk-name .plate{width:20px;height:20px}
+.wk-name .plate::after{inset:7px}
+.days button[aria-pressed="true"] .plate::after{background:var(--ink)}
+.wk-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:0 8px;font:500 13.5px var(--mono);height:32px}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);height:32px}
+.stepper button{border:0;background:transparent;width:30px;height:30px;font-size:17px}
+.stepper span{min-width:52px;text-align:center;font:600 12.5px var(--mono)}
+.goal{font:600 12px var(--mono);padding:6px 8px;border-radius:var(--r);background:var(--day-soft)}
+.goal.warn{background:var(--warn-soft)}
+
+/* полоса мышц тренировки */
+.mline{display:flex;gap:4px 14px;flex-wrap:wrap;padding:10px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.mline b{font:600 13px var(--mono);margin-right:4px}
+.mline .ind{color:var(--mute)}
+.helpbox{margin-top:10px;background:var(--day-soft);border-radius:var(--r-card);padding:12px 12px 4px;font-size:14px}
+.helpbox .btn{padding-left:0}
+
+/* журнал упражнений */
+.exlist{display:grid}
+.exb{padding:16px 0 14px;border-bottom:1px solid var(--line);display:grid;gap:8px;min-width:0}
+.exb-head{display:flex;align-items:flex-start;gap:6px}
+.exb-title{flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:2px 0;font:600 17.5px/1.25 var(--body);color:var(--day);letter-spacing:-.005em}
+:root[data-day="UB"] .exb-title{color:color-mix(in srgb,var(--p-yellow) 55%,var(--ink) 45%)}
+.exb.complete .exb-title::after{content:" ✓";color:var(--ok)}
+.exb-meta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:13px;color:var(--ink)}
+.exb-meta .mono{font-size:12.5px;color:var(--mute)}
+.exb-meta .mono b{color:var(--ink)}
+.exb-note{font-size:13px;color:var(--mute)}
+.linkbtn{border:0;background:none;padding:0;color:var(--day);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.hint{font-size:13px;border-radius:var(--r);padding:7px 10px;display:flex;gap:8px;align-items:center}
+.hint.up{background:var(--ok-soft)}
+.hint svg{flex:none;color:var(--ok)}
+
+.log{display:grid;margin-top:2px}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) minmax(0,1.05fr) minmax(0,.9fr) 40px 42px;gap:6px;align-items:center;padding:3px 4px;margin-inline:-4px;border-radius:var(--r);transition:background .2s var(--ease)}
+.row.head{font:600 10.5px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:.04em;text-align:center;padding-block:0 2px}
+.row.head > :first-child{text-align:left}
+.row.head .qh{border:0;background:none;padding:0;font:inherit;color:var(--day);text-decoration:underline dotted;text-underline-offset:3px;letter-spacing:inherit;text-transform:inherit}
+.row.done{background:var(--ok-soft)}
+.row .n{font:600 14px var(--mono);color:var(--mute);padding-left:4px}
+.row.done .n{color:var(--ok)}
+.row .prev{font:500 12.5px var(--mono);color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row input[type=text]{width:100%;min-width:0;height:40px;background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:0 2px;font:600 17px var(--mono);text-align:center;transition:border-color .15s var(--ease),background .15s var(--ease)}
+.row.done input[type=text]{background:transparent}
+.row input[type=text]:focus{background:var(--surface);border-color:var(--day);outline:0}
+.row input::placeholder{color:var(--mute);opacity:.5;font-weight:500}
+.q{height:40px;border:1px dashed var(--line);background:transparent;border-radius:var(--r);font:600 14px var(--mono);color:var(--mute)}
+.q.q0{background:var(--p-red);border:0;color:#fff}
+.q.q1{background:color-mix(in srgb,var(--p-red) 30%,var(--warn-soft));border:0;color:var(--ink)}
+.q.q2{background:var(--day-soft);border:0;color:var(--ink)}
+.q.q4{background:var(--sunk);border:0;color:var(--ink)}
+.tick{width:42px;height:40px;border-radius:var(--r);border:1.5px solid var(--line);background:var(--surface);color:var(--line);display:grid;place-items:center;transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
+.tick:hover{color:var(--mute);border-color:var(--mute)}
+.tick[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+.qpick{display:flex;align-items:center;gap:6px;padding:6px 0 8px;font-size:13px;color:var(--mute);flex-wrap:wrap}
+.qpick button{min-width:44px;height:36px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);font:600 14px var(--mono)}
+.qpick button.q0{background:var(--p-red);color:#fff;border-color:var(--p-red)}
+.qpick button.on{outline:2px solid var(--ink);outline-offset:1px}
+.exb-add{display:flex;gap:6px}
+.exb-notein{border:0;border-bottom:1px solid transparent;background:transparent;padding:4px 0;font-size:14px;color:var(--ink)}
+.exb-notein:focus{border-bottom-color:var(--day);outline:0}
+.exb-notein::placeholder{color:var(--mute);opacity:.8}
+.addex{margin-top:14px}
+
+/* кнопки */
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:8px 12px;min-height:38px;font-size:14px;font-weight:600;transition:background .15s var(--ease),border-color .15s var(--ease),transform .1s var(--ease)}
+.btn:hover{border-color:var(--mute)}
+.btn:active{transform:translateY(1px)}
+.btn.wide{flex:1;width:100%}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--inv)}
+.btn.primary svg{color:var(--day)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--mute)}
+.btn.quiet:hover{color:var(--ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.ibtn{display:inline-grid;place-items:center;width:36px;height:36px;border:0;background:transparent;border-radius:var(--r);color:var(--mute);padding:0;flex:none}
+.ibtn:hover{background:var(--sunk);color:var(--ink)}
+.ibtn.danger:hover{color:var(--p-red)}
+textarea{width:100%;background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:8px 10px;font-size:15px;resize:vertical;min-height:40px}
+textarea:focus{border-color:var(--day);background:var(--surface);outline:0}
+
+/* итог тренировки */
+.finish{display:grid;gap:12px;margin-top:26px}
+.finish h2,h3{font:700 15px var(--display);margin:0;letter-spacing:-.01em}
+h3{margin-top:24px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface)}
+.stats div{padding:10px 12px;display:grid;gap:2px}
+.stats div + div{border-left:1px solid var(--line)}
+.stats span{font-size:12px;color:var(--mute)}
+.stats b{font:700 20px var(--mono)}
+.stats small{font-size:12px;color:var(--mute);font-weight:500}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.form label,.adform label{display:grid;gap:4px;font-size:13px;color:var(--mute);min-width:0}
+.form input,.adform input[type=text]{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 10px;font-size:16px;width:100%;min-width:0}
+.form textarea{background:var(--surface);border-color:var(--line)}
+.form .full,.adform .full{grid-column:1/-1}
+.adform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .review{display:grid;gap:10px}
 .sum{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px;display:grid;gap:8px;min-width:0}
 .rich{display:grid;gap:6px;min-width:0;overflow-wrap:anywhere}
@@ -178,61 +174,106 @@ h3{font:700 14px var(--display);margin:22px 0 0;letter-spacing:-.005em}
 .rich li::marker{color:var(--day)}
 .rich code{font:500 .9em var(--mono);background:var(--sunk);padding:1px 5px;border-radius:3px}
 
-/* неделя, история, замеры */
+/* шторки */
+.sheet-wrap{position:fixed;inset:0;z-index:40;background:rgba(8,10,14,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:680px;max-height:88%;border-radius:10px 10px 0 0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+.sheet-head{display:flex;align-items:center;gap:8px;padding:14px 10px 12px 16px;border-bottom:1px solid var(--line)}
+.sheet-head b{font:600 16px var(--body);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet-body{overflow-y:auto;padding:14px 16px;display:grid;gap:12px;align-content:start}
+.sheet-foot{display:flex;gap:8px;align-items:flex-end;padding:10px 16px 14px;border-top:1px solid var(--line)}
+.sheet-foot textarea{flex:1;min-width:0;background:var(--surface);border-color:var(--line)}
+.sheet-foot .btn{min-height:44px}
+.menu{display:grid;border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);overflow:hidden}
+.mitem{display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:13px 14px;text-align:left;font-size:15px}
+.mitem + .mitem{border-top:1px solid var(--rule)}
+.mitem svg{flex:none;color:var(--mute)}
+.mitem:hover{background:var(--sunk)}
+.mitem.ai svg{color:var(--day)}
+.mitem.danger{color:var(--p-red)}
+.mitem.danger svg{color:var(--p-red)}
+.own{display:flex;gap:6px}
+.own input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 10px;font-size:15px}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+.chk input{width:18px;height:18px;accent-color:var(--day)}
+.mus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.mus button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:9px 10px;text-align:left;font-size:14px;display:flex;justify-content:space-between;gap:6px;align-items:baseline;min-width:0}
+.mus button small{color:var(--mute);font:500 11px var(--mono)}
+.mus button.s{border-color:var(--day);box-shadow:inset 3px 0 0 var(--day)}
+.mus button.p{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+.mus button.p small{color:inherit;opacity:.8}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:10px 6px;font-weight:600;font-size:14px;color:var(--mute)}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
+.seg button:disabled{opacity:.4}
+.chat{display:grid;gap:10px}
+.msg{border-radius:var(--r-card);padding:10px 12px;max-width:92%;min-width:0;font-size:15px}
+.msg.user{justify-self:end;background:var(--ink);color:var(--inv);white-space:pre-wrap}
+.msg.assistant{justify-self:start;background:var(--surface);border:1px solid var(--line)}
+
+/* неделя */
+.bars{display:grid;gap:7px;margin-top:14px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
+.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 62px;gap:8px;align-items:center;font-size:13px}
+.bl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track{position:relative;height:12px;background:var(--sunk);border-radius:2px;overflow:hidden}
+.track i{position:absolute;left:0;top:0;bottom:0;display:block}
+.track .zone{background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.track .planb{background:var(--line);height:4px;top:4px}
+.track .factb{background:var(--warn);opacity:.85}
+.track .factb.ok{background:var(--ok)}
+.bv{text-align:right;font-size:12px;color:var(--mute)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mute);margin-top:4px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:14px;height:8px;border-radius:2px}
+.legend .planb{background:var(--line)}
+.legend .factb{background:var(--ok)}
+.legend .zone{background:color-mix(in srgb,var(--ok) 20%,transparent)}
 .tbl{overflow-x:auto;margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
-table{border-collapse:collapse;width:100%;font:500 13.5px var(--mono);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font:500 13px var(--mono);font-variant-numeric:tabular-nums}
 th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
 th:first-child,td:first-child{text-align:left;font-family:var(--body)}
 th{color:var(--mute);font:600 12px var(--body)}
-th .plate{display:inline-block;vertical-align:-3px;margin-right:5px;width:14px;height:14px}
-th .plate::after{margin:5px;width:4px;height:4px}
+th .plate{width:12px;height:12px;vertical-align:-2px;margin-right:5px}
+th .plate::after{inset:4px;background:var(--surface)}
 tr:last-child td{border-bottom:0}
 td.dir{font-weight:700}
 td.mute{color:var(--mute)}
 td.ok{color:var(--ok);font-weight:700}
 td.low{color:var(--warn);font-weight:700}
 tfoot td{font-weight:700;border-top:1px solid var(--line);background:var(--sunk)}
-.note{color:var(--mute);font-size:13.5px;margin-top:10px}
-.list{display:grid;gap:6px}
-.sess{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
-.sess summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.note{color:var(--mute);font-size:13px;margin-top:10px}
+
+/* история */
+.list{display:grid;margin-top:6px}
+.sess{border-bottom:1px solid var(--line)}
+.sess summary{list-style:none;cursor:pointer;padding:14px 0;display:grid;gap:3px}
 .sess summary::-webkit-details-marker{display:none}
 .sess .d{display:flex;align-items:center;gap:8px;font-weight:600}
-.sess .s{color:var(--mute);font:500 12.5px var(--mono)}
-.sess .body{padding:0 14px 14px;display:grid;gap:8px;font-size:14.5px}
-.sess .body .mono{color:var(--mute);font-size:13px}
-.empty{color:var(--mute);padding:28px 8px;text-align:center}
+.sess .s{color:var(--mute);font:500 12.5px var(--mono);padding-left:22px}
+.sess .body{padding:0 0 14px 22px;display:grid;gap:10px;font-size:14.5px}
+.sess .body .mono{font-size:13px;color:var(--mute)}
 
-/* таймер, кнопка Клода, всплывашка, чат */
-.timer{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--inv);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;justify-content:center;z-index:9}
-.timer .t{font:700 26px/1 var(--mono);min-width:76px;text-align:center}
+/* нижние вкладки, таймер, кнопка тренера, всплывашка */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:12;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar button{border:0;background:transparent;display:grid;justify-items:center;gap:2px;padding:8px 2px 9px;color:var(--mute);font-size:11.5px;font-weight:600}
+.tabbar button[aria-selected="true"]{color:var(--ink)}
+.tabbar button[aria-selected="true"] svg{color:var(--day)}
+.timer{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:11;background:var(--ink);color:var(--inv);padding:8px 16px;display:flex;align-items:center;gap:10px;justify-content:center}
+.timer .t{font:700 22px/1 var(--mono);min-width:66px;text-align:center}
 .timer .l{font-size:13px;opacity:.75;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.timer button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r);padding:6px 10px;font:600 13px var(--mono)}
+.timer button{display:grid;place-items:center;background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r);height:30px;padding:0 8px;font:600 12.5px var(--mono)}
 .timer.done{background:var(--ok);color:#fff}
-.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:20;width:56px;height:56px;display:grid;place-items:center;background:var(--ink);color:var(--day);border:0;border-radius:16px;box-shadow:0 10px 24px rgba(10,14,22,.28);transition:bottom .25s var(--ease),transform .15s var(--ease)}
+.fab{position:fixed;right:16px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:20;width:54px;height:54px;display:grid;place-items:center;background:var(--ink);color:var(--day);border:0;border-radius:16px;box-shadow:0 10px 24px rgba(10,14,22,.28);transition:bottom .25s var(--ease),transform .15s var(--ease)}
 .fab:hover{transform:translateY(-2px)}
-.fab.raised{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-.toast{position:fixed;left:16px;right:88px;bottom:calc(22px + env(safe-area-inset-bottom,0px));max-width:460px;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);color:var(--inv);border-radius:var(--r-card);padding:11px 12px 11px 14px;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
-.toast.raised{bottom:calc(82px + env(safe-area-inset-bottom,0px))}
-.toast button{background:var(--day);border:0;color:var(--day-ink);font-weight:700;font-size:13px;padding:6px 10px;border-radius:var(--r);white-space:nowrap}
-.sheet-wrap{position:fixed;inset:0;z-index:40;background:rgba(8,10,14,.5);display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--bg);width:100%;max-width:720px;max-height:86%;border-radius:10px 10px 0 0;display:grid;grid-template-rows:auto 1fr auto;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -10px 30px rgba(0,0,0,.25)}
-.sheet-head{display:flex;align-items:center;gap:8px;padding:12px 12px 12px 16px;border-bottom:1px solid var(--line)}
-.sheet-head b{display:flex;align-items:center;gap:8px;white-space:nowrap;font:700 15px var(--display);margin-right:auto}
-.sheet-head b svg{color:var(--day)}
-.sheet-head .btn{white-space:nowrap}
-.sheet-body{overflow-y:auto;padding:14px 16px;display:grid;gap:10px;align-content:start;min-height:160px}
-.sheet-foot{display:flex;gap:8px;align-items:flex-end;padding:10px 16px 14px;border-top:1px solid var(--line)}
-.sheet-foot textarea{flex:1;min-width:0;background:var(--surface);border-color:var(--line)}
-.sheet-foot .btn{height:44px}
-.msg{border-radius:var(--r-card);padding:10px 12px;max-width:92%;min-width:0;font-size:15px}
-.msg.user{justify-self:end;background:var(--ink);color:var(--inv);white-space:pre-wrap}
-.msg.assistant{justify-self:start;background:var(--surface);border:1px solid var(--line)}
+.fab.raised{bottom:calc(122px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;left:16px;right:86px;bottom:calc(78px + env(safe-area-inset-bottom,0px));max-width:460px;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);color:var(--inv);border-radius:var(--r-card);padding:10px 10px 10px 14px;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+.toast.raised{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+.toast button{background:var(--day);border:0;color:var(--day-ink);font-weight:700;font-size:13px;padding:7px 10px;border-radius:var(--r);white-space:nowrap}
+@media (max-width:380px){.days button{font-size:12.5px;gap:4px}.days .plate{display:none}.bar{grid-template-columns:96px minmax(0,1fr) 56px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-@media (max-width:420px){.days small{display:none}.days button{padding:10px 8px}}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Unbounded:wght@600;700&display=swap">
-<div id="root"><div class="top"><div class="brand"><h1>Дневник тренировок</h1><span class="save">Загружаю…</span></div></div></div>
+<div id="root"><div class="empty">Загружаю дневник…</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
@@ -316,16 +357,18 @@ function weekFromDate(d){
 }
 
 /* ---------- Мышцы ---------- */
-const MUS=["Грудь","Спина","Передняя дельта","Средняя дельта","Задняя дельта","Бицепс","Трицепс","Квадрицепс","Бицепс бедра","Ягодицы","Икры"];
+const MUS=["Грудь","Широчайшие","Передняя дельта","Средняя дельта","Задняя дельта","Бицепс","Трицепс","Квадрицепс","Бицепс бедра","Ягодицы","Икры","Середина спины"];
+// порядок показа (индексы MUS фиксированы, т.к. сохраняются в записях)
+const MUS_ORDER=[0,1,11,2,3,4,5,6,7,8,9,10];
 // на упражнение: {мышца: вес}; 1 = основная (прямой подход), .5 = вспомогательная
 const MAP={
- UA:[{0:1,6:.5,2:.5},{1:1,5:.5,4:.5},{1:1,5:.5},{2:1,6:.5},{3:1},{5:1},{6:1}],
+ UA:[{0:1,6:.5,2:.5},{11:1,1:.5,5:.5,4:.5},{1:1,11:.5,5:.5},{2:1,6:.5},{3:1},{5:1},{6:1}],
  LA:[{7:1,9:.5},{8:1,9:.5},{7:1,9:.5},{8:1},{10:1},{4:1}],
- UB:[{0:1,6:.5,2:.5},{1:1,5:.5,4:.5},{1:1,5:.5,4:.5},{0:1,2:.5},{3:1},{5:1},{6:1},{5:1}],
+ UB:[{0:1,6:.5,2:.5},{1:1,11:.5,5:.5,4:.5},{1:1,11:.5,5:.5,4:.5},{0:1,2:.5},{3:1},{5:1},{6:1},{5:1}],
  LB:[{7:1,9:.5},{7:1,9:.5},{8:1},{7:1},{9:1},{10:1},{3:1},{4:1}]
 };
 
-/* Дневник тренировок — React 18 + htm (без сборки). Данные программы — в data.js. */
+/* Дневник тренировок: ядро (утилиты, модель, хранилище, промпты, иконки). React 18 + htm, без сборки. */
 const {useState,useEffect,useRef,useSyncExternalStore}=React;
 const html=htm.bind(React.createElement);
 
@@ -340,7 +383,7 @@ const dm=d=>d.slice(5).split("-").reverse().join(".");
 const clone=o=>JSON.parse(JSON.stringify(o));
 function weekStart(d){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()-(t.getDay()+6)%7); return t.toLocaleDateString("sv-SE"); }
 function weekEnd(d){ const t=new Date(weekStart(d)+"T00:00:00"); t.setDate(t.getDate()+6); return t.toLocaleDateString("sv-SE"); }
-const restTxt=r=>r>=60?fmt(r/60)+" мин":r+" с";
+const restTxt=r=>r>=60?Math.floor(r/60)+":"+String(r%60).padStart(2,"0"):r+" с";
 
 // Безопасный мини-markdown: сначала экранируем, потом заголовки, списки, жирный
 function md(src){
@@ -365,14 +408,18 @@ function xinfo(s,e){
   const base=row?row[0]:(e.name||"Упражнение");
   return {row,custom:!row,base,name:row?(e.alt||base):base,plan,mus:e.mus||(row?MAP[s.day][e.base]:null)||{}};
 }
-const musLists=m=>({prim:Object.keys(m).filter(k=>m[k]===1).map(k=>MUS[k]),sec:Object.keys(m).filter(k=>m[k]&&m[k]<1).map(k=>MUS[k])});
+const musKeys=m=>MUS_ORDER.filter(k=>m[k]);
+const musLists=m=>({prim:musKeys(m).filter(k=>m[k]===1).map(musName),sec:musKeys(m).filter(k=>m[k]<1).map(musName)});
 // setsAt(e) -> число подходов; результат по мышцам: d — прямые, f — дробные
 function muscleCount(s,setsAt){
   const r=MUS.map(()=>({d:0,f:0}));
   (s.ex||[]).forEach(e=>{ const n=setsAt(e), m=xinfo(s,e).mus; for(const k in m){ if(m[k]===1) r[k].d+=n; r[k].f+=n*m[k]; } });
   return r;
 }
-const blankSet=()=>({w:"",r:"",ok:false});
+const blankSet=()=>({w:"",r:"",ok:false,q:""});
+// сколько строк-подходов у упражнения: явное число (e.n), иначе план недели или уже записанные
+const rowsOf=(s,e)=>e.n!=null?e.n:Math.max(setsFor(xinfo(s,e).plan.ns,s.week),e.sets.length);
+const musName=k=>MUS[k];
 const setDone=x=>x.ok||num(x.r)!==null;           // подход засчитан: отмечен или есть повторы (вес не обязателен)
 const doneOf=e=>e.sets.filter(setDone).length;
 const hasData=s=>s.ex&&s.ex.some(e=>e.sets.some(x=>x.w||x.r||x.ok));
@@ -420,7 +467,9 @@ function getSession(date,day){ return S.data[sid(date,day)]||blankSession(date,d
 function editSession(date,day,fn){
   const id=sid(date,day);
   if(!S.data[id]) S.data[id]=blankSession(date,day);
-  fn(S.data[id]); persist(id); emit();
+  const s=S.data[id]; fn(s);
+  if(!s.start&&hasData(s)) s.start=Date.now();
+  persist(id); emit();
 }
 function putDoc(id,doc){ if(doc===undefined) delete S.data[id]; else S.data[id]=doc; persist(id); emit(); }
 
@@ -482,8 +531,8 @@ function sessionBlock(s,numbered){
   const d=P[s.day]; let t=`${s.date} · ${d.name} · неделя ${s.week}`+(s.bw?` · вес утром ${s.bw} кг`:"")+(s.dur?` · ${s.dur} мин`:"")+"\n";
   s.ex.forEach((e,i)=>{
     const inf=xinfo(s,e), {ns,lo,hi,rir}=inf.plan, {prim,sec}=musLists(inf.mus);
-    const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.ok?"":" (не отмечен)"}`).join(", ");
-    t+=`${numbered?(i+1)+".":"-"} ${inf.name}${e.alt&&!inf.custom?` [замена для «${inf.base}»]`:""}${inf.custom?" [добавлено]":""} · план ${setsFor(ns,s.week)}×${lo}–${hi}, RIR ${rirFor(rir,s.week)}`+
+    const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${x.ok?"":" (не отмечен)"}`).join(", ");
+    t+=`${numbered?(i+1)+".":"-"} ${inf.name}${e.alt&&!inf.custom?` [замена для «${inf.base}»]`:""}${inf.custom?" [добавлено]":""} · план ${rowsOf(s,e)}×${lo}–${hi}, RIR ${rirFor(rir,s.week)}`+
       `${prim.length||sec.length?` · мышцы: ${prim.join(", ")}${sec.length?" (косв.: "+sec.join(", ")+")":""}`:""} · факт: ${sets||"не выполнено"}${e.rir?` · реальный RIR: ${e.rir}`:""}${e.note?` · заметка: ${e.note}`:""}\n`;
   });
   if(s.note) t+=`Самочувствие/сон/боли: ${s.note}\n`;
@@ -526,7 +575,7 @@ ${list.length?list.map(x=>sessionBlock(x)).join("\n"):"Тренировок не
 ## План на следующую неделю
 Не выдумывай данные, которых нет.`;
 }
-const ERR={not_granted:"Доступ к Клоду не разрешён на этой странице.",rate_limited:"Слишком много запросов или исчерпан лимит. Попробуй позже.",session_expired:"Нужно заново войти в аккаунт.",refused:"Клод не стал отвечать на этот запрос.",sampling_disabled:"Клод недоступен для этого аккаунта."};
+const ERR={not_granted:"Помощник не включён: доступ не разрешён.",rate_limited:"Слишком много запросов или исчерпан лимит. Попробуй позже.",session_expired:"Нужно заново войти в аккаунт.",refused:"Помощник не стал отвечать на этот запрос.",sampling_disabled:"Помощник недоступен для этого аккаунта."};
 const errText=e=>ERR[e&&e.code]||"Не получилось получить ответ. Попробуй ещё раз.";
 async function copyText(t,ok){ try{ await navigator.clipboard.writeText(t); setStatus(ok||"Скопировано"); }catch(e){ setStatus("Копирование недоступно",true); } }
 
@@ -539,7 +588,7 @@ secondary — заметно работающие вспомогательные
   return musFromNames(r&&r.primary,r&&r.secondary);
 }
 function musFromNames(p,s){
-  const idx=a=>(Array.isArray(a)?a:[]).map(n=>MUS.indexOf(String(n).trim())).filter(k=>k>=0);
+  const idx=a=>(Array.isArray(a)?a:[]).map(n=>{ const t=String(n).trim(); return t==="Спина"?1:MUS.indexOf(t); }).filter(k=>k>=0);
   const prim=idx(p), sec=idx(s).filter(k=>!prim.includes(k));
   const m={}; sec.forEach(k=>m[k]=.5); prim.forEach(k=>m[k]=1); return m;
 }
@@ -550,7 +599,11 @@ const I={
   spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
   up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
-  check:"M5 12.5l4.5 4.5L19 7.5", arrowUp:"M12 19V5M6 11l6-6 6 6"
+  check:"M5 12.5l4.5 4.5L19 7.5", arrowUp:"M12 19V5M6 11l6-6 6 6",
+  more:"M5 12h.01M12 12h.01M19 12h.01", plus:"M12 5v14M5 12h14", minus:"M5 12h14",
+  dumbbell:"M3 12h2M19 12h2M7 7v10M17 7v10M5 9v6M19 9v6M7 12h10", bars:"M5 20V11M12 20V4M19 20v-6",
+  clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
+  swap:"M7 7h12l-3-3M17 17H5l3 3", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01"
 };
 const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
@@ -559,209 +612,259 @@ const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matc
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d=${I[n]}/></svg>`;
+  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"?3.5:2.25} stroke-linecap=${n==="more"?"round":"square"} stroke-linejoin="miter" aria-hidden="true"><path d=${I[n]}/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;
 
-/* ---------- Выбор мышц ---------- */
-function MusclePicker({value,onChange}){
-  return html`<div class="mus">${MUS.map((m,k)=>{ const v=value[k]||0; return html`<button key=${k} type="button" class=${v===1?"p":v?"s":""} onClick=${()=>{ const n=Object.assign({},value), c=cycle(v); if(c) n[k]=c; else delete n[k]; onChange(n); }}>${m}<small>${v===1?"основная":v?"косвенно":"нет"}</small></button>`; })}</div>`;
-}
+/* Интерфейс. Раскладка по образцу Strong/Hevy, см. DESIGN.md */
 
-/* ---------- Карточка упражнения ---------- */
-function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
-  const e=s.ex[i], inf=xinfo(s,e), {ns,lo,hi,rir,rest,note}=inf.plan, wk=s.week;
-  const [panel,setPanel]=useState(null);
-  const [own,setOwn]=useState("");
-  const [auto,setAuto]=useState(true);
-  const [msg,setMsg]=useState("");
-  const [busy,setBusy]=useState(false);
-  const planned=setsFor(ns,wk), rows=Math.max(planned,e.sets.length);
+/* ---------- Общие части ---------- */
+function MusclePicker({value,onChange}){
+  return html`<div class="mus">${MUS_ORDER.map(k=>{ const v=value[k]||0; return html`<button key=${k} type="button" class=${v===1?"p":v?"s":""} onClick=${()=>{ const n=Object.assign({},value), c=cycle(v); if(c) n[k]=c; else delete n[k]; onChange(n); }}><span>${MUS[k]}</span><small>${v===1?"основная":v?"косвенно":""}</small></button>`; })}</div>`;
+}
+function Sheet({title,onClose,children,foot}){
+  const ref=useRef(null);
+  useEffect(()=>{ anim(ref.current,{transform:["translateY(60px)","translateY(0)"]},{bounce:.16,duration:.5});
+    const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
+  return ReactDOM.createPortal(html`<div class="sheet-wrap" onClick=${ev=>{ if(ev.target===ev.currentTarget) onClose(); }}>
+    <div class="sheet" role="dialog" aria-label=${title} ref=${ref}>
+      <div class="sheet-head"><b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
+      <div class="sheet-body">${children}</div>
+      ${foot?html`<div class="sheet-foot">${foot}</div>`:null}
+    </div></div>`,document.body);
+}
+const qTone=q=>q===""||q==null?"":q==="0"?"q0":q==="1"?"q1":q==="4+"?"q4":"q2";
+const Elapsed=({s})=>{
+  const [,t]=useState(0);
+  useEffect(()=>{ if(!s.start||s.done) return; const h=setInterval(()=>t(x=>x+1),1000); return ()=>clearInterval(h); },[s.start,s.done]);
+  if(!s.start) return html`<span class="elapsed mute">0:00</span>`;
+  const sec=Math.max(0,Math.round(((s.done&&s.end)||Date.now())-s.start)/1000|0), h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), ss=sec%60;
+  return html`<span class="elapsed">${h?h+":"+String(m).padStart(2,"0"):m}:${String(ss).padStart(2,"0")}</span>`;
+};
+
+/* ---------- Упражнение: журнал подходов ---------- */
+function ExerciseBlock({s,i,date,edit,openSheet,startTimer,qHelp}){
+  const e=s.ex[i], inf=xinfo(s,e), {lo,hi,rir,rest,note}=inf.plan, wk=s.week;
+  const [qOpen,setQOpen]=useState(null);
+  const rows=rowsOf(s,e);
   const lt=lastTime(inf.name,date);
   const up=lt&&lt.e.sets.length&&lt.e.sets.every(x=>num(x.r)!==null&&num(x.r)>=hi);
   const {prim,sec}=musLists(inf.mus);
-  const done=e.sets.length&&e.sets.slice(0,planned).every(x=>x.ok);
-  const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) fn(x,ss); });
-  const runDetect=async(name)=>{
-    if(!S.sample) return;
-    setBusy(true); setMsg(""); setPanel("mus");
-    try{
-      const m=await detectMuscles(name);
-      if(!Object.keys(m).length) throw {};
-      upd(x=>{ x.mus=m; });
-      const l=musLists(m); setMsg("Клод определил. Основные: "+(l.prim.join(", ")||"нет")+(l.sec.length?". Косвенно: "+l.sec.join(", "):"")+". Можно поправить.");
-    }catch(err){ setMsg(err&&err.code==="not_granted"?ERR.not_granted+" Отметь мышцы вручную.":"Не получилось определить. Отметь мышцы вручную."); }
-    setBusy(false);
-  };
-  const rename=nm=>{
-    upd(x=>{ if(inf.custom) x.name=nm; else if(nm) x.alt=nm; else { delete x.alt; delete x.mus; } });
-    if(nm&&auto&&S.sample) runDetect(nm); else if(nm){ setPanel("mus"); setMsg("Отметь мышцы вручную или нажми «Определить через Клода»."); } else setPanel(null);
-    setOwn("");
-  };
-  const tick=j=>{
+  const done=rows>0&&e.sets.length>=rows&&e.sets.slice(0,rows).every(x=>x.ok);
+  const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x){ if(x.n==null) x.n=rowsOf(ss,x); while(x.sets.length<x.n) x.sets.push(blankSet()); fn(x,ss); } });
+  const tick=(j,el)=>{
     let started=false;
-    upd(x=>{ while(x.sets.length<=j) x.sets.push(blankSet()); const st=x.sets[j]; st.ok=!st.ok;
+    upd(x=>{ const st=x.sets[j]; st.ok=!st.ok;
       if(st.ok){ const lp=lt&&lt.e.sets[j]; if(!st.w&&lp&&lp.w) st.w=lp.w; if(!st.r) st.r=String(lp&&lp.r||lo); started=true; } });
-    if(started) startTimer(rest,inf.name);
+    if(started){ anim(el,{transform:["scale(.8)","scale(1)"]},{bounce:.5,duration:.4}); startTimer(rest,inf.name); }
   };
-  const setField=(j,f,v)=>upd(x=>{ while(x.sets.length<=j) x.sets.push(blankSet()); x.sets[j][f]=v; });
-
-  return html`<section class=${"ex"+(done?" complete":"")}>
-    <div class="ex-head">
-      <span class="idx">${String(i+1).padStart(2,"0")}</span>
-      <div class="ex-title">
-        <h2>${inf.name}</h2>
-        ${inf.custom?html`<div class="sub">добавлено вручную</div>`:e.alt?html`<div class="sub">вместо: ${inf.base}</div>`:null}
-      </div>
-      <div class="mv">
-        <button class="ibtn" disabled=${i===0} aria-label="Поднять выше" onClick=${()=>edit(ss=>{ [ss.ex[i-1],ss.ex[i]]=[ss.ex[i],ss.ex[i-1]]; })}><${Icon} n="up"/></button>
-        <button class="ibtn" disabled=${i===s.ex.length-1} aria-label="Опустить ниже" onClick=${()=>edit(ss=>{ [ss.ex[i+1],ss.ex[i]]=[ss.ex[i],ss.ex[i+1]]; })}><${Icon} n="down"/></button>
-        <button class="ibtn ai" aria-label="Спросить Клода про это упражнение" onClick=${()=>onAsk(i)}><${Icon} n="spark" size=${18}/></button>
-        <button class="ibtn danger" aria-label="Убрать упражнение" onClick=${()=>onRemove(i)}><${Icon} n="trash"/></button>
-      </div>
+  return html`<section class=${"exb"+(done?" complete":"")}>
+    <div class="exb-head">
+      <button class="exb-title" onClick=${()=>openSheet("menu",e.uid)}>${inf.name}</button>
+      <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="more"/></button>
     </div>
-    <div class="plan spec"><span><b>${planned}×${lo}–${hi}</b></span><span>RIR <b>${rirFor(rir,wk)}</b></span><span>отдых <b>${restTxt(rest)}</b></span></div>
-    <div class="plan">${prim.length||sec.length?html`<span>Основные: <b>${prim.join(", ")||"–"}</b></span>${sec.length?html`<span>Косвенно: ${sec.join(", ")}</span>`:null}`:html`<span>Мышцы не указаны. Нажми «Мышцы»</span>`}</div>
-    ${note?html`<div class="plan">${note}</div>`:null}
-    ${lt?html`<div class=${"hint"+(up?" up":"")}>${up?html`<${Icon} n="arrowUp" size=${16}/>`:null}<span>${up?"Все подходы на верхней границе, добавь вес. ":""}${dm(lt.date)}: ${lt.e.sets.filter(x=>num(x.r)!==null).map(x=>(x.w||"б/в")+"×"+x.r).join(", ")}</span></div>`:null}
-    <div class="sets">
-      <div class="set head"><span>№</span><span>Прошлый</span><span>кг</span><span>повт</span><span>✓</span></div>
-      ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<div class="set" key=${j}>
-        <span class="n">${j+1}</span>
-        <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r:"–"}</span>
-        <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>setField(j,"w",ev.target.value)}/>
-        <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>setField(j,"r",ev.target.value)}/>
-        <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${ev=>{ const el=ev.currentTarget; if(!x.ok) anim(el,{transform:["scale(.82)","scale(1)"]},{bounce:.5,duration:.4}); tick(j); }}><${Icon} n="check" size=${22}/></button>
-      </div>`; })}
+    <div class="exb-meta">
+      <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
+      ${prim.length||sec.length?html`<span>${prim.join(", ")}${sec.length?html`<span class="mute"> + ${sec.join(", ")}</span>`:null}</span>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать мышцы</button>`}
+      ${inf.custom?html`<span class="mute">добавлено</span>`:e.alt?html`<span class="mute">вместо: ${inf.base}</span>`:null}
     </div>
-    <div class="row-actions">
-      <button class="btn" onClick=${()=>upd(x=>{ x.sets.push(blankSet()); })}>+ подход</button>
-      ${rows>1?html`<button class="btn quiet" onClick=${()=>upd(x=>{ if(x.sets.length<rows) while(x.sets.length<rows) x.sets.push(blankSet()); x.sets.pop(); })}>− подход</button>`:null}
-      ${lt?html`<button class="btn quiet" onClick=${()=>upd(x=>{ x.sets=lt.e.sets.map(y=>({w:y.w,r:y.r,ok:false})); })}>Как в прошлый раз</button>`:null}
-      <button class="btn quiet" onClick=${()=>setPanel(panel==="swap"?null:"swap")}>${inf.custom?"Переименовать":"Заменить"}</button>
-      <button class="btn quiet" onClick=${()=>{ setPanel(panel==="mus"?null:"mus"); setMsg(""); }}>Мышцы</button>
+    ${note?html`<div class="exb-note">${note}</div>`:null}
+    ${up?html`<div class="hint up"><${Icon} n="arrowUp" size=${16}/><span>В прошлый раз все подходы на верхней границе (${hi}). Добавь вес.</span></div>`:null}
+    <div class="log" role="table" aria-label=${"Подходы: "+inf.name}>
+      <div class="row head" role="row"><span>Сет</span><span>Прошлый</span><span>кг</span><span>Повт</span><button class="qh" onClick=${qHelp} aria-label="Что такое запас">Запас</button><span aria-hidden="true">✓</span></div>
+      ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<${React.Fragment} key=${j}>
+        <div class=${"row"+(x.ok?" done":"")} role="row">
+          <span class="n">${j+1}</span>
+          <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r+(lp.q?" ·"+lp.q:""):"–"}</span>
+          <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].w=ev.target.value; })}/>
+          <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].r=ev.target.value; })}/>
+          <button class=${"q "+qTone(x.q)} aria-label=${"Запас повторов, подход "+(j+1)} onClick=${()=>setQOpen(qOpen===j?null:j)}>${x.q||"–"}</button>
+          <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${ev=>tick(j,ev.currentTarget)}><${Icon} n="check" size=${20}/></button>
+        </div>
+        ${qOpen===j?html`<div class="qpick" role="group" aria-label="Сколько повторов ещё мог сделать">
+          <span>Ещё мог:</span>
+          ${["0","1","2","3","4+"].map(v=>html`<button key=${v} class=${qTone(v)+(x.q===v?" on":"")} onClick=${()=>{ upd(y=>{ y.sets[j].q=y.sets[j].q===v?"":v; }); setQOpen(null); }}>${v}</button>`)}
+        </div>`:null}
+      <//>`; })}
     </div>
-    ${panel==="swap"?html`<div class="swap">
-      ${!inf.custom?html`<div class="opts">${(ALT[inf.base]||[]).filter(a=>a!==inf.name).map(a=>html`<button key=${a} onClick=${()=>rename(a)}>${a}</button>`)}${e.alt?html`<button onClick=${()=>rename("")}>↩ ${inf.base}</button>`:null}</div>`:null}
-      <div class="own"><input type="text" value=${own} onChange=${ev=>setOwn(ev.target.value)} placeholder=${inf.custom?"Новое название":"Своё упражнение"} aria-label="Название упражнения"/><button class="btn" onClick=${()=>own.trim()&&rename(own.trim())}>Взять</button></div>
-      <label class="chk"><input type="checkbox" checked=${auto&&!!S.sample} disabled=${!S.sample} onChange=${ev=>setAuto(ev.target.checked)}/> Мышцы определит Клод (иначе отмечу вручную)</label>
-    </div>`:null}
-    ${panel==="mus"?html`<div class="swap">
-      <${MusclePicker} value=${inf.mus} onChange=${m=>upd(x=>{ x.mus=m; })}/>
-      <div class="st">Нажимай на мышцу: нет → косвенно (0,5) → основная (1).</div>
-      ${S.sample?html`<div class="row-actions"><button class="btn primary" disabled=${busy} onClick=${()=>runDetect(inf.name)}><${Icon} n="spark" size=${16}/> ${busy?"Клод определяет…":"Определить через Клода"}</button></div>`:null}
-      ${msg?html`<div class="st">${msg}</div>`:null}
-    </div>`:null}
-    <input class="ririn" type="text" value=${e.rir||""} placeholder="Реальный RIR в последнем подходе" aria-label="Реальный RIR" onChange=${ev=>upd(x=>{ x.rir=ev.target.value; })}/>
-    <textarea rows="1" value=${e.note||""} placeholder="Заметка (техника, боль, ощущения)" aria-label="Заметка к упражнению" onChange=${ev=>upd(x=>{ x.note=ev.target.value; })}></textarea>
+    <div class="exb-add">
+      <button class="btn wide" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/> Подход</button>
+      <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${16}/></button>
+    </div>
+    <input class="exb-notein" type="text" value=${e.note||""} placeholder="Заметка: техника, ощущения, боль" aria-label="Заметка к упражнению" onChange=${ev=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=ev.target.value; })}/>
   </section>`;
 }
 
-/* ---------- Добавление упражнения ---------- */
-function AddExercise({edit}){
-  const [open,setOpen]=useState(false);
+/* ---------- Шторки действий с упражнением ---------- */
+function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk}){
+  const i=s.ex.findIndex(e=>e.uid===uid); if(i<0) return null;
+  const e=s.ex[i], inf=xinfo(s,e), lt=lastTime(inf.name,date);
+  const item=(icon,label,fn,cls)=>html`<button class=${"mitem "+(cls||"")} onClick=${fn}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
+  const move=d=>{ edit(ss=>{ const k=ss.ex.findIndex(y=>y.uid===uid), j=k+d; if(k<0||j<0||j>=ss.ex.length) return; [ss.ex[k],ss.ex[j]]=[ss.ex[j],ss.ex[k]]; }); onClose(); };
+  return html`<${Sheet} title=${inf.name} onClose=${onClose}>
+    <div class="menu">
+      ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
+      ${item("target","Мышцы",()=>go("mus"))}
+      ${lt?item("clock","Заполнить как в прошлый раз",()=>{ edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.sets=lt.e.sets.map(y=>({w:y.w,r:y.r,ok:false,q:""})); x.n=x.sets.length; } }); onClose(); }):null}
+      ${i>0?item("up","Поднять выше",()=>move(-1)):null}
+      ${i<s.ex.length-1?item("down","Опустить ниже",()=>move(1)):null}
+      ${item("spark","Спросить тренера про упражнение",()=>{ onClose(); onAsk(i); },"ai")}
+      ${item("trash","Убрать из тренировки",()=>{ onClose(); onRemove(i); },"danger")}
+    </div>
+  <//>`;
+}
+function SwapSheet({s,uid,edit,onClose,go}){
+  const [own,setOwn]=useState("");
+  const [auto,setAuto]=useState(!!S.sample);
+  const e=s.ex.find(x=>x.uid===uid); if(!e) return null;
+  const inf=xinfo(s,e);
+  const apply=nm=>{
+    edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(!x) return; if(inf.custom) x.name=nm; else if(nm) x.alt=nm; else { delete x.alt; delete x.mus; } });
+    if(nm) go("mus",{autodetect:auto&&!!S.sample,name:nm}); else onClose();
+  };
+  return html`<${Sheet} title=${inf.custom?"Переименовать":"Заменить: "+inf.name} onClose=${onClose}>
+    ${!inf.custom?html`<div class="menu">
+      ${(ALT[inf.base]||[]).filter(a=>a!==inf.name).map(a=>html`<button key=${a} class="mitem" onClick=${()=>apply(a)}><${Icon} n="swap" size=${18}/><span>${a}</span></button>`)}
+      ${e.alt?html`<button class="mitem" onClick=${()=>apply("")}><${Icon} n="clock" size=${18}/><span>Вернуть по программе: ${inf.base}</span></button>`:null}
+    </div>`:null}
+    <div class="own"><input type="text" value=${own} onChange=${ev=>setOwn(ev.target.value)} placeholder=${inf.custom?"Новое название":"Своё упражнение"} aria-label="Название упражнения"/><button class="btn primary" onClick=${()=>own.trim()&&apply(own.trim())}>Взять</button></div>
+    <label class="chk"><input type="checkbox" checked=${auto} disabled=${!S.sample} onChange=${ev=>setAuto(ev.target.checked)}/> Определить мышцы автоматически</label>
+  <//>`;
+}
+function MuscleSheet({s,uid,edit,onClose,opts}){
+  const e=s.ex.find(x=>x.uid===uid);
+  const [busy,setBusy]=useState(false), [msg,setMsg]=useState("");
+  const name=e?xinfo(s,e).name:"";
+  const run=async()=>{
+    setBusy(true); setMsg("");
+    try{ const m=await detectMuscles(name); if(!Object.keys(m).length) throw {};
+      edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=m; }); setMsg("Мышцы определены автоматически. Можно поправить вручную."); }
+    catch(err){ setMsg(err&&err.code==="not_granted"?ERR.not_granted+" Отметь вручную.":"Не получилось определить автоматически. Отметь вручную."); }
+    setBusy(false);
+  };
+  useEffect(()=>{ if(opts&&opts.autodetect) run(); },[]);
+  if(!e) return null;
+  return html`<${Sheet} title=${"Мышцы: "+name} onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${onClose}>Готово</button>`}>
+    <div class="st">Нажимай на мышцу: нет → косвенно (0,5 подхода) → основная (1 подход). Влияет на разбивку на вкладке «Неделя».</div>
+    <${MusclePicker} value=${xinfo(s,e).mus} onChange=${m=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=m; })}/>
+    ${S.sample?html`<button class="btn" disabled=${busy} onClick=${run}><${Icon} n="spark" size=${16}/> ${busy?"Определяю…":"Определить автоматически"}</button>`:null}
+    ${msg?html`<div class="st">${msg}</div>`:null}
+  <//>`;
+}
+function AddSheet({edit,onClose}){
   const [f,setF]=useState({name:"",n:"3",lo:"8",hi:"12"});
-  const [mode,setMode]=useState("ai");
+  const [mode,setMode]=useState(S.sample?"auto":"manual");
   const [mus,setMus]=useState({});
   const [msg,setMsg]=useState("");
-  const m=S.sample?mode:"manual";
-  if(!open) return html`<div class="addbox"><button class="btn" onClick=${()=>setOpen(true)}>+ Добавить упражнение</button>${msg?html`<div class="st">${msg}</div>`:null}</div>`;
   const add=async()=>{
-    const name=f.name.trim(); if(!name) return;
+    const name=f.name.trim(); if(!name){ setMsg("Впиши название."); return; }
     const cl=(v,a,z,d)=>Math.min(z,Math.max(a,Math.round(num(v)??d)));
     const n=cl(f.n,1,10,3), lo=cl(f.lo,1,100,8), hi=Math.max(lo,cl(f.hi,1,100,12)), uid="c"+rid();
-    edit(ss=>{ ss.ex.push({uid,base:-1,name,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:m==="manual"?mus:{},sets:Array.from({length:n},blankSet),note:""}); });
-    setOpen(false); setF({name:"",n:"3",lo:"8",hi:"12"}); setMus({});
-    if(m==="ai"){
-      setMsg("Клод определяет мышцы для «"+name+"»…");
-      try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); const l=musLists(r); setMsg("«"+name+"». Основные: "+(l.prim.join(", ")||"нет")+(l.sec.length?". Косвенно: "+l.sec.join(", "):"")+"."); }
-      catch(e){ setMsg("Клод не смог определить мышцы для «"+name+"». Отметь их кнопкой «Мышцы»."); }
-    } else setMsg("");
+    edit(ss=>{ ss.ex.push({uid,base:-1,name,n,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:mode==="manual"?mus:{},sets:Array.from({length:n},blankSet),note:""}); });
+    onClose();
+    if(mode==="auto"){ try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); }catch(e){} }
   };
-  const inp=(k,label,mode_)=>html`<label class=${k==="name"?"full":""}>${label}<input type="text" inputmode=${mode_} value=${f[k]} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))} placeholder=${k==="name"?"Например, Жим Свенда":""}/></label>`;
-  return html`<div class="addbox"><div class="adform">
-    ${inp("name","Название","text")}${inp("n","Подходы","numeric")}${inp("lo","Повт. от","numeric")}${inp("hi","Повт. до","numeric")}
-    <div class="full st">Мышцы:</div>
-    <div class="full seg" role="group" aria-label="Как заполнить мышцы">
-      <button aria-pressed=${String(m==="ai")} disabled=${!S.sample} onClick=${()=>setMode("ai")}>Через Клода</button>
-      <button aria-pressed=${String(m==="manual")} onClick=${()=>setMode("manual")}>Вручную</button>
+  const inp=(k,label,im)=>html`<label class=${k==="name"?"full":""}>${label}<input type="text" inputmode=${im} value=${f[k]} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))} placeholder=${k==="name"?"Например, жим Свенда":""}/></label>`;
+  return html`<${Sheet} title="Добавить упражнение" onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${add}>Добавить в тренировку</button>`}>
+    <div class="adform">${inp("name","Название","text")}${inp("n","Подходы","numeric")}${inp("lo","Повт. от","numeric")}${inp("hi","Повт. до","numeric")}</div>
+    <div class="seg" role="group" aria-label="Как указать мышцы">
+      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Мышцы автоматически</button>
+      <button aria-pressed=${String(mode==="manual")} onClick=${()=>setMode("manual")}>Вручную</button>
     </div>
-    ${m==="manual"?html`<div class="full"><${MusclePicker} value=${mus} onChange=${setMus}/></div>`:html`<div class="full st">После добавления Клод сам отметит основные и косвенные мышцы. Поправить можно в «Мышцы».</div>`}
-    <div class="row-actions full"><button class="btn primary" onClick=${add}>Добавить в тренировку</button><button class="btn quiet" onClick=${()=>setOpen(false)}>Отмена</button></div>
-  </div></div>`;
+    ${mode==="manual"?html`<${MusclePicker} value=${mus} onChange=${setMus}/>`:html`<div class="st">Основные и косвенные мышцы определятся сами после добавления. Поправить можно через «⋯ → Мышцы».</div>`}
+    ${msg?html`<div class="st bad">${msg}</div>`:null}
+  <//>`;
 }
 
 /* ---------- Разбор (тренировки или недели) ---------- */
 function Review({label,stored,build,onSave,disabledMsg}){
-  const [live,setLive]=useState("");
-  const [err,setErr]=useState("");
+  const [live,setLive]=useState(""), [err,setErr]=useState("");
   const ctl=useRef(null);
   const run=async()=>{
     const p=build(); if(!p){ setErr(disabledMsg); return; }
     ctl.current=new AbortController(); setErr(""); setLive("…");
-    try{
-      const r=await S.sample(p,{signal:ctl.current.signal,cache:false,onText:({text})=>setLive(text)});
-      onSave(r.text+(r.truncated?"\n\n(Ответ оборван, запроси ещё раз.)":"")); setLive("");
-    }catch(e){ setLive(""); if(e&&e.code!=="cancelled") setErr(e&&e.text?"":errText(e)); if(e&&e.text) onSave(e.text+"\n\n(Ответ прерван.)"); }
+    try{ const r=await S.sample(p,{signal:ctl.current.signal,cache:false,onText:({text})=>setLive(text)});
+      onSave(r.text+(r.truncated?"\n\n(Ответ оборван, запроси ещё раз.)":"")); setLive(""); }
+    catch(e){ setLive(""); if(e&&e.code!=="cancelled"&&!e.text) setErr(errText(e)); if(e&&e.text) onSave(e.text+"\n\n(Ответ прерван.)"); }
     ctl.current=null;
   };
   return html`<div class="review">
+    ${live?html`<div class="sum">${live==="…"?html`<div class="st">Анализирую… Ответ может прийти через полминуты.</div>`:html`<${Rich} text=${live}/>`}<div><button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button></div></div>`
+      :stored?html`<div class="sum"><${Rich} text=${stored}/></div>`:null}
     <div class="row-actions">
       ${S.sample?html`<button class="btn primary" disabled=${!!live} onClick=${run}><${Icon} n="spark" size=${16}/> ${stored?label+" заново":label}</button>`:null}
-      <button class="btn" onClick=${()=>{ const p=build(); p?copyText(p,"Запрос скопирован. Вставь его в чат с Клодом"):setErr(disabledMsg); }}>Скопировать запрос</button>
+      <button class="btn quiet" onClick=${()=>{ const p=build(); p?copyText(p,"Запрос скопирован, вставь его в чат"):setErr(disabledMsg); }}>Скопировать запрос</button>
     </div>
-    ${live?html`<div class="sum">${live==="…"?html`<div class="st">Клод думает… Ответ может прийти через полминуты.</div>`:html`<${Rich} text=${live}/>`}<div class="row-actions"><button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button></div></div>`
-      :stored?html`<div class="sum"><${Rich} text=${stored}/></div>`:null}
-    ${err?html`<div class="st">${err}</div>`:null}
+    ${err?html`<div class="st bad">${err}</div>`:null}
   </div>`;
 }
 
-/* ---------- Тренировка ---------- */
+/* ---------- Экран тренировки ---------- */
 function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk}){
   const s=getSession(date,day), wk=s.week;
   const edit=fn=>editSession(date,day,fn);
-  const counts=muscleCount(s,e=>Math.max(e.sets.length,setsFor(xinfo(s,e).plan.ns,wk)));
+  const [sheet,setSheet]=useState(null);       // {type, uid, opts}
+  const [help,setHelp]=useState(false);
+  const counts=muscleCount(s,e=>rowsOf(s,e));
   const remove=i=>{
     const entry=clone(s.ex[i]), name=xinfo(s,entry).name;
     edit(ss=>{ ss.ex.splice(i,1); });
     toast({text:`«${name}» убрано`,action:"Вернуть",run:()=>edit(ss=>{ ss.ex.splice(Math.min(i,ss.ex.length),0,entry); })});
   };
   const setWeek=d=>edit(ss=>{ ss.week=Math.min(6,Math.max(1,ss.week+d));
-    ss.ex.forEach(e=>{ if(e.sets.some(x=>x.w||x.r||x.ok)) return; const want=setsFor(xinfo(ss,e).plan.ns,ss.week); e.sets=Array.from({length:want},blankSet); }); });
+    ss.ex.forEach(e=>{ if(e.sets.some(x=>x.w||x.r||x.ok)) return; delete e.n; e.sets=Array.from({length:setsFor(xinfo(ss,e).plan.ns,ss.week)},blankSet); }); });
+  const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
+  const close=()=>setSheet(null);
+  const doneSets=s.ex.reduce((a,e)=>a+doneOf(e),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
+  let vol=0; s.ex.forEach(e=>e.sets.forEach(x=>{ const w=num(x.w),r=num(x.r); if(w!==null&&r!==null&&setDone(x)) vol+=w*r; }));
   return html`<div>
-    <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/><b>${P[k].name}</b><small>${P[k].sub}</small></button>`)}</div>
-    <div class="mchips" aria-label="Подходы по мышцам в этой тренировке">${counts.map((c,k)=>c.d?html`<span key=${k} title=${MUS[k]+": "+fmt(c.d)+" прямых, "+fmt(c.f)+" дробных"}><b>${c.d}</b> ${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind" title=${MUS[k]+": только косвенная нагрузка"}>+${fmt(c.f)} ${MUS[k]}</span>`:null)}</div>
-    <div class="meta" style=${{marginTop:"10px"}}>
-      <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
-      ${date!==todayStr()?html`<button class="btn" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
-      <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>Неделя ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
-      <span class=${"chip"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
+    <header class="wk">
+      <div class="wk-top">
+        <div class="wk-name"><${Plate} k=${day}/><h1>${P[day].name}</h1></div>
+        <${Elapsed} s=${s}/>
+        <button class=${"btn "+(s.done?"ok":"primary")} onClick=${finish}>${s.done?"Завершена":"Завершить"}</button>
+      </div>
+      <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
+      <div class="wk-meta">
+        <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
+        ${date!==todayStr()?html`<button class="btn quiet" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
+        <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
+        <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
+      </div>
+    </header>
+    <div class="mline" aria-label="Подходы по мышцам в этой тренировке">${MUS_ORDER.map(k=>{ const c=counts[k]; return c.d?html`<span key=${k}><b>${c.d}</b>${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind">+${fmt(c.f)} ${MUS[k]}</span>`:null; })}</div>
+    ${help?html`<div class="helpbox"><b>Запас (RIR)</b>: сколько повторов ты ещё мог бы сделать в этом подходе. 0 = отказ, больше ни одного. 2 = мог ещё два. Цель этой недели: <b>${WEEKS[wk]}</b>. Нажми на ячейку «Запас» в подходе, чтобы указать. Поле необязательное.<div><button class="btn quiet" onClick=${()=>setHelp(false)}>Понятно</button></div></div>`:null}
+    <div class="exlist">
+      ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} qHelp=${()=>setHelp(!help)} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
+      ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
+      <button class="btn wide addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
     </div>
-    <div class="cards">
-      ${s.ex.map((e,i)=>html`<${ExerciseCard} key=${e.uid} s=${s} i=${i} date=${date} day=${day} edit=${edit} onRemove=${remove} onAsk=${openAsk} startTimer=${startTimer}/>`)}
-      ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений. Добавь их ниже.</div>`:null}
-      <${AddExercise} edit=${edit}/>
-    </div>
-    <div class="foot">
-      <div class="form" style=${{margin:0}}>
+    <section class="finish">
+      <h2>Итог</h2>
+      <div class="stats">
+        <div><span>Подходы</span><b>${doneSets}<small>/${totalSets}</small></b></div>
+        <div><span>Объём</span><b>${Math.round(vol).toLocaleString("ru")}<small> кг</small></b></div>
+        <div><span>Время</span><b>${s.dur||"–"}<small> мин</small></b></div>
+      </div>
+      <div class="form">
         <label>Вес утром, кг<input type="text" inputmode="decimal" value=${s.bw||""} onChange=${ev=>edit(ss=>{ ss.bw=ev.target.value; })}/></label>
         <label>Длительность, мин<input type="text" inputmode="numeric" value=${s.dur||""} onChange=${ev=>edit(ss=>{ ss.dur=ev.target.value; })}/></label>
         <label class="full">Самочувствие, сон, боли<textarea rows="2" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea></label>
       </div>
-      <div class="row-actions">
-        <button class=${"btn "+(s.done?"ok":"primary")} onClick=${()=>edit(ss=>{ ss.done=!ss.done; })}>${s.done?"Тренировка завершена ✓":"Завершить тренировку"}</button>
-        <button class="btn" onClick=${()=>copyText(textLog(s))}>Копировать как текст</button>
-      </div>
-      <h3>Разбор тренировки</h3>
       <${Review} label="Разобрать тренировку" stored=${s.summary} disabledMsg="Сначала впиши хотя бы один подход."
         build=${()=>hasData(s)?reviewPrompt(s):""} onSave=${t=>edit(ss=>{ ss.summary=t; })}/>
-    </div>
+      <button class="btn quiet" onClick=${()=>copyText(textLog(s))}>Скопировать тренировку текстом</button>
+    </section>
+    ${sheet&&sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} go=${(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o})}/>`:null}
+    ${sheet&&sheet.type==="swap"?html`<${SwapSheet} s=${s} uid=${sheet.uid} edit=${edit} onClose=${close} go=${(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o})}/>`:null}
+    ${sheet&&sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`:null}
+    ${sheet&&sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`:null}
   </div>`;
 }
 function textLog(s){
   let t=`## ${s.date} · ${P[s.day].name} · нед. ${s.week}\n`;
   if(s.bw) t+=`Вес утром: ${s.bw} кг`+(s.dur?` · ${s.dur} мин`:"")+"\n";
-  s.ex.forEach(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}`).join(", ");
-    if(sets||e.note) t+=`- ${xinfo(s,e).name}: ${sets}${e.rir?" · RIR "+e.rir:""}${e.note?" ("+e.note+")":""}\n`; });
+  s.ex.forEach(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}`).join(", ");
+    if(sets||e.note) t+=`- ${xinfo(s,e).name}: ${sets}${e.note?" ("+e.note+")":""}\n`; });
   if(s.note) t+=`Итог: ${s.note}\n`;
   return t;
 }
@@ -771,32 +874,47 @@ function WeekView({date}){
   const [pw,setPw]=useState(null);
   const wk=pw||weekFromDate(date), ws=weekStart(date), we=weekEnd(date);
   const inWeek=sessions().filter(x=>x.date>=ws&&x.date<=we);
-  // столбец дня: тренировка этого дня на этой неделе (с заменами и добавленными), иначе программа
   const cols=ORDER.map(k=>{ const real=inWeek.filter(x=>x.day===k).sort((a,b)=>b.date.localeCompare(a.date))[0]; return {k,s:real||defSession(k),real:!!real}; });
-  const pd=cols.map(c=>muscleCount(c.s,e=>c.real?Math.max(e.sets.length,setsFor(xinfo(c.s,e).plan.ns,wk)):setsFor(xinfo(c.s,e).plan.ns,wk)));
-  const perDay=cols.map(c=>c.s.ex.reduce((a,e)=>a+(c.real?Math.max(e.sets.length,setsFor(xinfo(c.s,e).plan.ns,wk)):setsFor(xinfo(c.s,e).plan.ns,wk)),0));
+  const cnt=c=>e=>c.real?rowsOf(c.s,e):setsFor(xinfo(c.s,e).plan.ns,wk);
+  const pd=cols.map(c=>muscleCount(c.s,cnt(c)));
+  const perDay=cols.map(c=>c.s.ex.reduce((a,e)=>a+cnt(c)(e),0));
   const fact=MUS.map(()=>0); inWeek.forEach(x=>muscleCount(x,doneOf).forEach((c,k)=>{ fact[k]+=c.f; }));
   const totD=MUS.map((_,k)=>pd.reduce((a,d)=>a+d[k].d,0)), totF=MUS.map((_,k)=>pd.reduce((a,d)=>a+d[k].f,0));
   const hasFact=fact.some(v=>v>0);
   const wid="w_"+ws, wdoc=S.data[wid];
+  const max=Math.max(16,...totF,...fact);
   return html`<div>
-    <div class="meta" style=${{marginTop:"6px"}}>
-      <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setPw(Math.max(1,wk-1))}>−</button><span>Неделя ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setPw(Math.min(6,wk+1))}>+</button></div>
-      <span class=${"chip"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
-      <span class="st">${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}</span>
+    <header class="wk">
+      <div class="wk-top"><div class="wk-name"><h1>Неделя</h1></div><span class="elapsed mute">${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}</span></div>
+      <div class="wk-meta">
+        <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setPw(Math.max(1,wk-1))}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setPw(Math.min(6,wk+1))}>+</button></div>
+        <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
+      </div>
+    </header>
+    <div class="bars" aria-label="Дробные подходы по мышцам: план и факт">
+      ${MUS_ORDER.map(k=>html`<div class="bar" key=${k}>
+        <span class="bl">${MUS[k]}</span>
+        <div class="track" title=${"план "+fmt(totF[k])+", факт "+fmt(fact[k])}>
+          <i class="zone" style=${{left:(10/max*100)+"%",width:(6/max*100)+"%"}}></i>
+          <i class="planb" style=${{width:(totF[k]/max*100)+"%"}}></i>
+          ${hasFact?html`<i class=${"factb"+(fact[k]>=totF[k]-0.01?" ok":"")} style=${{width:(fact[k]/max*100)+"%"}}></i>`:null}
+        </div>
+        <span class="bv mono">${hasFact?fmt(fact[k])+"/":""}${fmt(totF[k])}</span>
+      </div>`)}
+      <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span><span><i class="zone"></i>10–16, рабочий диапазон</span></div>
     </div>
     <div class="tbl"><table>
       <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead>
-      <tbody>${MUS.map((m,k)=>html`<tr key=${k}><td>${m}</td>
+      <tbody>${MUS_ORDER.map(k=>html`<tr key=${k}><td>${MUS[k]}</td>
         ${pd.map((d,j)=>d[k].d?html`<td key=${j} class="dir">${d[k].d}</td>`:d[k].f?html`<td key=${j} class="mute">+${fmt(d[k].f)}</td>`:html`<td key=${j} class="mute">–</td>`)}
         <td class="dir">${totD[k]||"–"}</td><td>${fmt(totF[k])}</td>
         <td class=${!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low"}>${hasFact?fmt(fact[k]):"–"}</td></tr>`)}</tbody>
       <tfoot><tr><td>Подходов за тренировку</td>${perDay.map((n,j)=>html`<td key=${j}>${n}</td>`)}<td>${perDay.reduce((a,b)=>a+b,0)}</td><td></td><td></td></tr></tfoot>
     </table></div>
-    <p class="note"><b>Верх A … Низ B</b>: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и столбец считается по ней, с заменами и добавленными упражнениями. Без «•» столбец по программе. «+1,5» значит только косвенную нагрузку. <b>Дроб.</b>: прямой подход = 1, косвенный = 0,5, ориентир 10–16 в неделю. <b>Факт</b>: подходы с галочкой или с записанными повторами (вес не обязателен) за ${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}. Зелёный значит, что план выполнен.</p>
+    <p class="note">Столбцы дней: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и считается по ней, с заменами и добавленными упражнениями. «+1,5» значит только косвенную нагрузку. Дробные: прямой подход = 1, косвенный = 0,5. Факт: подходы с галочкой или с записанными повторами.</p>
     <h3>Разбор недели</h3>
     <${Review} label="Разобрать неделю" stored=${wdoc&&wdoc.summary} disabledMsg="На этой неделе ещё нет записанных тренировок."
-      build=${()=>inWeek.some(hasData)?weekPrompt(MUS.map((m,k)=>({m,plan:totF[k],fact:fact[k]})),ws,we,inWeek.filter(hasData).sort((a,b)=>a.date.localeCompare(b.date))):""}
+      build=${()=>inWeek.some(hasData)?weekPrompt(MUS_ORDER.map(k=>({m:MUS[k],plan:totF[k],fact:fact[k]})),ws,we,inWeek.filter(hasData).sort((a,b)=>a.date.localeCompare(b.date))):""}
       onSave=${t=>putDoc(wid,{kind:"week",start:ws,summary:t})}/>
   </div>`;
 }
@@ -804,17 +922,19 @@ function WeekView({date}){
 /* ---------- История ---------- */
 function HistoryView(){
   const list=sessions().filter(hasData).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
-  if(!list.length) return html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`;
-  return html`<div class="list">${list.map(s=>{
-    let vol=0,cnt=0; s.ex.forEach(e=>e.sets.forEach(x=>{ const w=num(x.w),r=num(x.r); if(r!==null){ cnt++; if(w!==null) vol+=w*r; } }));
-    return html`<details class="sess" key=${s.id}><summary><span class="d"><${Plate} k=${s.day}/>${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${cnt} подх. · ${Math.round(vol).toLocaleString("ru")} кг${s.done?" · ✓":""}</span></summary>
-      <div class="body">
-        ${s.bw?html`<div class="mono">Вес утром: ${s.bw} кг${s.dur?" · "+s.dur+" мин":""}</div>`:null}
-        ${s.ex.map(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}`).join(", "); return sets||e.note?html`<div key=${e.uid}><b>${xinfo(s,e).name}</b><br/><span class="mono">${sets}</span>${e.note?html`<br/>${e.note}`:null}</div>`:null; })}
-        ${s.note?html`<div>${s.note}</div>`:null}
-        ${s.summary?html`<div class="sum"><${Rich} text=${s.summary}/></div>`:null}
-      </div></details>`;
-  })}</div>`;
+  return html`<div>
+    <header class="wk"><div class="wk-top"><div class="wk-name"><h1>История</h1></div><span class="elapsed mute">${list.length} трен.</span></div></header>
+    ${!list.length?html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`:html`<div class="list">${list.map(s=>{
+      let vol=0,cnt=0; s.ex.forEach(e=>e.sets.forEach(x=>{ const w=num(x.w),r=num(x.r); if(r!==null){ cnt++; if(w!==null) vol+=w*r; } }));
+      return html`<details class="sess" key=${s.id}><summary><span class="d"><${Plate} k=${s.day}/>${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${cnt} подх. · ${Math.round(vol).toLocaleString("ru")} кг${s.dur?" · "+s.dur+" мин":""}</span></summary>
+        <div class="body">
+          ${s.bw?html`<div class="mono">Вес утром: ${s.bw} кг</div>`:null}
+          ${s.ex.map(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?"·"+x.q:""}`).join("  "); return sets||e.note?html`<div key=${e.uid}><b>${xinfo(s,e).name}</b><div class="mono">${sets}</div>${e.note?html`<div class="mute">${e.note}</div>`:null}</div>`:null; })}
+          ${s.note?html`<div>${s.note}</div>`:null}
+          ${s.summary?html`<div class="sum"><${Rich} text=${s.summary}/></div>`:null}
+        </div></details>`;
+    })}</div>`}
+  </div>`;
 }
 
 /* ---------- Замеры ---------- */
@@ -825,6 +945,7 @@ function BodyView({toast}){
   const submit=ev=>{ ev.preventDefault(); const d=f.date||todayStr(); const rec={kind:"body",date:d}; BF.forEach(([k])=>rec[k]=(f[k]||"").trim()); putDoc("b_"+d,rec); setF({date:todayStr()}); };
   const del=r=>{ const keep=clone(S.data[r.id]); putDoc(r.id,undefined); toast({text:"Замер за "+dmy(r.date)+" удалён",action:"Вернуть",run:()=>putDoc(r.id,keep)}); };
   return html`<div>
+    <header class="wk"><div class="wk-top"><div class="wk-name"><h1>Замеры</h1></div></div></header>
     <form class="form" onSubmit=${submit}>
       <label class="full">Дата<input type="date" value=${f.date} onChange=${ev=>setF(Object.assign({},f,{date:ev.target.value}))}/></label>
       ${BF.map(([k,l])=>html`<label key=${k}>${l}<input type="text" inputmode=${k==="bp"?"text":"decimal"} value=${f[k]||""} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))}/></label>`)}
@@ -837,28 +958,21 @@ function BodyView({toast}){
   </div>`;
 }
 
-/* ---------- Спросить Клода (чат с действиями) ---------- */
-function AskSheet({open,onClose,date,day,focus,toast}){
-  const [turns,setTurns]=useState([]);
-  const [input,setInput]=useState("");
-  const [live,setLive]=useState("");
-  const [err,setErr]=useState("");
-  const ctl=useRef(null), box=useRef(null), ta=useRef(null), sheet=useRef(null);
-  useEffect(()=>{ if(open) anim(sheet.current,{transform:["translateY(60px)","translateY(0)"]},{bounce:.18,duration:.5}); },[open]);
+/* ---------- Спросить тренера (чат с действиями) ---------- */
+function AskSheet({focus,onClose,date,day,toast}){
+  const [turns,setTurns]=useState([]), [input,setInput]=useState(""), [live,setLive]=useState(""), [err,setErr]=useState("");
+  const ctl=useRef(null), box=useRef(null);
   const s=getSession(date,day);
-  useEffect(()=>{ if(open&&focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); if(open) setTimeout(()=>ta.current&&ta.current.focus(),50); },[open,focus]);
-  useEffect(()=>{ if(box.current) box.current.scrollTop=box.current.scrollHeight; },[turns,live]);
-  if(!open) return null;
-
+  useEffect(()=>{ if(focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); },[]);
+  useEffect(()=>{ if(box.current) box.current.parentNode.scrollTop=1e6; },[turns,live]);
   const context=()=>{ const cur=getSession(date,day), prev=recent(date,3);
-    return `Ты персональный тренер по гипертрофии внутри приложения-дневника тренировок. Отвечай по-русски, коротко и по делу (до 150 слов, если не просят подробнее), списками где уместно. При боли в сухожилии советуй убрать упражнение и показаться спортивному врачу.
+    return `Ты персональный тренер по гипертрофии внутри приложения-дневника тренировок. Отвечай по-русски, коротко и по делу (до 150 слов, если не просят подробнее), списками где уместно. Не называй себя ИИ или Claude, ты просто тренер в приложении. При боли в сухожилии советуй убрать упражнение и показаться спортивному врачу.
 ${PROFILE}
 
 ТЕКУЩАЯ ТРЕНИРОВКА (упражнения пронумерованы):
 ${sessionBlock(cur,true)}
 ${prev.length?"ПОСЛЕДНИЕ ТРЕНИРОВКИ:\n"+prev.map(x=>sessionBlock(x)).join("\n"):""}
-${S.tools?`У тебя есть инструменты replace_exercise и add_exercise, они меняют текущую тренировку пользователя. Вызывай их ТОЛЬКО если пользователь прямо просит заменить или добавить упражнение. Мышцы выбирай только из списка: ${MUS.join(", ")}. После изменения кратко скажи, что сделал.`:"Изменять тренировку сам ты не можешь: если предлагаешь замену, назови упражнение, и пользователь заменит его кнопкой «Заменить»."}`; };
-
+${S.tools?`У тебя есть инструменты replace_exercise и add_exercise, они меняют текущую тренировку пользователя. Вызывай их ТОЛЬКО если пользователь прямо просит заменить или добавить упражнение. Мышцы выбирай только из списка: ${MUS.join(", ")}. После изменения кратко скажи, что сделал.`:"Менять тренировку сам ты не можешь: если предлагаешь замену, назови упражнение, и пользователь заменит его через «⋯ → Заменить упражнение»."}`; };
   const tools=()=>S.tools?[
     {name:"replace_exercise",description:"Заменяет упражнение в текущей тренировке на другое. Возвращает текст с результатом.",
      inputSchema:{type:"object",properties:{exercise_number:{type:"integer",description:"Номер упражнения в текущей тренировке, начиная с 1"},new_name:{type:"string"},primary_muscles:{type:"array",items:{type:"string",enum:MUS}},secondary_muscles:{type:"array",items:{type:"string",enum:MUS}}},required:["exercise_number","new_name"]},
@@ -866,56 +980,45 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
        if(!(i>=0&&i<cur.ex.length)) throw new Error("Нет упражнения с таким номером"); if(!name) throw new Error("Пустое название");
        const before=clone(cur.ex[i]), old=xinfo(cur,before).name, m=musFromNames(inp.primary_muscles,inp.secondary_muscles);
        editSession(date,day,ss=>{ const x=ss.ex.find(y=>y.uid===before.uid); if(!x) return; if(x.base>=0) x.alt=name; else x.name=name; if(Object.keys(m).length) x.mus=m; });
-       toast({text:`Клод заменил «${old}» на «${name}»`,action:"Вернуть",run:()=>editSession(date,day,ss=>{ const k=ss.ex.findIndex(y=>y.uid===before.uid); if(k>=0) ss.ex[k]=before; })});
+       toast({text:`Заменено: «${old}» → «${name}»`,action:"Вернуть",run:()=>editSession(date,day,ss=>{ const k=ss.ex.findIndex(y=>y.uid===before.uid); if(k>=0) ss.ex[k]=before; })});
        return `Готово: «${old}» заменено на «${name}».`; }},
     {name:"add_exercise",description:"Добавляет упражнение в конец текущей тренировки. Возвращает текст с результатом.",
      inputSchema:{type:"object",properties:{name:{type:"string"},sets:{type:"integer"},reps_min:{type:"integer"},reps_max:{type:"integer"},primary_muscles:{type:"array",items:{type:"string",enum:MUS}},secondary_muscles:{type:"array",items:{type:"string",enum:MUS}}},required:["name","sets","reps_min","reps_max"]},
      execute:inp=>{ const name=String(inp.name||"").trim(); if(!name) throw new Error("Пустое название");
        const n=Math.min(10,Math.max(1,Math.round(Number(inp.sets)||3))), lo=Math.max(1,Math.round(Number(inp.reps_min)||8)), hi=Math.max(lo,Math.round(Number(inp.reps_max)||12)), uid="c"+rid();
-       editSession(date,day,ss=>{ ss.ex.push({uid,base:-1,name,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:musFromNames(inp.primary_muscles,inp.secondary_muscles),sets:Array.from({length:n},blankSet),note:""}); });
-       toast({text:`Клод добавил «${name}»`,action:"Убрать",run:()=>editSession(date,day,ss=>{ ss.ex=ss.ex.filter(y=>y.uid!==uid); })});
+       editSession(date,day,ss=>{ ss.ex.push({uid,base:-1,name,n,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:musFromNames(inp.primary_muscles,inp.secondary_muscles),sets:Array.from({length:n},blankSet),note:""}); });
+       toast({text:`Добавлено: «${name}»`,action:"Убрать",run:()=>editSession(date,day,ss=>{ ss.ex=ss.ex.filter(y=>y.uid!==uid); })});
        return `Готово: добавлено «${name}», ${n}×${lo}–${hi}.`; }}
   ]:undefined;
-
   const send=async(text)=>{
     const q=(text??input).trim(); if(!q||ctl.current) return;
     const next=[...turns,{role:"user",content:q}]; setTurns(next); setInput(""); setErr(""); setLive("…");
     ctl.current=new AbortController();
-    try{
-      const opts={signal:ctl.current.signal,cache:false,onText:({text})=>setLive(text)}; const t=tools(); if(t) opts.tools=t;
+    try{ const opts={signal:ctl.current.signal,cache:false,onText:({text})=>setLive(text)}; const t=tools(); if(t) opts.tools=t;
       const r=await S.sample([{role:"user",content:context()},...next.slice(-12)],opts);
-      setTurns([...next,{role:"assistant",content:r.text}]);
-    }catch(e){
-      if(e&&e.text) setTurns([...next,{role:"assistant",content:e.text+"\n\n(Ответ прерван.)"}]);
-      if(e&&e.code!=="cancelled") setErr(errText(e));
-    }
+      setTurns([...next,{role:"assistant",content:r.text}]); }
+    catch(e){ if(e&&e.text) setTurns([...next,{role:"assistant",content:e.text+"\n\n(Ответ прерван.)"}]); if(e&&e.code!=="cancelled") setErr(errText(e)); }
     setLive(""); ctl.current=null;
   };
-  const chips=["Подбери замену упражнению: тренажёр занят","Какой вес ставить сегодня по ключевым упражнениям?","Чувствую дискомфорт в суставе. Что делать?","Как правильно выполнять первое упражнение?","Добавь упражнение на отстающую мышцу"];
-  return html`<div class="sheet-wrap" onClick=${ev=>{ if(ev.target.classList.contains("sheet-wrap")) onClose(); }}>
-    <div class="sheet" role="dialog" aria-label="Спросить Клода" ref=${sheet}>
-      <div class="sheet-head"><b><${Icon} n="spark" size=${18}/> Спросить Клода</b>
-        ${turns.length?html`<button class="btn quiet" onClick=${()=>{ setTurns([]); setErr(""); }}>Новый чат</button>`:null}
-        <button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
-      <div class="sheet-body" ref=${box}>
-        ${!S.sample?html`<div class="st">Клод недоступен на этой странице. Напиши вопрос и нажми «Скопировать запрос», затем вставь его в чат с Клодом.</div>`:null}
-        ${!turns.length&&!live?html`<div class="st">Клод видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение. Всё отменяется кнопкой «Вернуть».":""}</div>
-          <div class="opts">${chips.map(c=>html`<button key=${c} onClick=${()=>S.sample?send(c):setInput(c)}>${c}</button>`)}</div>`:null}
-        ${turns.map((t,k)=>html`<div key=${k} class=${"msg "+t.role}>${t.role==="assistant"?html`<${Rich} text=${t.content}/>`:t.content}</div>`)}
-        ${live?html`<div class="msg assistant">${live==="…"?html`<span class="st">Клод думает…</span>`:html`<${Rich} text=${live}/>`}</div>`:null}
-        ${err?html`<div class="st bad">${err}</div>`:null}
-      </div>
-      <div class="sheet-foot">
-        <textarea ref=${ta} rows="2" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
-        ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
-          :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
-          :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован. Вставь его в чат с Клодом")}>Скопировать запрос</button>`}
-      </div>
+  const chips=["Тренажёр занят, чем заменить?","Какой вес ставить сегодня?","Дискомфорт в суставе, что делать?","Как правильно делать первое упражнение?","Добавь упражнение на отстающую мышцу"];
+  const foot=html`<textarea rows="2" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
+    ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
+      :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
+      :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}>Скопировать</button>`}`;
+  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot}>
+    <div class="chat" ref=${box}>
+      ${!S.sample?html`<div class="st">Помощник недоступен на этой странице. Напиши вопрос и скопируй запрос, чтобы вставить его в чат.</div>`:null}
+      ${!turns.length&&!live?html`<div class="st">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}</div>
+        <div class="menu">${chips.map(c=>html`<button key=${c} class="mitem" onClick=${()=>S.sample?send(c):setInput(c)}><${Icon} n="spark" size=${16}/><span>${c}</span></button>`)}</div>`:null}
+      ${turns.map((t,k)=>html`<div key=${k} class=${"msg "+t.role}>${t.role==="assistant"?html`<${Rich} text=${t.content}/>`:t.content}</div>`)}
+      ${live?html`<div class="msg assistant">${live==="…"?html`<span class="st">Думаю…</span>`:html`<${Rich} text=${live}/>`}</div>`:null}
+      ${err?html`<div class="st bad">${err}</div>`:null}
+      ${turns.length&&!live?html`<button class="btn quiet" onClick=${()=>{ setTurns([]); setErr(""); }}>Начать заново</button>`:null}
     </div>
-  </div>`;
+  <//>`;
 }
 
-/* ---------- Таймер отдыха и всплывашка ---------- */
+/* ---------- Таймер, всплывашка, нижние вкладки ---------- */
 function Timer({t,onStop,onShift}){
   const [,tick]=useState(0);
   useEffect(()=>{ if(!t) return; const h=setInterval(()=>tick(x=>x+1),250); return ()=>clearInterval(h); },[t]);
@@ -926,7 +1029,7 @@ function Timer({t,onStop,onShift}){
     <div class="t">${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}</div>
     <div class="l">${left===0?"Отдых закончен":"Отдых · "+t.label}</div>
     <button onClick=${()=>onShift(15)} aria-label="Плюс 15 секунд">+15</button>
-    <button onClick=${onStop}>Стоп</button>
+    <button onClick=${onStop} aria-label="Остановить таймер"><${Icon} n="close" size=${16}/></button>
   </div>`;
 }
 function Toast({t,onClose,raised}){
@@ -936,7 +1039,6 @@ function Toast({t,onClose,raised}){
   return html`<div class=${"toast"+(raised?" raised":"")} role="status" ref=${ref}><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
 }
 
-/* ---------- Приложение ---------- */
 function App(){
   useStore();
   const [view,setView]=useState("train");
@@ -945,31 +1047,28 @@ function App(){
   const [picked,setPicked]=useState(null);
   const [timer,setTimer]=useState(null);
   const [toast,setToast]=useState(null);
-  const [ask,setAsk]=useState({open:false,focus:null});
+  const [ask,setAsk]=useState(null);
   const day=picked||defaultDay(date);
   const mainRef=useRef(null);
   useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
-  useEffect(()=>{ anim(mainRef.current,{opacity:[0,1],transform:["translateY(6px)","translateY(0)"]},{type:"tween",duration:.22,ease:[.2,.8,.2,1]}); },[view,day]);
+  useEffect(()=>{ anim(mainRef.current,{opacity:[0,1]},{type:"tween",duration:.2,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };
     document.addEventListener("visibilitychange",f); return ()=>document.removeEventListener("visibilitychange",f); },[auto,date]);
-  const startTimer=(sec,label)=>setTimer({end:Date.now()+sec*1000,label});
   const showToast=t=>setToast(Object.assign({id:rid()},t));
-  const tabs=[["train","Тренировка"],["week","Неделя"],["hist","История"],["body","Замеры"]];
+  const tabs=[["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"],["body","Замеры","ruler"]];
   return html`<${React.Fragment}>
-    <div class="top">
-      <div class="brand"><h1>Дневник тренировок</h1><span class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</span></div>
-      <div class="nav" role="tablist">${tabs.map(([k,l])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}>${l}</button>`)}</div>
-    </div>
+    <div class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</div>
     <main ref=${mainRef}>
-      ${view==="train"?html`<${TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} startTimer=${startTimer} openAsk=${i=>setAsk({open:true,focus:i})}/>`
+      ${view==="train"?html`<${TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} startTimer=${(sec,label)=>setTimer({end:Date.now()+sec*1000,label})} openAsk=${i=>setAsk({focus:i})}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
     </main>
-    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({open:true,focus:null})} aria-label="Спросить Клода"><${Icon} n="spark" size=${26}/></button>
+    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${26}/></button>
     <${Toast} t=${toast} raised=${!!timer} onClose=${()=>setToast(null)}/>
     <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
-    <${AskSheet} open=${ask.open} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk({open:false,focus:null})}/>
+    <nav class="tabbar" role="tablist">${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}><${Icon} n=${ic} size=${22}/><span>${l}</span></button>`)}</nav>
+    ${ask?html`<${AskSheet} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk(null)}/>`:null}
   <//>`;
 }
 
