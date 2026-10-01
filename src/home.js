@@ -42,30 +42,32 @@ function weekData(date){
 }
 
 // Сводка — по экрану «Сводка» макета
-function HomeView({date,day,go,openHistory,openSession}){
+function HomeView({date,setDate,day,go,openHistory,openSession,toast}){
+  const [bodyOpen,setBodyOpen]=useState(false);
   const s=getSession(date,day), w=weekData(date);
   const rows=s.ex.reduce((a,e)=>a+rowsOf(s,e),0), doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0);
   const started=hasData(s);
   const prs=sessions().filter(x=>x.date<=date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).flatMap(sessionPRs).slice(0,3);
   const lifts=[...new Set(ORDER.map(k=>P[k].ex[0][0]))].map(n=>({name:n,h:exerciseHistory(n)})).filter(x=>x.h.length);
   const main=lifts.slice().sort((a,b)=>b.h[b.h.length-1].date.localeCompare(a.h[a.h.length-1].date))[0];
-  const recent=sessions().filter(hasData).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const body=Object.values(S.data).filter(v=>v&&v.kind==="body"&&num(v.w)!==null).sort((a,b)=>a.date.localeCompare(b.date));
   const topSet=h=>h.sets.reduce((b,x)=>e1rm(x.w,x.r)>e1rm(b.w,b.r)?x:b,h.sets[0]);
   return html`<div class="home">
     <header class="large">
-      <span class="eyebrow">${longDate(date)}</span>
       <h1>Прогресс</h1>
+      <label class="datepick"><span>${longDate(date)}</span><${Icon} n="down" size=${16}/>
+        <input type="date" value=${date} aria-label="Сменить дату" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/></label>
+      ${date!==todayStr()?html`<button class="linkbtn today-back" onClick=${()=>setDate(todayStr())}>Вернуться к сегодня</button>`:null}
     </header>
 
     <section class="card today">
-      <div class="card-h"><span class="card-t acc">Тренировка сегодня</span><span class="card-s">Неделя ${w.wk} из 6</span></div>
+      <div class="card-h"><span class="card-t acc">${date===todayStr()?"Тренировка сегодня":"Тренировка "+dm(date)}</span></div>
       <div class="today-main">
         <${Rings} size=${76} stroke=${10} label=${"Сделано подходов: "+doneSets+" из "+rows} rings=${[{p:rows?doneSets/rows:0,color:"var(--acc)",track:"var(--acc-track)"}]}/>
         <div class="today-txt">
           <b>${P[day].name}</b>
           <span>${s.ex.length} упражнений · ${rows} подходов</span>
-          <small>${s.done?"Тренировка завершена":started?"Сделано "+doneSets+" из "+rows+" подходов":"Цель недели: запас "+rirFor("3",w.wk)+" повтора"}</small>
+          <small>${s.done?"Тренировка завершена":started?"Сделано "+doneSets+" из "+rows+" подходов":"Ещё не начата"}</small>
         </div>
       </div>
       <ul class="plist">${s.ex.slice(0,3).map(e=>{ const inf=xinfo(s,e); return html`<li key=${e.uid}><span>${inf.name}</span><span class="num">${rowsOf(s,e)} × ${inf.plan.lo}–${inf.plan.hi}</span></li>`; })}</ul>
@@ -101,16 +103,14 @@ function HomeView({date,day,go,openHistory,openSession}){
         <span class="lmain"><b>${r.name}</b><small>${dm(r.date)} · ${r.w?fmt(num(r.w))+" кг × ":""}${r.r} · 1ПМ ≈ ${kgf(r.v)} кг</small></span>
         <${Icon} n="right" size=${18}/></button>`)}</div>`:null}
 
-    <h2 class="sec">Журнал</h2>
-    <div class="card list">
-      ${recent.map(x=>html`<button key=${x.id} class="lrow" onClick=${()=>openSession(x.date,x.day)}>
-        <${Plate} k=${x.day}/>
-        <span class="lmain"><b>${P[x.day].name}</b><small>${longDate(x.date)} · ${x.ex.reduce((a,e)=>a+doneOf(e),0)} подх.</small></span>
-        <${Icon} n="right" size=${18}/></button>`)}
-      <button class="lrow" onClick=${()=>go("hist")}><span class="lmain"><b>Все тренировки</b></span><${Icon} n="right" size=${18}/></button>
-      <button class="lrow" onClick=${()=>go("body")}><span class="lmain"><b>Вес и замеры</b><small>${body.length?fmt(num(body[body.length-1].w))+" кг, "+dm(body[body.length-1].date):"Пока нет замеров"}</small></span>
-        ${body.length>1?html`<${Spark} values=${body.map(b=>num(b.w))} w=${80} h=${30}/>`:null}<${Icon} n="right" size=${18}/></button>
+    <h2 class="sec">Вес и замеры</h2>
+    <div class="tiles4 bodytiles">
+      <button onClick=${()=>setBodyOpen(true)}><span>Вес</span><b class="big">${body.length?fmt(num(body[body.length-1].w)):"–"}<small> кг</small></b>
+        <small class="bt-s">${body.length?dm(body[body.length-1].date)+(body.length>1?" · "+(num(body[body.length-1].w)-num(body[0].w)>=0?"+":"")+fmt(Math.round((num(body[body.length-1].w)-num(body[0].w))*10)/10)+" кг":""):"Нажми, чтобы внести"}</small></button>
+      <button onClick=${()=>setBodyOpen(true)}><span>Замеры</span><b class="big">${body.length}</b>
+        <small class="bt-s">${body.length?"записей · добавить":"Добавить первый"}</small></button>
     </div>
+    ${bodyOpen?html`<${BodySheet} toast=${toast} onClose=${()=>setBodyOpen(false)}/>`:null}
   </div>`;
 }
 
@@ -146,7 +146,7 @@ function WeekScreen({date,toast}){
   return html`<div class="weekscr">
     <header class="large">
       <span class="eyebrow">${dayMonth(w.ws)} – ${dayMonth(w.we)}</span>
-      <h1>Неделя ${w.wk}</h1>
+      <h1>${mode==="prev"?"Прошлая неделя":"Эта неделя"}</h1>
     </header>
     <div class="seg3" role="group" aria-label="Период">
       ${[["now","Эта неделя"],["prev","Прошлая"]].map(([k,l])=>html`<button key=${k} aria-pressed=${String(mode===k)} onClick=${()=>setMode(k)}>${l}</button>`)}

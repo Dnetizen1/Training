@@ -312,8 +312,6 @@ function DaySheet({s,date,day,setDate,setDay,setWeek,ui,setUi,onClose}){
     <div class="grp">
       <label class="grp-row"><span>Дата</span><input type="date" value=${date} onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/></label>
       ${date!==todayStr()?html`<button class="grp-row link" onClick=${()=>setDate(todayStr())}>Вернуться к сегодня</button>`:null}
-      <div class="grp-row"><span>Неделя мезоцикла</span><div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>${wk} из 6</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div></div>
-      <div class="grp-row"><span>Цель недели</span><span class="mute">${WEEKS[wk]}</span></div>
     </div>
   <//>`;
 }
@@ -353,9 +351,9 @@ function FinishPanel({s,edit,toast,head}){
       </div>
       <label class="notetile"><span>Заметка о тренировке</span>
         <textarea rows="2" placeholder="Самочувствие, сон, боли…" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea></label>
-      ${s.done?html`<${Corrections} s=${s} toast=${toast}/>`:null}
       <${Review} label="Разобрать тренировку" stored=${s.summary} disabledMsg="Сначала впиши хотя бы один подход."
         build=${()=>hasData(s)?reviewPrompt(s):""} onSave=${t=>edit(ss=>{ ss.summary=t; })}/>
+      ${s.done?html`<${Corrections} s=${s} toast=${toast}/>`:null}
     </section>`;
 }
 function AppliedBanner({s,date,day,edit}){
@@ -373,12 +371,12 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   return html`<div>
     <nav class="navrow" aria-label="Навигация">
       <button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Прогресс</button>
-      <span class="navright"><button class="navlink" onClick=${()=>setSheet({type:"muscles"})}>Мышцы</button>
-      <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button></span>
+      <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>
     </nav>
     <header class="ttl">
-      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату или неделю"><h1>${P[day].name}</h1></button>
-      <span class="ttl-s">Неделя ${wk} · ${WEEKS[wk]} · ${s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0)} из ${s.ex.reduce((a,e)=>a+rowsOf(s,e),0)} подх.</span>
+      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату или неделю"><h1>${P[day].name}</h1><span class="ttl-chev"><${Icon} n="down" size=${16}/></span></button>
+      <button class="ttl-mus" onClick=${()=>setSheet({type:"muscles"})}><${Icon} n="bars" size=${16}/>Мышцы</button>
+      <span class="ttl-s">${dm(date)} · ${s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0)} из ${s.ex.reduce((a,e)=>a+rowsOf(s,e),0)} подх.</span>
     </header>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
@@ -393,7 +391,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   </div>`;
 }
 function textLog(s){
-  let t=`## ${s.date} · ${P[s.day].name} · нед. ${s.week}\n`;
+  let t=`## ${s.date} · ${P[s.day].name}\n`;
   if(s.bw) t+=`Вес утром: ${s.bw} кг`+(s.dur?` · ${s.dur} мин`:"")+"\n";
   s.ex.forEach(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}`).join(", ");
     if(sets||e.note) t+=`- ${xinfo(s,e).name}: ${sets}${e.note?" ("+e.note+")":""}\n`; });
@@ -446,7 +444,7 @@ function DateStrip({list,openSession}){
   const ref=useRef(null);
   const byDate={}; list.forEach(x=>{ if(!byDate[x.date]) byDate[x.date]=x; });
   const end=new Date(weekEnd(todayStr())+"T00:00:00"), start=new Date(end);
-  start.setDate(start.getDate()-62);
+  end.setDate(end.getDate()+120); start.setDate(start.getDate()-365-120);
   const first=list.length?new Date(list[list.length-1].date+"T00:00:00"):start;
   if(first<start) start.setTime(first.getTime());
   start.setDate(start.getDate()-((start.getDay()+6)%7));
@@ -455,8 +453,8 @@ function DateStrip({list,openSession}){
   const today=todayStr();
   return html`<div class="dstrip" ref=${ref} role="list" aria-label="Календарь тренировок">${days.map(d=>{
     const x=byDate[d], t=new Date(d+"T00:00:00"), mon=t.getDate()===1||d===days[0];
-    return html`<button key=${d} role="listitem" class=${"ds-day"+(x?" on":"")+(d===today?" today":"")+(t.getDay()===1?" wk":"")} disabled=${!x}
-      onClick=${()=>x&&openSession(x.date,x.day)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")}>
+    return html`<button key=${d} role="listitem" class=${"ds-day"+(x?" on":"")+(d===today?" today":"")+(t.getDay()===1?" wk":"")} 
+      onClick=${()=>openSession(d,x?x.day:null)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")}>
       <small class="ds-m">${mon?RU_MONTHS[t.getMonth()].slice(0,3):""}</small>
       <small>${WD[t.getDay()]}</small>
       <b style=${x?{background:PC[x.day]}:null}>${t.getDate()}</b>
@@ -473,7 +471,7 @@ function HistoryView({openSession}){
       const cnt=s.ex.reduce((a,e)=>a+doneOf(e),0);
       return html`<button key=${s.id} class="lrow" onClick=${()=>openSession(s.date,s.day)}>
         <${Plate} k=${s.day}/>
-        <span class="lmain"><b>${P[s.day].name}</b><small>${longDate(s.date)} · нед. ${s.week} · ${s.ex.length} упр. · ${cnt} подх.${s.dur?" · "+s.dur+" мин":""}</small></span>
+        <span class="lmain"><b>${P[s.day].name}</b><small>${longDate(s.date)} · ${s.ex.length} упр. · ${cnt} подх.${s.dur?" · "+s.dur+" мин":""}</small></span>
         <${Icon} n="right" size=${18}/></button>`;
     })}</div>`}
   </div>`;
@@ -481,14 +479,12 @@ function HistoryView({openSession}){
 
 /* ---------- Замеры ---------- */
 const BF=[["w","Вес, кг"],["waist","Талия, см"],["arm","Рука, см"],["thigh","Бедро, см"],["bp","Давление"],["hr","Пульс покоя"]];
-function BodyView({toast,go}){
+function BodySheet({toast,onClose}){
   const [f,setF]=useState({date:todayStr()});
   const rows=Object.entries(S.data).filter(([k,v])=>v&&v.kind==="body").map(([k,v])=>Object.assign({id:k},v)).sort((a,b)=>b.date.localeCompare(a.date));
   const submit=ev=>{ ev.preventDefault(); const d=f.date||todayStr(); const rec={kind:"body",date:d}; BF.forEach(([k])=>rec[k]=(f[k]||"").trim()); putDoc("b_"+d,rec); setF({date:todayStr()}); };
   const del=r=>{ const keep=clone(S.data[r.id]); putDoc(r.id,undefined); toast({text:"Замер за "+dmy(r.date)+" удалён",action:"Вернуть",run:()=>putDoc(r.id,keep)}); };
-  return html`<div>
-    <nav class="navrow"><button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Прогресс</button></nav>
-    <header class="ttl"><h1>Вес и замеры</h1></header>
+  return html`<${Sheet} title="Вес и замеры" onClose=${onClose}>
     <form class="form" onSubmit=${submit}>
       <label class="full">Дата<input type="date" value=${f.date} onChange=${ev=>setF(Object.assign({},f,{date:ev.target.value}))}/></label>
       ${BF.map(([k,l])=>html`<label key=${k}>${l}<input type="text" inputmode=${k==="bp"?"text":"decimal"} value=${f[k]||""} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))}/></label>`)}
@@ -498,7 +494,7 @@ function BodyView({toast,go}){
     ${rows.length?html`<div class="tbl"><table><thead><tr><th>Дата</th>${BF.map(([k,l])=>html`<th key=${k}>${l.replace(/, (кг|см)/,"")}</th>`)}<th></th></tr></thead>
       <tbody>${rows.map(r=>html`<tr key=${r.id}><td>${dmy(r.date)}</td>${BF.map(([k])=>html`<td key=${k}>${r[k]||"–"}</td>`)}<td><button class="ibtn danger" aria-label="Удалить замер" onClick=${()=>del(r)}><${Icon} n="trash" size=${16}/></button></td></tr>`)}</tbody></table></div>`
       :html`<div class="empty">Замеров нет. Мерь утром, натощак, в одинаковых условиях.</div>`}
-  </div>`;
+  <//>`;
 }
 
 /* ---------- Спросить тренера (чат с действиями) ---------- */
@@ -619,14 +615,14 @@ function App(){
     ${S.bad?html`<div class="save bad" role="status">${S.status}</div>`:null}
     <main ref=${mainRef}>
       ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} ui=${ui} setUi=${setUi} openHistory=${setHist} go=${go}/>`
-        :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openSession=${openSession} openHistory=${setHist}/>`
+        :view==="home"?html`<${HomeView} date=${date} setDate=${setDate} toast=${showToast} day=${day} go=${go} openSession=${openSession} openHistory=${setHist}/>`
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
-        :view==="hist"?html`<${HistoryView} openSession=${openSession}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
+        :html`<${HistoryView} openSession=${openSession}/>`}
     </main>
     <nav class="tabbar" role="tablist">
       ${tabs.map(([k,l,ic])=>k==="ask"?html`<button key=${k} class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${24}/><span>${l}</span></button>`
         :k==="train"?html`<button key=${k} role="tab" class="tb-main" aria-selected=${String(view===k)} onClick=${()=>go(k)}><span class="tb-main-i"><${Icon} n=${ic} size=${26}/></span><span>${l}</span></button>`
-        :html`<button key=${k} role="tab" aria-selected=${String(view===k||(k==="home"&&view==="body"))} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
+        :html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
     </nav>
     ${hist?html`<${ExerciseHistory} name=${hist} onClose=${()=>setHist(null)}/>`:null}
     ${ask?html`<${AskSheet} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk(null)}/>`:null}

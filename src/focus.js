@@ -97,7 +97,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
       <button class="navlink" onClick=${()=>go("home")}>Готово</button>
     </nav>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
-    <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)+" · неделя "+wk}}/>
+    <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)}}/>
   </div>`;
 
   return html`<div class="fx">
@@ -106,8 +106,8 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
       <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>
     </nav>
     <header class="ttl">
-      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату, неделю или вид экрана"><h1>${P[day].name}</h1></button>
-      <span class="ttl-s">${e?"Упражнение "+(i+1)+" из "+s.ex.length+" · неделя "+wk:"Нет упражнений"}</span>
+      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату, неделю или вид экрана"><h1>${P[day].name}</h1><span class="ttl-chev"><${Icon} n="down" size=${16}/></span></button>
+      <span class="ttl-s">${e?dm(date)+" · упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}</span>
     </header>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <div class="segs" role="tablist" aria-label="Упражнения">${s.ex.map((x,k)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)); return html`<button key=${x.uid} role="tab" class=${k===i?"on":""} aria-selected=${String(k===i)} aria-label=${xinfo(s,x).name+": "+d+" из "+r} onClick=${()=>goEx(k)}><i style=${{width:(r?d/r*100:0)+"%"}}></i></button>`; })}</div>
@@ -120,7 +120,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
           <h2>${inf.name}</h2>
           <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="more" size=${22}/></button>
         </div>
-        <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir,wk)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
+        <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
         <button class="tags" aria-label="Нагрузка на мышцы" onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
         ${!exDone?html`
           <div class="tiles">

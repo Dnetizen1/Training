@@ -68,8 +68,9 @@ const ALT = {
 const WEEKS = {1:"RIR 3",2:"RIR 2",3:"RIR 1–2",4:"изоляция 0–1 RIR",5:"изоляция 0–1 RIR",6:"разгрузка: ½ подходов, RIR 3–4"};
 const START = "2026-10-01";
 
-function setsFor(n, wk){ return wk===6 ? Math.ceil(n/2) : n; }
-function rirFor(rir, wk){ return wk===1 ? "3" : wk===6 ? "3–4" : rir; }
+// Цикл верх/низ повторяется без мезоциклов: подходы и запас всегда как в программе.
+function setsFor(n){ return n; }
+function rirFor(rir){ return rir; }
 function weekFromDate(d){
   const days = Math.floor((new Date(d+"T00:00:00") - new Date(START+"T00:00:00"))/864e5);
   return ((Math.max(0,Math.floor(days/7)))%6)+1;

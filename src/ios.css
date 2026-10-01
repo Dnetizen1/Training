@@ -733,3 +733,27 @@ details.grp .form{box-shadow:none;border-radius:0;padding-top:4px}
 .dlegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--mute);margin:4px 4px 16px}
 .dlegend span{display:inline-flex;align-items:center;gap:6px}
 main{display:flow-root}
+
+/* ===== v7 ===== */
+.ttl{grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px}
+.ttl-s{grid-column:1/-1}
+.ttl-b{gap:8px}
+.ttl-chev{display:grid;place-items:center;width:28px;height:28px;border-radius:14px;background:var(--fill);color:var(--acc);margin-top:4px;flex:none}
+.ttl-mus{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border:0;border-radius:17px;background:var(--fill);color:var(--ink);font-size:15px;font-weight:600}
+.ttl-mus svg{color:var(--acc)}
+/* прогресс: дата под заголовком, меняется */
+.large .datepick{position:relative;display:inline-flex;align-items:center;gap:6px;margin-top:4px;height:32px;padding:0 12px;border-radius:16px;background:var(--fill);font-size:15px;font-weight:600;color:var(--ink);cursor:pointer}
+.datepick svg{color:var(--acc)}
+.datepick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;cursor:pointer}
+.today-back{display:block;margin-top:8px}
+.large{display:grid;justify-items:start}
+/* плитки «Вес» и «Замеры» как в итоге */
+.bodytiles button{display:grid;gap:2px;justify-items:start;border:0;background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);text-align:left;color:var(--ink)}
+.bodytiles span{font-size:13px;color:var(--mute)}
+.bodytiles b{font-size:28px;line-height:34px}
+.bodytiles b small{font-size:17px;color:var(--mute);font-weight:600}
+.bodytiles .bt-s{font-size:13px;color:var(--mute)}
+/* итог: время с теми же отступами, «Разобрать» — акцентная */
+.tiles4 .durtile{padding:0}
+.finish .review .row-actions .btn{background:var(--accf);color:var(--acc-ink);font-weight:700;justify-content:center}
+.finish .review .row-actions .btn svg{color:currentColor}
