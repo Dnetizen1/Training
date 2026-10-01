@@ -138,6 +138,10 @@ h3{font:700 18px var(--display);letter-spacing:.04em;text-transform:uppercase;ma
 .adform input[type=text]{background:var(--field);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:16px;width:100%;min-width:0}
 .adform .full{grid-column:1/-1}
 .st{color:var(--mute);font-size:13.5px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--line);padding:3px;border-radius:10px}
+.seg button{border:0;background:transparent;padding:8px;border-radius:8px;font-weight:600;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:disabled{opacity:.4}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
 
@@ -324,7 +328,8 @@ function lastTime(name){
 
 /* ---------- Тренировка ---------- */
 const main=document.getElementById("main");
-let musOpen=null, addOpen=false, delArm=null, musMsg="", detecting=null;
+let musOpen=null, addOpen=false, delArm=null, musMsg="", detecting=null, addMode=null, addMus={}, addDraft={name:"",n:"3",lo:"8",hi:"12"};
+const addModeNow=()=>sampleFn?(addMode||"ai"):"manual";
 function renderTrain(){
   const s=store[sid()]||blankSession();
   const wk=s.week;
@@ -386,7 +391,7 @@ function renderTrain(){
       </div>
       ${swapOpen===i?`<div class="swap"><div class="opts">${inf.custom?"":(ALT[inf.base]||[]).filter(a=>a!==shown).map(a=>`<button data-act="pick" data-name="${esc(a)}">${esc(a)}</button>`).join("")}${ed.alt&&!inf.custom?`<button data-act="pick" data-name="">↩ ${esc(inf.base)}</button>`:""}</div>
         <div class="own"><input type="text" id="own-${i}" placeholder="${inf.custom?"Новое название":"Своё упражнение"}" aria-label="Название упражнения"><button class="btn" data-act="own">Взять</button></div>
-        <label class="chk"><input type="checkbox" id="swap-auto-${i}" ${sampleFn?"checked":"disabled"}> Определить мышцы через Клода</label></div>`:""}
+        <label class="chk"><input type="checkbox" id="swap-auto-${i}" ${sampleFn?"checked":"disabled"}> Определить мышцы через Клода (иначе заполню вручную)</label></div>`:""}
       ${musOpen===i?`<div class="swap"><div class="mus">${MUS.map((m,k)=>{ const v=inf.mus[k]||0; return `<button data-act="mus" data-k="${k}" class="${v===1?"p":v?"s":""}">${m}<small>${v===1?"основная":v?"косвенно":"нет"}</small></button>`; }).join("")}</div>
         <div class="st">Нажимай на мышцу: нет, косвенно (0,5), основная (1). Это влияет на разбивку на вкладке «Неделя».</div>
         ${sampleFn?`<div class="row-actions"><button class="btn primary" data-act="detect" ${detecting===ed.uid&&ed.uid?"disabled":""}>${detecting&&detecting===ed.uid?"Клод определяет…":"Определить через Клода"}</button></div>`:""}
@@ -395,14 +400,20 @@ function renderTrain(){
       <textarea data-f="note" rows="1" placeholder="Заметка (техника, боль, ощущения)" aria-label="Заметка к упражнению">${esc(ed.note)}</textarea>
     </section>`;
   });
-  h+=`<div class="addbox">${addOpen?`<div class="adform">
-      <label class="full">Название<input type="text" id="add-name" placeholder="Например, Жим Свенда"></label>
-      <label>Подходы<input type="text" id="add-n" inputmode="numeric" value="3"></label>
-      <label>Повт. от<input type="text" id="add-lo" inputmode="numeric" value="8"></label>
-      <label>Повт. до<input type="text" id="add-hi" inputmode="numeric" value="12"></label>
-      <label class="chk full"><input type="checkbox" id="add-auto" ${sampleFn?"checked":"disabled"}> Определить мышцы через Клода</label>
+  h+=`<div class="addbox">${addOpen?(()=>{ const md_=addModeNow(); return `<div class="adform">
+      <label class="full">Название<input type="text" id="add-name" value="${esc(addDraft.name)}" placeholder="Например, Жим Свенда"></label>
+      <label>Подходы<input type="text" id="add-n" inputmode="numeric" value="${esc(addDraft.n)}"></label>
+      <label>Повт. от<input type="text" id="add-lo" inputmode="numeric" value="${esc(addDraft.lo)}"></label>
+      <label>Повт. до<input type="text" id="add-hi" inputmode="numeric" value="${esc(addDraft.hi)}"></label>
+      <div class="full st">Мышцы:</div>
+      <div class="full seg" role="group" aria-label="Как заполнить мышцы">
+        <button data-act="addmode" data-m="ai" aria-pressed="${md_==="ai"}" ${sampleFn?"":"disabled"}>Через Клода</button>
+        <button data-act="addmode" data-m="manual" aria-pressed="${md_==="manual"}">Вручную</button>
+      </div>
+      ${md_==="manual"?`<div class="full mus">${MUS.map((m,k)=>{ const v=addMus[k]||0; return `<button data-act="addmus" data-k="${k}" class="${v===1?"p":v?"s":""}">${m}<small>${v===1?"основная":v?"косвенно":"нет"}</small></button>`; }).join("")}</div>
+      <div class="full st">Нажимай на мышцу: нет, косвенно (0,5), основная (1).</div>`:`<div class="full st">После добавления Клод сам отметит основные и косвенные мышцы. Результат можно поправить в «Мышцы».</div>`}
       <div class="row-actions full"><button class="btn primary" data-act="addgo">Добавить в тренировку</button><button class="btn quiet" data-act="addcancel">Отмена</button></div>
-    </div>`:`<button class="btn" data-act="addopen">+ Добавить упражнение</button>`}</div>
+    </div>`; })():`<button class="btn" data-act="addopen">+ Добавить упражнение</button>`}</div>
   </div>
   <div class="foot">
     <div class="form" style="margin:0">
@@ -478,7 +489,9 @@ main.addEventListener("click",ev=>{
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>setSave("Скопировано"),()=>setSave("Копирование недоступно",true)); return; }
   const act=b.dataset.act;
   if(act==="addopen"){ addOpen=true; renderTrain(); const f=document.getElementById("add-name"); f&&f.focus(); return; }
-  if(act==="addcancel"){ addOpen=false; renderTrain(); return; }
+  if(act==="addcancel"){ addOpen=false; addMus={}; addDraft={name:"",n:"3",lo:"8",hi:"12"}; renderTrain(); return; }
+  if(act==="addmode"){ addMode=b.dataset.m; renderTrain(); return; }
+  if(act==="addmus"){ const k=b.dataset.k, v=addMus[k]||0; if(v===0) addMus[k]=.5; else if(v<1) addMus[k]=1; else delete addMus[k]; renderTrain(); return; }
   if(act==="addgo"){
     const name=document.getElementById("add-name").value.trim();
     if(!name){ document.getElementById("add-name").focus(); return; }
@@ -486,10 +499,10 @@ main.addEventListener("click",ev=>{
     const n=clamp(document.getElementById("add-n").value,1,10,3);
     const lo=clamp(document.getElementById("add-lo").value,1,100,8);
     const hi=Math.max(lo,clamp(document.getElementById("add-hi").value,1,100,12));
-    const auto=document.getElementById("add-auto").checked&&!!sampleFn;
+    const auto=addModeNow()==="ai";
     const s=cur(), uid_=rid();
-    s.ex.push({uid:uid_,base:-1,name,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:{},sets:Array.from({length:n},()=>({w:"",r:"",ok:false})),note:""});
-    addOpen=false; musMsg=""; if(auto) musOpen=s.ex.length-1; persist(sid()); renderTrain();
+    s.ex.push({uid:uid_,base:-1,name,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:auto?{}:Object.assign({},addMus),sets:Array.from({length:n},()=>({w:"",r:"",ok:false})),note:""});
+    addOpen=false; addMus={}; addDraft={name:"",n:"3",lo:"8",hi:"12"}; musMsg=""; if(auto) musOpen=s.ex.length-1; persist(sid()); renderTrain();
     if(auto) detectMuscles(sid(),uid_);
     return;
   }
@@ -513,7 +526,7 @@ main.addEventListener("click",ev=>{
     const auto=!!(document.getElementById("swap-auto-"+i)||{}).checked&&!!sampleFn;
     if(inf.custom) ed.name=nm; else if(nm) ed.alt=nm; else { delete ed.alt; delete ed.mus; }
     swapOpen=null;
-    if(auto&&nm){ musOpen=i; musMsg=""; }
+    if(nm&&(auto||inf.custom||act==="own")){ musOpen=i; musMsg=auto?"":"Отметь мышцы вручную или нажми «Определить через Клода»."; }
     persist(sid()); renderTrain();
     if(auto&&nm) detectMuscles(sid(),ensureUid(ed));
   }
@@ -533,6 +546,7 @@ main.addEventListener("click",ev=>{
 });
 main.addEventListener("input",ev=>{
   const t=ev.target;
+  if(/^add-(name|n|lo|hi)$/.test(t.id)){ addDraft[t.id.slice(4)]=t.value; return; }
   if(t.id==="date"||/^(own-|add-|swap-)/.test(t.id)){ return; }
   const s=cur();
   if(t.id==="bw") s.bw=t.value; else if(t.id==="dur") s.dur=t.value; else if(t.id==="snote") s.note=t.value;
