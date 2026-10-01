@@ -64,7 +64,7 @@ const hasData=s=>s.ex&&s.ex.some(e=>e.sets.some(x=>x.w||x.r||x.ok));
 const defSession=k=>({day:k,ex:P[k].ex.map((_,i)=>({base:i,uid:"p"+i,sets:[]}))});
 function blankSession(date,day){
   const wk=weekFromDate(date);
-  return {kind:"session",date,day,week:wk,bw:"",note:"",done:false,
+  return {kind:"session",lvVer:LV_VER,date,day,week:wk,bw:"",note:"",done:false,
     ex:P[day].ex.map((e,i)=>({base:i,uid:"p"+i,sets:Array.from({length:setsFor(e[1],wk)},blankSet),note:""}))};
 }
 function normDoc(v){
@@ -157,6 +157,20 @@ function defaultDay(date){
   return prev.length?ORDER[(ORDER.indexOf(prev[0].day)+1)%4]:"UA";
 }
 
+/* Разовый пересчёт нагрузки в уже записанных тренировках (после перехода на справочник ExRx и новый список мышц).
+   Упражнения программы без замены берут новые значения программы; заменённые/добавленные — из справочника, если он их знает. */
+const LV_VER=2;
+function migrateLv(){
+  for(const id in S.data){ const v=S.data[id];
+    if(!v||v.kind!=="session"||!Array.isArray(v.ex)||(v.lvVer||0)>=LV_VER) continue;
+    v.ex.forEach(e=>{
+      if(e.base>=0&&!e.alt){ delete e.lv; delete e.mus; return; }
+      const k=knownLevels(xinfo(v,e).name); if(k){ e.lv=k; delete e.mus; }
+    });
+    v.lvVer=LV_VER; persist(id);
+  }
+}
+
 /* подключение к платформе */
 (async()=>{
   const c=window.claude;
@@ -176,7 +190,7 @@ function defaultDay(date){
   const flush=()=>{ for(const id of [...pending]) persist(id); };
   if(!S.db){
     const local=lsRead(); for(const id in local) if(!pending.has(id)) S.data[id]=normDoc(local[id]);
-    S.connected=true; setStatus("Сохранение на этом устройстве"); flush(); return;
+    S.connected=true; migrateLv(); setStatus("Сохранение на этом устройстве"); flush(); return;
   }
   S.db.collection("data/users/"+S.uid).onSnapshot(snap=>{
     const next={};
@@ -184,6 +198,7 @@ function defaultDay(date){
     for(const id of pending){ if(S.data[id]) next[id]=S.data[id]; else delete next[id]; }
     S.data=next;
     if(!S.connected){ S.connected=true; S.status="Синхронизировано"; flush(); }
+    migrateLv();
     emit();
   },()=>{ S.db=null; S.connected=true; setStatus("Нет синхронизации, пишу на устройство",true); });
 })();
@@ -309,51 +324,84 @@ const ERR={not_granted:"Помощник не включён: доступ не 
 const errText=e=>ERR[e&&e.code]||"Не получилось получить ответ. Попробуй ещё раз.";
 async function copyText(t,ok){ try{ await navigator.clipboard.writeText(t); setStatus(ok||"Скопировано"); }catch(e){ setStatus("Копирование недоступно",true); } }
 
-/* Справочник нагрузки по типовым упражнениям (по ExRx: target / synergists / stabilizers).
-   Основная мышца 9–10; значимый синергист 4–5; мелкий 2–3. Стабилизаторы не считаем (бицепс в тягах к поясу — стабилизатор).
-   Индексы: 0 грудь, 1 широчайшие, 2 пер. дельта, 3 ср. дельта, 4 задн. дельта, 5 бицепс, 6 трицепс,
-   7 квадрицепс, 8 бицепс бедра, 9 ягодицы, 10 икры, 11 середина спины, 12 предплечья. Порядок важен: от частного к общему. */
+/* Справочник нагрузки (русские названия), по ExRx: target / synergists, стабилизаторы не считаем.
+   Целевая 9–10; значимый синергист 4–6; мелкий 2–3. Бицепс в тягах к поясу — стабилизатор, поэтому не указан.
+   Индексы: 0 грудь, 1 широчайшие, 2 пер. дельта, 3 ср. дельта, 4 задн. дельта, 5 бицепс, 6 трицепс, 7 квадрицепс,
+   8 бицепс бедра, 9 ягодицы, 10 икры, 11 трапеции, 12 предплечья, 13 поясница, 14 шея, 15 пресс, 16 косые,
+   17 внутр. бедро, 18 наруж. бедро. Порядок важен: от частного к общему. */
 const LIB=[
-  [/мах\S*.*(наклон|задн)|обратн\S* развед|развед\S*.*(наклон|задн)|задн\S* дельт|reverse fly|rear delt|тяга к лицу|face ?pull/, {4:9,11:4}],
-  [/мах\S*.*вперед|подъем\S* перед собой|front raise/, {2:9}],
-  [/мах|развед\S* в стороны|lateral raise|подъем\S* в стороны/, {3:9,2:2}],
-  [/шраг|shrug/, {11:9,12:3}],
+  // плечи
+  [/мах\S*.*(наклон|задн)|обратн\S* (развед|мах|бабочк|пек)|развед\S*.*(наклон|задн)|задн\S* дельт|reverse fly|rear delt|тяга к лицу|face ?pull/, {4:9,11:4}],
+  [/мах\S*.*вперед|подъем\S* (перед собой|вперед)|front raise/, {2:9}],
+  [/тяга.*подбород|протяжк|upright row/, {3:8,11:6,2:3}],
+  [/мах|развед\S* (рук )?в стороны|lateral raise|подъем\S* в стороны|y.?raise/, {3:9,2:2}],
+  [/шраг|shrug|пожиман/, {11:9,12:3}],
+  // шея, кор
+  [/(^|[^а-я])ше(я|и|ю|ей|йн)|neck/, {14:9}],
+  [/русск\S* скруч|боков\S* (наклон|скруч|планк)|косы|дровосек|woodchop|паллоф|pallof|повороты корпуса/, {16:9,15:4}],
+  [/подъем\S* (ног|колен)|leg raise|knee raise|ножниц/, {15:9,16:3}],
+  [/велосипед|bicycle/, {15:8,16:6}],
+  [/ролик|ab ?wheel|rollout/, {15:9,1:3}],
+  [/планк|plank/, {15:7,16:4}],
+  [/скручив|кранч|crunch|пресс|подъем\S* корпуса|sit.?up/, {15:9}],
+  // спина
+  [/обратн\S* гиперэкстенз|reverse hyper/, {9:8,8:5,13:3}],
+  [/гиперэкстенз|hyperextension|back extension/, {13:9,9:5,8:5}],
+  [/гуд.?морнинг|good ?morning|наклон\S* со штанг/, {8:8,13:6,9:5}],
   [/пуловер на блоке|прям\S* рук\S*.*блок|straight.?arm/, {1:9}],
   [/пуловер|pullover/, {1:7,0:5,6:2}],
   [/подтягив|pull.?up|chin.?up|гравитрон|верхн\S* блок|вертикальн\S* тяга|тяга сверху|lat ?pulldown/, {1:9,11:4,5:3,4:2,12:2}],
-  [/тяга.*(одной рукой|гантели)|one.?arm row|dumbbell row/, {1:8,11:6,4:3,12:2}],
+  [/тяга.*(одной рукой|гантели)|one.?arm row|dumbbell row|тяга кроса/, {1:8,11:6,4:3,12:2}],
+  [/трэп|трап.?гриф|trap.?bar|hex.?bar/, {9:8,7:7,8:5,13:5,11:5,12:4}],
+  [/сумо|sumo/, {9:8,17:7,8:6,7:5,13:5,12:4}],
+  [/румынск|мертв\S* тяга|прям\S* ног|rdl|romanian|stiff/, {8:9,9:7,13:3,12:2}],
+  [/станов|deadlift/, {9:8,8:7,13:6,7:5,11:5,12:4}],
   [/тяга.*(к поясу|в наклоне|т.?гриф|упором|горизонт|нижн\S* блок|сидя|мейдоу|пендли)|тяга штанги|row/, {11:9,1:7,4:4,12:2}],
-  [/румынск|мертв\S* тяга|прям\S* ног|rdl|romanian/, {8:9,9:7,11:3,12:3}],
-  [/станов|deadlift/, {9:8,8:7,7:5,11:5,12:4}],
-  [/гиперэкстенз|good ?morning|гуд ?морнинг/, {9:7,8:6}],
+  // ноги и ягодицы
   [/хип.?траст|ягодичн\S* мост|hip ?thrust|glute bridge/, {9:10,8:3}],
-  [/отведен\S* ног|ягодичн\S* (тренаж|машин)|kickback/, {9:9}],
-  [/сведен\S* ног|приводящ/, {}],
+  [/сведен\S* ног|приведен|приводящ|adduct/, {17:10}],
+  [/разведен\S* ног|отведен\S* (ног|бедр)|отводящ|abduct/, {18:9,9:5}],
+  [/отведен\S* ног.*назад|махи ногой|ягодичн\S* (тренаж|машин)|kickback.*(glute|ног)/, {9:9,8:3}],
   [/разгибан\S* ног|leg extension|сисси/, {7:10}],
   [/сгибан\S* ног|нордик|leg curl|ham curl/, {8:10}],
-  [/выпад|сплит|болгарск|степ.?ап|зашагив|lunge|split squat/, {7:8,9:8,8:2}],
-  [/жим ногами|leg press/, {7:9,9:5}],
+  [/выпад|сплит|болгарск|степ.?ап|зашагив|lunge|split squat/, {7:8,9:8,17:3,8:2}],
+  [/жим ногами|leg press/, {7:9,9:5,17:3}],
   [/гакк|hack/, {7:9,9:5}],
-  [/присед|squat|гоблет/, {7:9,9:7,8:2}],
+  [/фронтальн\S* присед|front squat/, {7:9,9:5,13:3}],
+  [/присед|squat|гоблет/, {7:9,9:7,17:4,8:2}],
   [/икр|носк|голен|calf/, {10:10}],
-  [/французск|пушдаун|pushdown|разгибан\S*.*(рук|из-за|блок|трицеп|канат)|skull/, {6:9}],
-  [/свенд|svend/, {0:9,2:3}],
+  // руки
+  [/французск|пушдаун|pushdown|разгибан\S*.*(рук|из-за|блок|трицеп|канат)|skull|обратн\S* отжиман|отжиман\S* от скам|bench dip/, {6:9}],
   [/жим.*узк|close.?grip/, {6:8,0:6,2:4}],
+  [/зоттман|zottman/, {5:7,12:6}],
+  [/молот|hammer/, {5:7,12:6}],
+  [/сгибан\S*.*обратн\S* хват|reverse curl/, {12:8,5:4}],
+  [/сгибан\S*|бицепс|байесиан|скотт|концентрир|curl/, {5:9,12:2}],
+  [/разгибан\S*|трицепс|extension|kickback/, {6:9}],
+  [/запясть|предплеч|wrist|фермер|farmer/, {12:9}],
+  // грудь и жимы
+  [/свенд|svend/, {0:9,2:3}],
   [/брус|dip/, {0:7,6:7,2:5}],
   [/сведен|пек.?дек|бабочк|кроссовер.*груд|fly|flye/, {0:9,2:2}],
   [/жим.*(наклон|incline)/, {0:9,2:6,6:4}],
-  [/жим.*(лежа|скамь|bench|груд)|отжиман|push.?up/, {0:9,2:4,6:5}],
-  [/жим.*(сидя|стоя|над голов|армейск|арнольд|плеч|вверх)|overhead|shoulder press|military/, {2:9,3:4,6:5}],
-  [/молот|hammer/, {5:7,12:6}],
-  [/сгибан\S*.*обратн\S* хват|reverse curl/, {12:8,5:4}],
-  [/сгибан\S*|бицепс|байесиан|скотт|curl/, {5:9,12:2}],
-  [/разгибан\S*|трицепс|французск|пушдаун|pushdown|triceps|extension|kickback/, {6:9}],
-  [/запясть|предплеч|wrist/, {12:9}]
+  [/жим.*(сидя|стоя|над голов|армейск|арнольд|плеч|вверх|швунг)|overhead|shoulder press|military|push press/, {2:9,3:4,6:5}],
+  [/жим.*(лежа|скамь|bench|груд)|отжиман|push.?up/, {0:9,2:4,6:5}]
 ];
 const normName=n=>String(n||"").toLowerCase().replace(/ё/g,"е");
 function libLevels(name){ const n=normName(name); for(const [re,lv] of LIB) if(re.test(n)) return Object.assign({},lv); return null; }
+// Открытая база free-exercise-db (public domain, ~680 силовых упражнений, английские названия): основные 9, второстепенные 3.
+const tok=t=>normName(t).replace(/[^a-zа-я0-9]+/g," ").trim().split(" ").filter(Boolean);
+function dbLevels(name){
+  if(typeof EXDB==="undefined") return null;
+  const q=tok(name); if(!q.length) return null;
+  let best=null, bs=0;
+  for(const [n,p,sec] of EXDB){ const t=tok(n), hit=q.filter(w=>t.includes(w)).length, sc=hit/Math.max(q.length,t.length); if(sc>bs){ bs=sc; best=[p,sec]; } }
+  if(!best||bs<.6) return null;
+  const lv={}; best[1].forEach(k=>{ lv[k]=3; }); best[0].forEach(k=>{ lv[k]=9; }); return lv;
+}
+function knownLevels(name){ const a=libLevels(name); if(a&&Object.keys(a).length) return a; const b=dbLevels(name); return b&&Object.keys(b).length?b:null; }
 async function detectMuscles(name){
-  const lib=libLevels(name); if(lib&&Object.keys(lib).length) return lib;
+  const known=knownLevels(name); if(known) return known;
   const r=await S.sample.json(`Определи нагрузку на мышцы в силовом упражнении «${name}» по шкале 0–10, как в ExRx (target / synergists; стабилизаторы НЕ указывай).
 Правила:
 - Целевая мышца 9–10. Значимый синергист 4–5. Мелкий синергист 2–3. Всё остальное не указывай.
@@ -364,7 +412,9 @@ async function detectMuscles(name){
 Ответь только JSON вида {"levels":{"Средняя дельта":9,"Передняя дельта":2}}`,{modelTier:"default"});
   return lvFromObj(r&&r.levels);
 }
-const musIndex=n=>{ const t=String(n).trim(); return t==="Спина"?1:MUS.indexOf(t); };
+const MUS_ALIAS={"Спина":1,"Широчайшие мышцы":1,"Середина спины":11,"Трапеция":11,"Верх спины":11,"Передняя часть бедра":7,"Задняя часть бедра":8,"Голень":10,
+  "Косые":16,"Приводящие":17,"Отводящие":18,"Внутреннее бедро":17,"Наружное бедро":18,"Плечи":2};
+const musIndex=n=>{ const t=String(n).trim(); return t in MUS_ALIAS?MUS_ALIAS[t]:MUS.indexOf(t); };
 function lvFromObj(o){ const lv={}; if(o&&typeof o==="object") for(const n in o){ const k=musIndex(n), v=Math.round(Number(o[n])); if(k>=0&&v>=1) lv[k]=Math.min(10,v); } return lv; }
 // для инструментов чата: уровни, а если их нет, списки основных/вспомогательных
 function lvFromTool(inp){ const lv=lvFromObj(inp&&inp.muscle_levels); if(Object.keys(lv).length) return lv;

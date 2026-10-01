@@ -85,6 +85,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
   return html`<div class="focus">
     <header class="fhead">
       <button class="fday" onClick=${()=>setPanel(panel==="day"?null:"day")} aria-expanded=${String(panel==="day")}><${Plate} k=${day}/><span>${P[day].name}</span><small>нед. ${wk} · ${WEEKS[wk]}</small></button>
+      <${MusBtn} onClick=${()=>setSheet({type:"muscles"})}/>
       <button class="ibtn" aria-label="Все упражнения" onClick=${()=>setPanel(panel==="list"?null:"list")}><${Icon} n="list" size=${20}/></button>
     </header>
     ${panel==="day"?html`<div class="fpanel">

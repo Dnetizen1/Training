@@ -4,18 +4,51 @@
 // Нагрузка по 10-балльной шкале, как в «Твой тренер»: строка на мышцу, − значение +
 function LevelPicker({value,onChange}){
   const set=(k,v)=>{ const n=Object.assign({},value); v=Math.max(0,Math.min(10,v)); if(v) n[k]=v; else delete n[k]; onChange(n); };
-  const used=MUS_ORDER.filter(k=>value[k]), rest=MUS_ORDER.filter(k=>!value[k]);
-  return html`<div class="lv">
-    ${[...used.sort((a,b)=>value[b]-value[a]),...rest].map(k=>{ const v=+value[k]||0, c=v>=7?"hi":v>=4?"mid":v?"lo":""; return html`<div key=${k} class=${"lvrow "+c}>
+  const used=MUS_ORDER.filter(k=>value[k]);
+  const row=k=>{ const v=+value[k]||0, c=v>=7?"hi":v>=4?"mid":v?"lo":""; return html`<div key=${k} class=${"lvrow "+c}>
       <span class="lvn">${MUS[k]}</span>
       <button class="lvb" aria-label=${"Меньше: "+MUS[k]} disabled=${!v} onClick=${()=>set(k,v-1)}><${Icon} n="minus" size=${14}/></button>
       <b class="lvv">${v||"–"}</b>
       <button class="lvb" aria-label=${"Больше: "+MUS[k]} disabled=${v>=10} onClick=${()=>set(k,v?v+1:4)}><${Icon} n="plus" size=${14}/></button>
       <span class="lvc">${lvCat(v)}</span>
-    </div>`; })}
+    </div>`; };
+  return html`<div class="lv">
+    ${used.length?html`<div class="lvg">Работают</div>${[...used].sort((a,b)=>value[b]-value[a]).map(row)}`:null}
+    ${MUS_GROUPS.map(([g,ks])=>{ const rest=ks.filter(k=>!value[k]); return rest.length?html`<${React.Fragment} key=${g}><div class="lvg">${g}</div>${rest.map(row)}<//>`:null; })}
     <div class="lvtotal"><span>Общая нагрузка</span><b>${used.reduce((a,k)=>a+(+value[k]),0)}</b></div>
   </div>`;
 }
+// График «план / сделано» по мышцам, сгруппированным как в списке мышц. rows: {k:{plan,fact}}; zone — рабочий диапазон недели
+function MuscleBars({rows,zone,showEmpty}){
+  const vals=MUS_ORDER.flatMap(k=>[rows[k].plan,rows[k].fact]);
+  const max=Math.max(zone?16:1,...vals), hasFact=MUS_ORDER.some(k=>rows[k].fact>0);
+  const groups=MUS_GROUPS.map(([g,ks])=>[g,ks.filter(k=>showEmpty||rows[k].plan>0||rows[k].fact>0)]).filter(g=>g[1].length);
+  if(!groups.length) return html`<div class="st">В этой тренировке пока нет упражнений с указанными мышцами.</div>`;
+  return html`<div class="bars">
+    ${groups.map(([g,ks])=>html`<${React.Fragment} key=${g}>
+      <div class="bgroup">${g}</div>
+      ${ks.map(k=>{ const r=rows[k]; return html`<div class="bar" key=${k}>
+        <span class="bl">${MUS[k]}</span>
+        <div class="track" title=${"план "+fmt(r.plan)+", сделано "+fmt(r.fact)}>
+          ${zone?html`<i class="zone" style=${{left:(10/max*100)+"%",width:(6/max*100)+"%"}}></i>`:null}
+          <i class="planb" style=${{width:(r.plan/max*100)+"%"}}></i>
+          ${hasFact?html`<i class=${"factb"+(r.fact>=r.plan-0.01?" ok":"")} style=${{width:(r.fact/max*100)+"%"}}></i>`:null}
+        </div>
+        <span class="bv mono">${hasFact?fmt(r.fact)+"/":""}${fmt(r.plan)}</span>
+      </div>`; })}
+    <//>`)}
+    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}</div>
+  </div>`;
+}
+const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,doneOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
+function SessionMuscles({s,onClose}){
+  return html`<${Sheet} title=${"Мышцы за тренировку: "+P[s.day].name} onClose=${onClose}>
+    <div class="st">Эффективные подходы: нагрузка 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>
+    <${MuscleBars} rows=${sessionRows(s)}/>
+  <//>`;
+}
+const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
+
 function Sheet({title,onClose,children,foot}){
   const ref=useRef(null);
   useEffect(()=>{ anim(ref.current,{transform:["translateY(-40px)","translateY(0)"],opacity:[.4,1]},{bounce:.12,duration:.45});
@@ -232,7 +265,7 @@ function Review({label,stored,build,onSave,disabledMsg}){
       :stored?html`<div class="sum"><${Rich} text=${stored}/></div>`:null}
     <div class="row-actions">
       ${S.sample?html`<button class="btn primary" disabled=${!!live} onClick=${run}><${Icon} n="spark" size=${16}/> ${stored?label+" заново":label}</button>`:null}
-      <button class="btn quiet" onClick=${()=>{ const p=build(); p?copyText(p,"Запрос скопирован, вставь его в чат"):setErr(disabledMsg); }}>Скопировать запрос</button>
+      <button class="btn" onClick=${()=>{ const p=build(); p?copyText(p,"Запрос скопирован, вставь его в чат"):setErr(disabledMsg); }}>Скопировать запрос</button>
     </div>
     ${err?html`<div class="st bad">${err}</div>`:null}
   </div>`;
@@ -259,7 +292,8 @@ function SessionSheets({sheet,setSheet,s,date,edit,remove,openAsk}){
   return sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} go=${go}/>`
     :sheet.type==="swap"?html`<${SwapSheet} s=${s} uid=${sheet.uid} edit=${edit} onClose=${close} go=${go}/>`
     :sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`
-    :sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`:null;
+    :sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`
+    :sheet.type==="muscles"?html`<${SessionMuscles} s=${s} onClose=${close}/>`:null;
 }
 function FinishPanel({s,edit,toast}){
   const doneSets=s.ex.reduce((a,e)=>a+doneOf(e),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
@@ -279,7 +313,7 @@ function FinishPanel({s,edit,toast}){
       ${s.done?html`<${Corrections} s=${s} toast=${toast}/>`:null}
       <${Review} label="Разобрать тренировку" stored=${s.summary} disabledMsg="Сначала впиши хотя бы один подход."
         build=${()=>hasData(s)?reviewPrompt(s):""} onSave=${t=>edit(ss=>{ ss.summary=t; })}/>
-      <button class="btn quiet" onClick=${()=>copyText(textLog(s))}>Скопировать тренировку текстом</button>
+      <div><button class="btn" onClick=${()=>copyText(textLog(s))}>Скопировать тренировку текстом</button></div>
     </section>`;
 }
 function AppliedBanner({s,date,day,edit}){
@@ -294,11 +328,11 @@ function AppliedBanner({s,date,day,edit}){
 function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
-  const counts=muscleCount(s,e=>rowsOf(s,e));
   return html`<div>
     <header class="wk">
       <div class="wk-top">
         <div class="wk-name"><${Plate} k=${day}/><h1>${P[day].name}</h1></div>
+        <${MusBtn} onClick=${()=>setSheet({type:"muscles"})}/>
         <button class=${"btn "+(s.done?"ok":"primary")} onClick=${finish}>${s.done?"Завершена":"Завершить"}</button>
       </div>
       <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
@@ -309,7 +343,6 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
         <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
       </div>
     </header>
-    <div class="mline" aria-label="Подходы по мышцам в этой тренировке">${MUS_ORDER.map(k=>{ const c=counts[k]; return c.d?html`<span key=${k}><b>${c.d}</b>${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind">+${fmt(c.f)} ${MUS[k]}</span>`:null; })}</div>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <div class="exlist">
       ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
@@ -351,21 +384,10 @@ function WeekView({date}){
         <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
       </div>
     </header>
-    <div class="bars" aria-label="Эффективные подходы по мышцам: план и факт">
-      ${MUS_ORDER.map(k=>html`<div class="bar" key=${k}>
-        <span class="bl">${MUS[k]}</span>
-        <div class="track" title=${"план "+fmt(totF[k])+", факт "+fmt(fact[k])}>
-          <i class="zone" style=${{left:(10/max*100)+"%",width:(6/max*100)+"%"}}></i>
-          <i class="planb" style=${{width:(totF[k]/max*100)+"%"}}></i>
-          ${hasFact?html`<i class=${"factb"+(fact[k]>=totF[k]-0.01?" ok":"")} style=${{width:(fact[k]/max*100)+"%"}}></i>`:null}
-        </div>
-        <span class="bv mono">${hasFact?fmt(fact[k])+"/":""}${fmt(totF[k])}</span>
-      </div>`)}
-      <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span><span><i class="zone"></i>10–16, рабочий диапазон</span></div>
-    </div>
+    <${MuscleBars} zone=${true} rows=${Object.fromEntries(MUS.map((_,k)=>[k,{plan:totF[k],fact:fact[k]}]))}/>
     <div class="tbl"><table>
       <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Эфф.</th><th>Факт</th></tr></thead>
-      <tbody>${MUS_ORDER.map(k=>html`<tr key=${k}><td>${MUS[k]}</td>
+      <tbody>${MUS_ORDER.filter(k=>totF[k]>0||fact[k]>0).map(k=>html`<tr key=${k}><td>${MUS[k]}</td>
         ${pd.map((d,j)=>d[k].d?html`<td key=${j} class="dir">${d[k].d}</td>`:d[k].f?html`<td key=${j} class="mute">+${fmt(d[k].f)}</td>`:html`<td key=${j} class="mute">–</td>`)}
         <td class="dir">${totD[k]||"–"}</td><td>${fmt(totF[k])}</td>
         <td class=${!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low"}>${hasFact?fmt(fact[k]):"–"}</td></tr>`)}</tbody>
