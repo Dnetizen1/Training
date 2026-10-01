@@ -16,19 +16,19 @@
 :root[data-day="UB"]{--day:var(--p-yellow);--day-ink:#111418;--day-soft:#fbf1d2}
 :root[data-day="LB"]{--day:var(--p-green);--day-soft:#dff1e6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0e1013; --surface:#171a1f; --sunk:#1e2228; --line:#2c323a; --rule:#242930;
-  --ink:#e9ebee; --mute:#98a1ad; --inv:#0e1013;
+  --bg:#1b1b1d; --surface:#232326; --sunk:#2b2b2f; --line:#38383d; --rule:#2f2f33;
+  --ink:#ececee; --mute:#a3a3aa; --inv:#1b1b1d;
   --p-red:#ff5a60; --p-blue:#5d8dff; --p-yellow:#f2c94c; --p-green:#3fca7b;
   --day-soft:#1c2740; --ok:#3fca7b; --ok-soft:#14301f; --warn:#ff8a4c; --warn-soft:#3a2416; color-scheme:dark}
   :root:not([data-theme="light"])[data-day="LA"]{--day-soft:#3a1c1e}
   :root:not([data-theme="light"])[data-day="UB"]{--day-soft:#3a3218}
   :root:not([data-theme="light"])[data-day="LB"]{--day-soft:#15301f}
-  :root:not([data-theme="light"]){--day-ink:#0e1013}}
+  :root:not([data-theme="light"]){--day-ink:#1b1b1d}}
 :root[data-theme="dark"]{
-  --bg:#0e1013; --surface:#171a1f; --sunk:#1e2228; --line:#2c323a; --rule:#242930;
-  --ink:#e9ebee; --mute:#98a1ad; --inv:#0e1013;
+  --bg:#1b1b1d; --surface:#232326; --sunk:#2b2b2f; --line:#38383d; --rule:#2f2f33;
+  --ink:#ececee; --mute:#a3a3aa; --inv:#1b1b1d;
   --p-red:#ff5a60; --p-blue:#5d8dff; --p-yellow:#f2c94c; --p-green:#3fca7b;
-  --day-soft:#1c2740; --day-ink:#0e1013; --ok:#3fca7b; --ok-soft:#14301f; --warn:#ff8a4c; --warn-soft:#3a2416; color-scheme:dark}
+  --day-soft:#1c2740; --day-ink:#1b1b1d; --ok:#3fca7b; --ok-soft:#14301f; --warn:#ff8a4c; --warn-soft:#3a2416; color-scheme:dark}
 :root[data-theme="dark"][data-day="LA"]{--day-soft:#3a1c1e}
 :root[data-theme="dark"][data-day="UB"]{--day-soft:#3a3218}
 :root[data-theme="dark"][data-day="LB"]{--day-soft:#15301f}
@@ -304,7 +304,7 @@ tfoot td{font-weight:700;border-top:1px solid var(--line);background:var(--sunk)
 html,body{overflow-x:clip}
 input,textarea,select{max-width:100%}
 body{padding-block:0 140px}
-.tabbar,.fab{display:none!important}
+.fab{display:none!important}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin-inline:-16px;padding:8px 16px 0;border-bottom:1px solid var(--line);display:grid}
 .topbar-row{display:flex;align-items:center;gap:6px;min-width:0}
 .tabs{flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -327,3 +327,47 @@ body{padding-block:0 140px}
 .sheet-body{padding-bottom:20px}
 .topbar{grid-template-columns:minmax(0,1fr)}.timer .l{flex:1}
 @media (max-width:400px){.tabs button{font-size:10.5px;letter-spacing:-.01em;padding-inline:0}.topbar-row{gap:4px}.askbtn{width:40px;height:40px}}
+
+
+/* v5: вкладки снова внизу (по просьбе), тренер — пятая кнопка; сверху только таймер и всплывашка */
+body{padding-block:0 170px}
+.tabbar{grid-template-columns:repeat(5,1fr);padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.tabbar button{font-size:11px;min-width:0}
+.tabbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-ask{color:var(--ink)!important}
+.tb-ask-i{display:grid;place-items:center;width:40px;height:28px;border-radius:9px;background:var(--ink);color:var(--day)}
+.topbar{padding:0 16px}
+.save{position:static;display:flex;justify-content:flex-end;padding-top:8px;margin-bottom:-18px}
+.save > span{display:inline}
+.wk{padding-top:22px}
+.sheet-wrap{align-items:flex-end}
+.sheet{border-radius:10px 10px 0 0;max-height:calc(100% - 40px);box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+.sheet-head{padding-top:14px}
+
+/* чередование упражнений: тёмная/светлая полоса */
+:root{--band:#e2e5e9}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--band:#222225}}
+:root[data-theme="dark"]{--band:#222225}
+.exb{margin-inline:-16px;padding-inline:16px;border-bottom:0}
+.exb:nth-child(odd){background:var(--band)}
+.exb:nth-child(odd) .row input[type=text]{background:var(--bg)}
+.exb:nth-child(odd) .row.done input[type=text]{background:transparent}
+
+/* заметка */
+.notebtn{display:flex;align-items:flex-start;gap:6px;border:0;background:none;padding:2px 0;color:var(--mute);font-size:13.5px;text-align:left;width:100%}
+.notebtn svg{flex:none;margin-top:2px}
+.notebtn.has{color:var(--ink)}
+.notebtn.has span{white-space:pre-wrap}
+.noteedit{background:var(--surface);border:1px solid var(--day);border-radius:var(--r-card);padding:8px 10px;font-size:14px;min-height:38px;resize:none;overflow:hidden}
+
+/* перенос в план */
+.corr{display:grid;gap:10px}
+.corr h3{margin-top:4px}
+.corr-item{align-items:flex-start;cursor:pointer}
+.corr-item > span{display:grid;gap:2px;flex:1;min-width:0}
+.corr-item small{color:var(--mute);font-size:12.5px}
+.corr-item input{width:18px;height:18px;margin-top:2px;accent-color:var(--day)}
+.corr-day{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.applied{margin-top:12px;background:var(--day-soft);border-radius:var(--r-card);padding:10px 12px;font-size:14px}
+.applied ul{margin:6px 0 2px;padding-left:18px;display:grid;gap:3px}
+.applied .btn{padding-left:0}

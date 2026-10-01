@@ -101,10 +101,37 @@ function persist(id){
 }
 const sessions=()=>Object.entries(S.data).filter(([k,v])=>v&&v.kind==="session").map(([k,v])=>Object.assign({id:k},v));
 const sid=(date,day)=>"s_"+date+"_"+day;
-function getSession(date,day){ return S.data[sid(date,day)]||blankSession(date,day); }
+/* Корректировки плана: после разбора тренировки изменения для следующих тренировок копятся в m_<день>
+   и применяются, когда открываешь новую тренировку этого дня (дата позже тренировки-источника). */
+const modsId=day=>"m_"+day;
+const modsList=day=>{ const d=S.data[modsId(day)]; return d&&Array.isArray(d.list)?d.list:[]; };
+const pendingMods=(day,date)=>modsList(day).filter(m=>m.from<date);
+function modText(m){
+  const row=m.base>=0&&P[m.day]?P[m.day].ex[m.base]:null;
+  return m.type==="add_sets"?`+${m.n} подх. «${row?row[0]:"?"}»`
+    :m.type==="replace"?`«${row?row[0]:"?"}» → «${m.name}»`
+    :`добавить «${m.name}» ${m.n}×${m.lo}–${m.hi}`;
+}
+function applyMods(s,mods){
+  const info=[];
+  mods.forEach(m=>{
+    if(m.type==="add_sets"){ const e=s.ex.find(x=>x.base===m.base); if(!e) return; const n=rowsOf(s,e)+m.n; e.n=n; while(e.sets.length<n) e.sets.push(blankSet()); }
+    else if(m.type==="replace"){ const e=s.ex.find(x=>x.base===m.base); if(!e) return; e.alt=m.name; if(m.lv&&Object.keys(m.lv).length) e.lv=m.lv; }
+    else if(m.type==="add"){ s.ex.push({uid:"m"+m.id,base:-1,name:m.name,n:m.n,plan:{ns:m.n,lo:m.lo,hi:m.hi,rir:"1",rest:120,note:""},lv:m.lv||{},sets:Array.from({length:m.n},blankSet),note:""}); }
+    else return;
+    info.push({text:modText(m),reason:m.reason||"",from:m.from});
+  });
+  if(info.length) s.applied=info;
+  return s;
+}
+function getSession(date,day){ return S.data[sid(date,day)]||applyMods(blankSession(date,day),pendingMods(day,date)); }
 function editSession(date,day,fn){
   const id=sid(date,day);
-  if(!S.data[id]) S.data[id]=blankSession(date,day);
+  if(!S.data[id]){
+    const mods=pendingMods(day,date);
+    S.data[id]=applyMods(blankSession(date,day),mods);
+    if(mods.length){ const left=modsList(day).filter(m=>!mods.includes(m)); putDoc(modsId(day),left.length?{kind:"mods",day,list:left}:undefined); }
+  }
   const s=S.data[id]; fn(s);
   if(!s.start&&hasData(s)) s.start=Date.now();
   persist(id); emit();
@@ -160,6 +187,71 @@ function defaultDay(date){
     emit();
   },()=>{ S.db=null; S.connected=true; setStatus("Нет синхронизации, пишу на устройство",true); });
 })();
+
+/* Что не доделано относительно программы и куда это перенести */
+const upcomingDays=day=>[1,2,3].map(k=>ORDER[(ORDER.indexOf(day)+k)%4]);
+function deficits(s){
+  const out=[];
+  P[s.day].ex.forEach((row,bi)=>{
+    const e=s.ex.find(x=>x.base===bi), plan=setsFor(row[1],s.week), done=e?doneOf(e):0;
+    if(done<plan) out.push({bi,name:e?xinfo(s,e).name:row[0],missed:plan-done,lv:e?xinfo(s,e).lv:LV[s.day][bi],removed:!e});
+  });
+  return out;
+}
+// Простой перенос: недобор идёт в ближайшую тренировку с упражнением, где эта мышца нагружена высоко.
+// Лимит на тренировку: +4 подхода и одно новое упражнение (только в день того же типа); остальное дальше по неделе или не переносится.
+const CAP_SETS=4, CAP_NEW=1;
+function suggestMods(s){
+  const res=[], after=upcomingDays(s.day), load={}, added={};
+  deficits(s).forEach(d=>{   // порядок программы: базовые раньше изоляции
+    const top=+lvSorted(d.lv)[0]; if(isNaN(top)) return;
+    const why=`недобор ${d.missed} подх. «${d.name}» (${MUS[top]})`;
+    for(const day of after){
+      const room=CAP_SETS-(load[day]||0); if(room<=0) continue;
+      const bi=P[day].ex.findIndex((r,i)=>(LV[day][i][top]||0)>=7); if(bi<0) continue;
+      const n=Math.min(2,d.missed,room), same=res.find(m=>m.day===day&&m.type==="add_sets"&&m.base===bi);
+      if(same){ same.n+=n; same.reason+="; "+why; } else res.push({id:rid(),day,type:"add_sets",base:bi,n,from:s.date,reason:why});
+      load[day]=(load[day]||0)+n; return;
+    }
+    const day=after.find(k=>(added[k]||0)<CAP_NEW&&(load[k]||0)<CAP_SETS&&k[0]===s.day[0]);   // новое упражнение — только в день того же типа
+    if(!day) return;
+    const row=P[s.day].ex[d.bi], n=Math.min(2,d.missed,CAP_SETS-(load[day]||0));
+    res.push({id:rid(),day,type:"add",name:d.name,n,lo:row[2],hi:row[3],lv:d.lv,from:s.date,reason:why});
+    load[day]=(load[day]||0)+n; added[day]=(added[day]||0)+1;
+  });
+  return res;
+}
+async function suggestModsAuto(s){
+  const after=upcomingDays(s.day), defs=deficits(s);
+  const prog=after.map(day=>`${day} (${P[day].name}):\n`+P[day].ex.map((r,i)=>`  ${i}. ${r[0]} ${r[1]}×${r[2]}–${r[3]}; нагрузка: ${lvText(LV[day][i])}`).join("\n")).join("\n");
+  const r=await S.sample.json(`Ты тренер по гипертрофии. Тренировка ${s.date} (${P[s.day].name}) завершена с отклонениями от программы. Перенеси недобор в ближайшие тренировки так, чтобы недельный объём по мышцам сохранился, но тренировки не раздулись (не больше +3 подходов на тренировку). Можно: добавить подходы к упражнению (add_sets), заменить упражнение (replace), добавить упражнение (add).
+${PROFILE}
+
+ЧТО ПРОИЗОШЛО:
+${sessionBlock(s)}
+НЕДОБОР ПО ПРОГРАММЕ:
+${defs.length?defs.map(d=>`- ${d.name}: не сделано ${d.missed} подх.${d.removed?" (упражнение убрано)":""}; нагрузка: ${lvText(d.lv)}`).join("\n"):"нет"}
+
+БЛИЖАЙШИЕ ТРЕНИРОВКИ (индексы упражнений с 0):
+${prog}
+
+Ответь только JSON: {"changes":[{"day":"UB","type":"add_sets","exercise_index":0,"sets":2,"reason":"коротко почему"},{"day":"LB","type":"add","name":"…","sets":2,"reps_min":10,"reps_max":15,"levels":{"Грудь":8},"reason":"…"},{"day":"UB","type":"replace","exercise_index":3,"name":"…","levels":{"Грудь":9},"reason":"…"}]}. Если переносить нечего, верни {"changes":[]}.`);
+  const out=[];
+  (r&&Array.isArray(r.changes)?r.changes:[]).forEach(c=>{
+    const day=String(c.day), type=String(c.type); if(!after.includes(day)) return;
+    const bi=Math.round(Number(c.exercise_index)), n=Math.min(4,Math.max(1,Math.round(Number(c.sets)||2))), reason=String(c.reason||"").slice(0,160);
+    if((type==="add_sets"||type==="replace")&&!(bi>=0&&bi<P[day].ex.length)) return;
+    if(type==="add_sets") out.push({id:rid(),day,type,base:bi,n,from:s.date,reason});
+    else if(type==="replace"&&c.name) out.push({id:rid(),day,type,base:bi,name:String(c.name).slice(0,80),lv:lvFromObj(c.levels),from:s.date,reason});
+    else if(type==="add"&&c.name){ const lo=Math.max(1,Math.round(Number(c.reps_min)||8)); out.push({id:rid(),day,type,name:String(c.name).slice(0,80),n,lo,hi:Math.max(lo,Math.round(Number(c.reps_max)||12)),lv:lvFromObj(c.levels),from:s.date,reason}); }
+  });
+  return out;
+}
+function addMods(mods){
+  const byDay={}; mods.forEach(m=>{ (byDay[m.day]=byDay[m.day]||[]).push(m); });
+  for(const day in byDay) putDoc(modsId(day),{kind:"mods",day,list:[...modsList(day),...byDay[day]]});
+}
+function dropMod(day,id){ const left=modsList(day).filter(m=>m.id!==id); putDoc(modsId(day),left.length?{kind:"mods",day,list:left}:undefined); }
 
 /* ---------- Промпты для Клода ---------- */
 const PROFILE=`Профиль: мужчина 26 лет, 177 см, ~83 кг, ~20% жира, стаж ~6 месяцев, цель — гипертрофия. Принимает ААС под наблюдением врача, поэтому особое внимание сухожилиям (грудь, дистальный бицепс, надколенник, ахилл) и давлению. Препараты не обсуждай и не советуй.
@@ -241,7 +333,7 @@ const I={
   more:"M5 12h.01M12 12h.01M19 12h.01", plus:"M12 5v14M5 12h14", minus:"M5 12h14",
   dumbbell:"M3 12h2M19 12h2M7 7v10M17 7v10M5 9v6M19 9v6M7 12h10", bars:"M5 20V11M12 20V4M19 20v-6",
   clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
-  swap:"M7 7h12l-3-3M17 17H5l3 3", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01"
+  swap:"M7 7h12l-3-3M17 17H5l3 3", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01"
 };
 const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
