@@ -247,16 +247,16 @@ const saveEl=document.getElementById("save");
 function setSave(t,bad){ saveEl.textContent=t; saveEl.className="save"+(bad?" bad":""); }
 function lsRead(){ try{ return JSON.parse(localStorage.getItem(LS)||"{}"); }catch(e){ return {}; } }
 function lsWrite(){ try{ localStorage.setItem(LS, JSON.stringify(store)); }catch(e){} }
-const timers={}, chains={}, pending=new Set();
+const timers={}, chains={}, pending=new Set(), vers={};
 function persist(id){
-  clearTimeout(timers[id]); pending.add(id);
+  clearTimeout(timers[id]); pending.add(id); const v=vers[id]=(vers[id]||0)+1;
   setSave("Сохраняю…");
   timers[id]=setTimeout(()=>{
     const data=store[id];
     if(!db){ pending.delete(id); lsWrite(); setSave(local?"Сохранено на этом устройстве":"", false); return; }
     chains[id]=(chains[id]||Promise.resolve()).then(()=>
       db.collection("data/users/"+uid).doc(id).set(JSON.parse(JSON.stringify(data)))
-    ).then(()=>{ if(!timers[id]||store[id]===data) pending.delete(id); setSave("Сохранено"); },()=>setSave("Не сохранилось. Проверь доступ",true));
+    ).then(()=>{ if(vers[id]===v) pending.delete(id); setSave("Сохранено"); },()=>setSave("Не сохранилось. Проверь доступ",true));
   },700);
 }
 function sessions(){ return Object.entries(store).filter(([k,v])=>v&&v.kind==="session").map(([k,v])=>({id:k,...v})); }
@@ -633,7 +633,7 @@ render();
   let first=true;
   db.collection("data/users/"+uid).onSnapshot(snap=>{
     const prev=JSON.stringify(store[sid()]||null);
-    const next={}; snap.docs.forEach(d=>{ next[d.id]=d.data(); });
+    const next={}; snap.docs.forEach(d=>{ next[d.id]=JSON.parse(JSON.stringify(d.data())); });
     // локальные несохранённые правки не затираем
     for(const id of pending) if(store[id]) next[id]=store[id];
     store=next;
