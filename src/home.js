@@ -42,7 +42,7 @@ function weekData(date){
 }
 
 // Сводка — по экрану «Сводка» макета
-function HomeView({date,day,go,openHistory}){
+function HomeView({date,day,go,openHistory,openSession}){
   const s=getSession(date,day), w=weekData(date);
   const rows=s.ex.reduce((a,e)=>a+rowsOf(s,e),0), doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0);
   const started=hasData(s);
@@ -103,7 +103,7 @@ function HomeView({date,day,go,openHistory}){
 
     <h2 class="sec">Журнал</h2>
     <div class="card list">
-      ${recent.map(x=>html`<button key=${x.id} class="lrow" onClick=${()=>go("hist")}>
+      ${recent.map(x=>html`<button key=${x.id} class="lrow" onClick=${()=>openSession(x.date,x.day)}>
         <${Plate} k=${x.day}/>
         <span class="lmain"><b>${P[x.day].name}</b><small>${longDate(x.date)} · ${x.ex.reduce((a,e)=>a+doneOf(e),0)} подх.</small></span>
         <${Icon} n="right" size=${18}/></button>`)}

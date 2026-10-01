@@ -327,6 +327,12 @@ function SessionSheets({sheet,setSheet,s,date,day,edit,remove,openAsk,openHistor
     :sheet.type==="muscles"?html`<${SessionMuscles} s=${s} onClose=${close}/>`
     :sheet.type==="day"?html`<${DaySheet} s=${s} date=${date} day=${day} setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi} onClose=${close}/>`:null;
 }
+function DurTile({value,onChange}){
+  const [ed,setEd]=useState(false);
+  return html`<div class="durtile">${ed
+    ?html`<label><span>Время, мин</span><input autoFocus type="text" inputmode="numeric" value=${value} onChange=${ev=>onChange(ev.target.value.replace(/[^0-9]/g,""))} onBlur=${()=>setEd(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEd(false); }}/></label>`
+    :html`<button onClick=${()=>setEd(true)} aria-label=${"Время тренировки: "+(value||"не задано")+" мин. Нажми, чтобы изменить"}><span>Время <${Icon} n="pen" size=${13}/></span><b class="big">${value||"–"}<small> мин</small></b></button>`}</div>`;
+}
 function FinishPanel({s,edit,toast,head}){
   const doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
@@ -340,22 +346,16 @@ function FinishPanel({s,edit,toast,head}){
         <div><h2>${head?head.title:"Итог"}</h2><span class="mute">${head?head.sub:s.done?"Тренировка завершена":"Тренировка ещё идёт"}</span></div>
       </div>
       <div class="tiles4">
-        <div><span>Время</span><b class="big">${s.dur||"–"}<small> мин</small></b></div>
+        <${DurTile} value=${s.dur||""} onChange=${v=>edit(ss=>{ ss.dur=v; })}/>
         <div><span>Подходы</span><b class="big acc">${doneSets}/${totalSets}</b></div>
         <div><span>Упражнения</span><b class="big grn">${doneEx}/${s.ex.length}</b></div>
         <div><span>Средний запас</span><b class="big">${avgQ}</b></div>
       </div>
+      <label class="notetile"><span>Заметка о тренировке</span>
+        <textarea rows="2" placeholder="Самочувствие, сон, боли…" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea></label>
       ${s.done?html`<${Corrections} s=${s} toast=${toast}/>`:null}
       <${Review} label="Разобрать тренировку" stored=${s.summary} disabledMsg="Сначала впиши хотя бы один подход."
         build=${()=>hasData(s)?reviewPrompt(s):""} onSave=${t=>edit(ss=>{ ss.summary=t; })}/>
-      <details class="grp more">
-        <summary class="grp-row"><span>Самочувствие, вес и время</span><${Icon} n="down" size=${18}/></summary>
-        <div class="form">
-          <label>Вес утром, кг<input type="text" inputmode="decimal" value=${s.bw||""} onChange=${ev=>edit(ss=>{ ss.bw=ev.target.value; })}/></label>
-          <label>Длительность, мин<input type="text" inputmode="numeric" value=${s.dur||""} onChange=${ev=>edit(ss=>{ ss.dur=ev.target.value; })}/></label>
-          <label class="full">Самочувствие, сон, боли<textarea rows="2" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea></label>
-        </div>
-      </details>
     </section>`;
 }
 function AppliedBanner({s,date,day,edit}){
@@ -432,8 +432,7 @@ function WeekView({date,embedded}){
         <td class=${!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low"}>${hasFact?fmt(fact[k]):"–"}</td></tr>`)}</tbody>
       <tfoot><tr><td>Подходов за тренировку</td>${perDay.map((n,j)=>html`<td key=${j}>${n}</td>`)}<td>${perDay.reduce((a,b)=>a+b,0)}</td><td></td><td></td></tr></tfoot>
     </table></div>
-    <p class="note">Столбцы дней: подходы с высокой нагрузкой (7–10) на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и считается по ней, с заменами и добавленными упражнениями. «+1,5» значит, что мышца работает только со средней или низкой нагрузкой. «Эфф.»: эффективные подходы: высокая нагрузка = 1, средняя (4–6) = 0,5, низкая (1–3) = 0,25. «Факт»: то же по сделанным подходам.</p>
-    <h3>Разбор недели</h3>
+    <${Help} label="Как читать таблицу">Столбцы дней: подходы с высокой нагрузкой (7–10) на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и считается по ней, с заменами и добавленными упражнениями. «+1,5» значит, что мышца работает только со средней или низкой нагрузкой. «Эфф.»: эффективные подходы: высокая нагрузка = 1, средняя (4–6) = 0,5, низкая (1–3) = 0,25. «Факт»: то же по сделанным подходам.<//>
     <${Review} label="Разобрать неделю" stored=${wdoc&&wdoc.summary} disabledMsg="На этой неделе ещё нет записанных тренировок."
       build=${()=>inWeek.some(hasData)?weekPrompt(MUS_ORDER.map(k=>({m:MUS[k],plan:totF[k],fact:fact[k]})),ws,we,inWeek.filter(hasData).sort((a,b)=>a.date.localeCompare(b.date))):""}
       onSave=${t=>putDoc(wid,{kind:"week",start:ws,summary:t})}/>
@@ -441,19 +440,41 @@ function WeekView({date,embedded}){
 }
 
 /* ---------- История ---------- */
-function HistoryView({go}){
+const WD=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+const shortDay=k=>P[k].name.split(" ").map(w=>w[0]).join("");
+function DateStrip({list,openSession}){
+  const ref=useRef(null);
+  const byDate={}; list.forEach(x=>{ if(!byDate[x.date]) byDate[x.date]=x; });
+  const end=new Date(weekEnd(todayStr())+"T00:00:00"), start=new Date(end);
+  start.setDate(start.getDate()-62);
+  const first=list.length?new Date(list[list.length-1].date+"T00:00:00"):start;
+  if(first<start) start.setTime(first.getTime());
+  start.setDate(start.getDate()-((start.getDay()+6)%7));
+  const days=[]; for(const d=new Date(start); d<=end; d.setDate(d.getDate()+1)) days.push(d.toLocaleDateString("sv-SE"));
+  useEffect(()=>{ const el=ref.current; if(!el) return; const t=el.querySelector(".ds-day.today"); el.scrollLeft=t?t.offsetLeft-el.clientWidth+t.offsetWidth*3:el.scrollWidth; },[]);
+  const today=todayStr();
+  return html`<div class="dstrip" ref=${ref} role="list" aria-label="Календарь тренировок">${days.map(d=>{
+    const x=byDate[d], t=new Date(d+"T00:00:00"), mon=t.getDate()===1||d===days[0];
+    return html`<button key=${d} role="listitem" class=${"ds-day"+(x?" on":"")+(d===today?" today":"")+(t.getDay()===1?" wk":"")} disabled=${!x}
+      onClick=${()=>x&&openSession(x.date,x.day)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")}>
+      <small class="ds-m">${mon?RU_MONTHS[t.getMonth()].slice(0,3):""}</small>
+      <small>${WD[t.getDay()]}</small>
+      <b style=${x?{background:PC[x.day]}:null}>${t.getDate()}</b>
+      <small class="ds-k">${x?shortDay(x.day):""}</small>
+    </button>`; })}</div>`;
+}
+function HistoryView({openSession}){
   const list=sessions().filter(hasData).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
   return html`<div>
     <header class="large"><h1>История</h1><span class="ttl-s">${list.length} в журнале</span></header>
-    ${!list.length?html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`:html`<div class="list">${list.map(s=>{
+    <${DateStrip} list=${list} openSession=${openSession}/>
+    <div class="dlegend">${ORDER.map(k=>html`<span key=${k}><${Plate} k=${k}/>${P[k].name}</span>`)}</div>
+    ${!list.length?html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`:html`<div class="card list">${list.map(s=>{
       const cnt=s.ex.reduce((a,e)=>a+doneOf(e),0);
-      return html`<details class="sess" key=${s.id}><summary><span class="d"><${Plate} k=${s.day}/>${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${s.ex.length} упр. · ${cnt} подх.${s.dur?" · "+s.dur+" мин":""}</span></summary>
-        <div class="body">
-          ${s.bw?html`<div class="mono">Вес утром: ${s.bw} кг</div>`:null}
-          ${s.ex.map(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?"·"+x.q:""}`).join("  "); return sets||e.note?html`<div key=${e.uid}><b>${xinfo(s,e).name}</b><div class="mono">${sets}</div>${e.note?html`<div class="mute">${e.note}</div>`:null}</div>`:null; })}
-          ${s.note?html`<div>${s.note}</div>`:null}
-          ${s.summary?html`<div class="sum"><${Rich} text=${s.summary}/></div>`:null}
-        </div></details>`;
+      return html`<button key=${s.id} class="lrow" onClick=${()=>openSession(s.date,s.day)}>
+        <${Plate} k=${s.day}/>
+        <span class="lmain"><b>${P[s.day].name}</b><small>${longDate(s.date)} · нед. ${s.week} · ${s.ex.length} упр. · ${cnt} подх.${s.dur?" · "+s.dur+" мин":""}</small></span>
+        <${Icon} n="right" size=${18}/></button>`;
     })}</div>`}
   </div>`;
 }
@@ -585,8 +606,9 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["home","Прогресс","summ"],["train","Тренировка","dumbbell"],["ask","Тренер","star"],["week","Неделя","bars"],["hist","История","history"]];
+  const tabs=[["home","Прогресс","summ"],["ask","Тренер","spark"],["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","history"]];
   const go=v=>{ setView(v); window.scrollTo(0,0); };
+  const openSession=(d,k)=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(k); go("train"); };
   const restFull=ui==="focus"&&view==="train"&&timer&&!timer.hidden;
   useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
   return html`<${React.Fragment}>
@@ -597,12 +619,13 @@ function App(){
     ${S.bad?html`<div class="save bad" role="status">${S.status}</div>`:null}
     <main ref=${mainRef}>
       ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} ui=${ui} setUi=${setUi} openHistory=${setHist} go=${go}/>`
-        :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openHistory=${setHist}/>`
+        :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openSession=${openSession} openHistory=${setHist}/>`
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
-        :view==="hist"?html`<${HistoryView} go=${go}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
+        :view==="hist"?html`<${HistoryView} openSession=${openSession}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
     </main>
     <nav class="tabbar" role="tablist">
-      ${tabs.map(([k,l,ic])=>k==="ask"?html`<button key=${k} class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><span class="tb-ask-i"><${Icon} n="spark" size=${24}/></span><span>${l}</span></button>`
+      ${tabs.map(([k,l,ic])=>k==="ask"?html`<button key=${k} class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${24}/><span>${l}</span></button>`
+        :k==="train"?html`<button key=${k} role="tab" class="tb-main" aria-selected=${String(view===k)} onClick=${()=>go(k)}><span class="tb-main-i"><${Icon} n=${ic} size=${26}/></span><span>${l}</span></button>`
         :html`<button key=${k} role="tab" aria-selected=${String(view===k||(k==="home"&&view==="body"))} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
     </nav>
     ${hist?html`<${ExerciseHistory} name=${hist} onClose=${()=>setHist(null)}/>`:null}
