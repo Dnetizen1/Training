@@ -1,225 +1,242 @@
 <title>Дневник тренировок</title>
 <style>
-/* Layout: one-column phone-first app. Sticky top bar with week/RIR, day tabs, exercise cards with set rows, fixed rest-timer bar. */
+/* Направление: тренировочный журнал. Палитра — цвета дисков IWF (25 красный, 20 синий, 15 жёлтый, 10 зелёный),
+   у каждого дня свой диск и он же акцент. Острые углы (4–6px), линии вместо теней, цифры моноширинным.
+   Шрифты: Unbounded (заголовки), Golos Text (текст), JetBrains Mono (цифры). */
 :root{
-  --bg:#eceef1; --card:#ffffff; --line:#d9dde3; --ink:#161a20; --mute:#5d6672;
-  --accent:#2446d8; --accent-ink:#ffffff; --accent-soft:#e3e9fd;
-  --ok:#17803d; --ok-soft:#dff3e5; --warn:#b4540a; --warn-soft:#fbead9;
-  --field:#f5f6f8;
-  --display:"Barlow Condensed","Arial Narrow",sans-serif;
-  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#eceef0; --surface:#ffffff; --sunk:#f4f5f7; --line:#d2d6dc; --rule:#e5e8ec;
+  --ink:#111418; --mute:#5a626d; --inv:#ffffff;
+  --p-red:#d4252d; --p-blue:#1d55d4; --p-yellow:#e2ad0f; --p-green:#16924a;
+  --day:var(--p-blue); --day-ink:#ffffff; --day-soft:#e3eafb;
+  --ok:#16924a; --ok-soft:#e1f2e7; --warn:#c2410c; --warn-soft:#fbe9df;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:4px; --r-card:6px;
+  --ease:cubic-bezier(.2,.8,.2,1);
 }
+:root[data-day="LA"]{--day:var(--p-red);--day-soft:#f9e1e2}
+:root[data-day="UB"]{--day:var(--p-yellow);--day-ink:#111418;--day-soft:#fbf1d2}
+:root[data-day="LB"]{--day:var(--p-green);--day-soft:#dff1e6}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#12151a; --card:#1b2027; --line:#2c333d; --ink:#e9ecf1; --mute:#98a2b0;
-  --accent:#8aa2ff; --accent-ink:#0d1330; --accent-soft:#232c52;
-  --ok:#5cd187; --ok-soft:#173424; --warn:#f0a35e; --warn-soft:#3a2a18; --field:#232932; color-scheme:dark}}
+  --bg:#0e1013; --surface:#171a1f; --sunk:#1e2228; --line:#2c323a; --rule:#242930;
+  --ink:#e9ebee; --mute:#98a1ad; --inv:#0e1013;
+  --p-red:#ff5a60; --p-blue:#5d8dff; --p-yellow:#f2c94c; --p-green:#3fca7b;
+  --day-soft:#1c2740; --ok:#3fca7b; --ok-soft:#14301f; --warn:#ff8a4c; --warn-soft:#3a2416; color-scheme:dark}
+  :root:not([data-theme="light"])[data-day="LA"]{--day-soft:#3a1c1e}
+  :root:not([data-theme="light"])[data-day="UB"]{--day-soft:#3a3218}
+  :root:not([data-theme="light"])[data-day="LB"]{--day-soft:#15301f}
+  :root:not([data-theme="light"]){--day-ink:#0e1013}}
 :root[data-theme="dark"]{
-  --bg:#12151a; --card:#1b2027; --line:#2c333d; --ink:#e9ecf1; --mute:#98a2b0;
-  --accent:#8aa2ff; --accent-ink:#0d1330; --accent-soft:#232c52;
-  --ok:#5cd187; --ok-soft:#173424; --warn:#f0a35e; --warn-soft:#3a2a18; --field:#232932; color-scheme:dark}
+  --bg:#0e1013; --surface:#171a1f; --sunk:#1e2228; --line:#2c323a; --rule:#242930;
+  --ink:#e9ebee; --mute:#98a1ad; --inv:#0e1013;
+  --p-red:#ff5a60; --p-blue:#5d8dff; --p-yellow:#f2c94c; --p-green:#3fca7b;
+  --day-soft:#1c2740; --day-ink:#0e1013; --ok:#3fca7b; --ok-soft:#14301f; --warn:#ff8a4c; --warn-soft:#3a2416; color-scheme:dark}
+:root[data-theme="dark"][data-day="LA"]{--day-soft:#3a1c1e}
+:root[data-theme="dark"][data-day="UB"]{--day-soft:#3a3218}
+:root[data-theme="dark"][data-day="LB"]{--day-soft:#15301f}
+
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:16px/1.4 var(--body);padding-inline:16px;padding-block:0 120px;max-width:720px;margin-inline:auto}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-inline:16px;padding-block:0 120px;max-width:720px;margin-inline:auto;-webkit-font-smoothing:antialiased}
 button,input,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px;display:grid;gap:10px}
-.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
-h1{font:700 28px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;margin:0}
-.save{font-size:13px;color:var(--mute)}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--day);outline-offset:2px}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* шапка */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:14px 0;display:grid;gap:12px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font:700 19px/1.1 var(--display);letter-spacing:-.01em;margin:0}
+.save{font:500 12px var(--mono);color:var(--mute);display:inline-flex;align-items:center;gap:6px}
+.save::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.save.bad::before{background:var(--warn)}
 .save.bad{color:var(--warn)}
-.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--line);padding:3px;border-radius:10px}
-.nav button{border:0;background:transparent;padding:8px 2px;font-size:14px;border-radius:8px;font-weight:600;color:var(--mute)}
-.nav button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.days{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.days button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 2px;font:700 17px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase}
-.days button small{display:block;font:500 11px/1.2 var(--body);text-transform:none;letter-spacing:0;color:var(--mute);margin-top:2px}
-.days button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.days button[aria-pressed="true"] small{color:inherit;opacity:.85}
-.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.chip{display:inline-flex;gap:6px;align-items:center;background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.nav button{border:0;background:transparent;padding:10px 2px 11px;font-size:14.5px;font-weight:600;color:var(--mute);border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .2s var(--ease),border-color .2s var(--ease)}
+.nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--day)}
+
+/* дни: диски */
+main{padding-top:14px}
+.days{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.days button{display:grid;justify-items:start;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-card);padding:10px 9px;text-align:left;transition:background .2s var(--ease),border-color .2s var(--ease)}
+.days b{font:700 13px/1 var(--display);white-space:nowrap}
+.days button{min-width:0;overflow:hidden}
+.days small{font-size:11.5px;line-height:1.2;color:var(--mute);overflow-wrap:anywhere;hyphens:auto;max-width:100%}
+.plate{width:16px;height:16px;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 4px color-mix(in srgb,var(--c) 70%,#000 30%),inset 0 0 0 6px var(--c)}
+.plate::after{content:"";display:block;width:4px;height:4px;margin:6px;border-radius:50%;background:var(--surface)}
+.days button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--inv)}
+.days button[aria-pressed="true"] small{color:inherit;opacity:.7}
+.days button[aria-pressed="true"] .plate::after{background:var(--ink)}
+
+/* сводка мышц сегодня */
+.mchips{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);font-size:13.5px}
+.mchips span b{font:600 13.5px var(--mono);margin-right:4px}
+.mchips span.ind{color:var(--mute)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.chip{font:600 12.5px var(--mono);padding:5px 8px;border-radius:var(--r);background:var(--day-soft);color:var(--ink)}
 .chip.warn{background:var(--warn-soft)}
-.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--card)}
-.stepper button{border:0;background:transparent;width:32px;height:32px;font-size:18px;border-radius:999px}
-.stepper span{min-width:62px;text-align:center;font-weight:600;font-size:14px}
-input[type=date]{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:14px}
-.cards{display:grid;gap:12px;margin-top:6px}
-.ex{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px;min-width:0}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.stepper button{border:0;background:transparent;width:34px;height:34px;font-size:18px}
+.stepper span{min-width:76px;text-align:center;font:600 13px var(--mono)}
+input[type=date]{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;font:500 14px var(--mono);height:36px}
+
+/* карточки упражнений */
+.cards{display:grid;gap:10px;margin-top:12px}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px 14px 12px;display:grid;gap:10px;min-width:0;transition:border-color .25s var(--ease)}
 .ex.complete{border-color:var(--ok)}
-.ex h2{font:700 21px/1.15 var(--display);letter-spacing:.01em;margin:0}
-.plan{color:var(--mute);font-size:14px;display:flex;flex-wrap:wrap;gap:4px 12px}
-.plan b{color:var(--ink);font-weight:600}
-.hint{font-size:13.5px;border-radius:8px;padding:6px 10px;background:var(--field);color:var(--mute)}
-.hint.up{background:var(--ok-soft);color:var(--ink)}
-.sets{display:grid;gap:6px}
-.set{display:grid;grid-template-columns:22px minmax(0,.9fr) minmax(0,1fr) minmax(0,1fr) 44px;gap:6px;align-items:center}
-.set.head{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);text-align:center;font-weight:600}
-.set .prev{font-size:13px;color:var(--mute);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.set .n{font:700 16px var(--display);color:var(--mute);text-align:center}
-.set input[type=text]{width:100%;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font-size:18px;font-variant-numeric:tabular-nums;text-align:center}
-.tick{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--field);font-size:20px;line-height:1;color:var(--mute)}
-.tick[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
-.row-actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
-.btn.quiet{border-color:transparent;color:var(--mute);background:transparent}
-textarea{width:100%;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:15px;resize:vertical;min-height:40px}
-.foot{display:grid;gap:10px;margin-top:14px}
-.timer{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--bg);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;justify-content:center;z-index:9}
-.timer[hidden]{display:none!important}
-.timer .t{font:700 30px/1 var(--display);font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
-.timer .l{font-size:13px;opacity:.8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.timer button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:8px;padding:6px 10px}
-.timer.done{background:var(--ok);color:#fff}
-.sess{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0}
-.sess summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
-.sess summary::-webkit-details-marker{display:none}
-.sess .d{font:700 18px var(--display);letter-spacing:.02em}
-.sess .s{color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums}
-.sess .body{padding:0 14px 14px;display:grid;gap:8px;font-size:14.5px}
-.sess .body div b{font-weight:600}
-.sess .body .mono{font-variant-numeric:tabular-nums;color:var(--mute)}
-.list{display:grid;gap:8px;margin-top:6px}
-.empty{color:var(--mute);padding:28px 8px;text-align:center}
-.form{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:6px}
-.form label{display:grid;gap:4px;font-size:13px;color:var(--mute);min-width:0}
-.form input{background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:16px;width:100%;min-width:0}
-.form .full{grid-column:1/-1}
-.tbl{overflow-x:auto;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:12px}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
-th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
-th:first-child,td:first-child{text-align:left}
-th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-tr:last-child td{border-bottom:0}
-h3{font:700 18px var(--display);letter-spacing:.04em;text-transform:uppercase;margin:18px 0 0;color:var(--mute)}
-@media (prefers-reduced-motion:no-preference){.tick{transition:background .12s}}
-
-.swap{display:grid;gap:8px;background:var(--field);border-radius:10px;padding:10px}
-.swap .opts{display:flex;flex-wrap:wrap;gap:6px}
-.swap .opts button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:14px}
-.swap .own{display:flex;gap:6px}
-.swap .own input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:15px}
-.was{font-size:12px;color:var(--warn);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.ririn{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:15px;width:100%}
-.sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;min-width:0}
-.sum h4{font:700 18px/1.2 var(--display);letter-spacing:.03em;text-transform:uppercase;margin:10px 0 0}
-.sum h4:first-child{margin-top:0}
-.sum p,.sum ul,.sum ol{margin:0}
-.sum ul,.sum ol{padding-left:20px;display:grid;gap:4px}
-.sum code{background:var(--field);padding:1px 5px;border-radius:5px;font-size:.92em}
-.sum .st{color:var(--mute);font-size:14px}
-
-.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.mchips span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;font-variant-numeric:tabular-nums}
-.mchips span b{font-weight:700}
-.mchips span.ind{background:transparent;color:var(--mute);border-style:dashed}
-.tbl td.dir{font-weight:600}
-.tbl td.ok{color:var(--ok);font-weight:600}
-.tbl td.low{color:var(--warn);font-weight:600}
-.tbl tfoot td{font-weight:700;border-top:2px solid var(--line);background:var(--field)}
-.note{color:var(--mute);font-size:13.5px;margin-top:10px}
-
-.ex-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.ex-head h2{min-width:0}
-.mv{display:flex;gap:4px;flex:none}
-.mv button{width:34px;height:34px;border:1px solid var(--line);background:var(--field);border-radius:8px;font-size:16px;line-height:1}
-.mv button:disabled{opacity:.35;cursor:default}
-.mus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.mus button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 10px;text-align:left;font-size:14px;display:grid;gap:1px}
-.mus button small{color:var(--mute);font-size:11px}
-.mus button.s{background:var(--accent-soft);border-color:var(--accent)}
-.mus button.p{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.mus button.p small{color:inherit;opacity:.85}
-.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)}
-.chk input{width:18px;height:18px}
-.addbox{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
-.adform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.adform label{display:grid;gap:4px;font-size:13px;color:var(--mute);min-width:0}
-.adform input[type=text]{background:var(--field);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:16px;width:100%;min-width:0}
-.adform .full{grid-column:1/-1}
-.st{color:var(--mute);font-size:13.5px}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--line);padding:3px;border-radius:10px}
-.seg button{border:0;background:transparent;padding:8px;border-radius:8px;font-weight:600;color:var(--mute)}
-.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.seg button:disabled{opacity:.4}
-/* --- v2: иконки, плавающая кнопка, чат, всплывашка --- */
-body{padding-block:0 150px}
+.ex-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start}
+.idx{font:600 13px/26px var(--mono);color:var(--mute);min-width:22px}
+.ex.complete .idx{color:var(--ok)}
 .ex-title{min-width:0}
-.ex-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.mv{display:flex;gap:4px;flex:none}
-.ibtn{display:inline-grid;place-items:center;width:34px;height:34px;border:1px solid var(--line);background:var(--field);border-radius:9px;color:var(--mute);padding:0}
-.ibtn:disabled{opacity:.35;cursor:default}
-.ibtn.ai{color:var(--accent)}
-.ibtn.danger:hover,.ibtn.danger:focus-visible{color:var(--warn);border-color:var(--warn)}
-.btn{display:inline-flex;align-items:center;gap:6px}
+.ex h2{font:600 18px/1.25 var(--body);margin:2px 0 0;letter-spacing:-.005em}
+.sub{font-size:13px;color:var(--mute);margin-top:2px}
+.sub b{color:var(--warn);font-weight:600}
+.mv{display:flex;gap:2px;flex:none}
+.ibtn{display:inline-grid;place-items:center;width:34px;height:34px;border:0;background:transparent;border-radius:var(--r);color:var(--mute);padding:0;transition:background .15s var(--ease),color .15s var(--ease)}
+.ibtn:hover{background:var(--sunk);color:var(--ink)}
+.ibtn:disabled{opacity:.3;cursor:default;background:transparent}
+.ibtn.ai{color:var(--day)}
+.ibtn.danger:hover,.ibtn.danger:focus-visible{color:var(--p-red)}
+.plan{color:var(--mute);font-size:13.5px;display:flex;flex-wrap:wrap;gap:2px 14px}
+.plan b{color:var(--ink);font-weight:600}
+.plan.spec{font-family:var(--mono);font-size:13px}
+.hint{font:500 12.5px var(--mono);border-radius:var(--r);padding:7px 10px;background:var(--sunk);color:var(--mute);display:flex;gap:8px;align-items:center}
+.hint.up{background:var(--ok-soft);color:var(--ink)}
+.hint svg{flex:none;color:var(--ok)}
+
+/* журнал подходов */
+.sets{display:grid}
+.set{display:grid;grid-template-columns:22px minmax(0,.8fr) minmax(0,1fr) minmax(0,1fr) 44px;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--rule)}
+.set.head{border-top:0;padding:0 0 4px;font:500 11px var(--mono);color:var(--mute);text-align:center}
+.set.head span:first-child{text-align:left}
+.set .n{font:600 14px var(--mono);color:var(--mute)}
+.set .prev{font:500 12.5px var(--mono);color:var(--mute);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.set input[type=text]{width:100%;min-width:0;height:42px;background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:0 4px;font:600 18px var(--mono);text-align:center;transition:border-color .15s var(--ease),background .15s var(--ease)}
+.set input[type=text]:focus{background:var(--surface);border-color:var(--day);outline:0}
+.set input::placeholder{color:var(--mute);opacity:.55;font-weight:500}
+.tick{width:44px;height:42px;border-radius:var(--r);border:1.5px solid var(--line);background:transparent;color:var(--line);display:grid;place-items:center;transition:background .15s var(--ease),border-color .15s var(--ease),color .15s var(--ease)}
+.tick:hover{border-color:var(--mute);color:var(--mute)}
+.tick[aria-pressed="true"]{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+
+/* кнопки */
+.row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:8px 12px;font-size:14px;font-weight:600;transition:background .15s var(--ease),border-color .15s var(--ease),transform .1s var(--ease)}
+.btn:hover{border-color:var(--mute)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--inv)}
+.btn.primary svg{color:var(--day)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--mute);padding-inline:8px}
+.btn.quiet:hover{color:var(--ink);background:var(--sunk)}
 .btn:disabled{opacity:.55;cursor:default}
-.mus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.mus button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 10px;text-align:left;font-size:14px;display:grid;gap:1px}
-.mus button small{color:var(--mute);font-size:11px}
-.mus button.s{background:var(--accent-soft);border-color:var(--accent)}
-.mus button.p{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.mus button.p small{color:inherit;opacity:.85}
-.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)}
-.chk input{width:18px;height:18px}
-.swap{display:grid;gap:8px;background:var(--field);border-radius:10px;padding:10px}
+textarea{width:100%;background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:8px 10px;font-size:15px;resize:vertical;min-height:40px}
+textarea:focus,.ririn:focus{border-color:var(--day);background:var(--surface);outline:0}
+.ririn{background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:8px 10px;font-size:15px;width:100%}
+
+/* панели в карточке */
+.swap{display:grid;gap:10px;background:var(--sunk);border-radius:var(--r);padding:10px}
 .opts{display:flex;flex-wrap:wrap;gap:6px}
-.opts button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:14px;text-align:left}
+.opts button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;font-size:14px;text-align:left;transition:border-color .15s var(--ease)}
+.opts button:hover{border-color:var(--day)}
 .own{display:flex;gap:6px}
-.own input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:15px}
-.was{font-size:12px;color:var(--warn);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.ririn{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:15px;width:100%}
-.addbox{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
-.adform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.adform label{display:grid;gap:4px;font-size:13px;color:var(--mute);min-width:0}
-.adform input[type=text]{background:var(--field);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:16px;width:100%;min-width:0}
-.adform .full,.form .full{grid-column:1/-1}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--line);padding:3px;border-radius:10px}
-.seg button{border:0;background:transparent;padding:8px;border-radius:8px;font-weight:600;color:var(--mute)}
-.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.seg button:disabled{opacity:.4}
+.own input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;font-size:15px}
+.mus{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.mus button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;text-align:left;font-size:14px;display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.mus button small{color:var(--mute);font:500 11px var(--mono)}
+.mus button.s{border-color:var(--day);box-shadow:inset 3px 0 0 var(--day)}
+.mus button.p{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+.mus button.p small{color:inherit;opacity:.8}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink)}
+.chk input{width:18px;height:18px;accent-color:var(--day)}
 .st{color:var(--mute);font-size:13.5px}
 .st.bad{color:var(--warn)}
-.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.mchips span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;font-variant-numeric:tabular-nums}
-.mchips span.ind{background:transparent;color:var(--mute);border-style:dashed}
-.tbl td.dir{font-weight:600}
-.tbl td.mute{color:var(--mute)}
-.tbl td.ok{color:var(--ok);font-weight:600}
-.tbl td.low{color:var(--warn);font-weight:600}
-.tbl tfoot td{font-weight:700;border-top:2px solid var(--line);background:var(--field)}
-.note{color:var(--mute);font-size:13.5px;margin-top:10px}
+
+/* добавление */
+.addbox{border:1.5px dashed var(--line);border-radius:var(--r-card);padding:10px;display:grid;gap:10px}
+.addbox > .btn{justify-self:start}
+.adform{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.adform label,.form label{display:grid;gap:4px;font-size:13px;color:var(--mute);min-width:0}
+.adform input[type=text],.form input{background:var(--sunk);border:1px solid transparent;border-radius:var(--r);padding:9px 10px;font-size:16px;width:100%;min-width:0}
+.adform .full,.form .full{grid-column:1/-1}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:9px;font-weight:600;font-size:14px;color:var(--mute)}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
+.seg button:disabled{opacity:.4}
+
+/* подвал тренировки */
+.foot{display:grid;gap:12px;margin-top:18px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px}
+h3{font:700 14px var(--display);margin:22px 0 0;letter-spacing:-.005em}
 .review{display:grid;gap:10px}
-.sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;min-width:0}
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:14px;display:grid;gap:8px;min-width:0}
 .rich{display:grid;gap:6px;min-width:0;overflow-wrap:anywhere}
-.rich h4{font:700 17px/1.2 var(--display);letter-spacing:.03em;text-transform:uppercase;margin:8px 0 0}
+.rich h4{font:700 13px/1.3 var(--display);margin:10px 0 0}
 .rich h4:first-child{margin-top:0}
 .rich p,.rich ul,.rich ol{margin:0}
 .rich ul,.rich ol{padding-left:20px;display:grid;gap:4px}
-.rich code{background:var(--field);padding:1px 5px;border-radius:5px;font-size:.92em}
-.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:20;display:flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:12px 18px 12px 14px;font-weight:700;font-size:15px;box-shadow:0 8px 22px rgba(20,30,80,.28)}
-.fab.raised{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
-@media (max-width:420px){.fab span{display:none}.fab{padding:14px}}
-.toast{position:fixed;left:16px;right:16px;bottom:calc(148px + env(safe-area-inset-bottom,0px));margin-inline:auto;max-width:480px;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;font-size:14.5px;box-shadow:0 8px 22px rgba(0,0,0,.25)}
-.toast button{background:transparent;border:0;color:var(--accent-soft);font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:13px;padding:4px 6px}
-.sheet-wrap{position:fixed;inset:0;z-index:40;background:rgba(10,14,22,.45);display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:var(--bg);width:100%;max-width:720px;max-height:86%;border-radius:18px 18px 0 0;display:grid;grid-template-rows:auto 1fr auto;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+.rich li::marker{color:var(--day)}
+.rich code{font:500 .9em var(--mono);background:var(--sunk);padding:1px 5px;border-radius:3px}
+
+/* неделя, история, замеры */
+.tbl{overflow-x:auto;margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
+table{border-collapse:collapse;width:100%;font:500 13.5px var(--mono);font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left;font-family:var(--body)}
+th{color:var(--mute);font:600 12px var(--body)}
+th .plate{display:inline-block;vertical-align:-3px;margin-right:5px;width:14px;height:14px}
+th .plate::after{margin:5px;width:4px;height:4px}
+tr:last-child td{border-bottom:0}
+td.dir{font-weight:700}
+td.mute{color:var(--mute)}
+td.ok{color:var(--ok);font-weight:700}
+td.low{color:var(--warn);font-weight:700}
+tfoot td{font-weight:700;border-top:1px solid var(--line);background:var(--sunk)}
+.note{color:var(--mute);font-size:13.5px;margin-top:10px}
+.list{display:grid;gap:6px}
+.sess{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card)}
+.sess summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sess summary::-webkit-details-marker{display:none}
+.sess .d{display:flex;align-items:center;gap:8px;font-weight:600}
+.sess .s{color:var(--mute);font:500 12.5px var(--mono)}
+.sess .body{padding:0 14px 14px;display:grid;gap:8px;font-size:14.5px}
+.sess .body .mono{color:var(--mute);font-size:13px}
+.empty{color:var(--mute);padding:28px 8px;text-align:center}
+
+/* таймер, кнопка Клода, всплывашка, чат */
+.timer{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--inv);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;justify-content:center;z-index:9}
+.timer .t{font:700 26px/1 var(--mono);min-width:76px;text-align:center}
+.timer .l{font-size:13px;opacity:.75;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.timer button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:var(--r);padding:6px 10px;font:600 13px var(--mono)}
+.timer.done{background:var(--ok);color:#fff}
+.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:20;width:56px;height:56px;display:grid;place-items:center;background:var(--ink);color:var(--day);border:0;border-radius:16px;box-shadow:0 10px 24px rgba(10,14,22,.28);transition:bottom .25s var(--ease),transform .15s var(--ease)}
+.fab:hover{transform:translateY(-2px)}
+.fab.raised{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;left:16px;right:88px;bottom:calc(22px + env(safe-area-inset-bottom,0px));max-width:460px;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);color:var(--inv);border-radius:var(--r-card);padding:11px 12px 11px 14px;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+.toast.raised{bottom:calc(82px + env(safe-area-inset-bottom,0px))}
+.toast button{background:var(--day);border:0;color:var(--day-ink);font-weight:700;font-size:13px;padding:6px 10px;border-radius:var(--r);white-space:nowrap}
+.sheet-wrap{position:fixed;inset:0;z-index:40;background:rgba(8,10,14,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:720px;max-height:86%;border-radius:10px 10px 0 0;display:grid;grid-template-rows:auto 1fr auto;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+.sheet-head{display:flex;align-items:center;gap:8px;padding:12px 12px 12px 16px;border-bottom:1px solid var(--line)}
+.sheet-head b{display:flex;align-items:center;gap:8px;white-space:nowrap;font:700 15px var(--display);margin-right:auto}
+.sheet-head b svg{color:var(--day)}
 .sheet-head .btn{white-space:nowrap}
-.sheet-head{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
-.sheet-head b{display:flex;align-items:center;gap:6px;white-space:nowrap;font:700 19px var(--display);text-transform:uppercase;letter-spacing:.03em;margin-right:auto;color:var(--accent)}
 .sheet-body{overflow-y:auto;padding:14px 16px;display:grid;gap:10px;align-content:start;min-height:160px}
 .sheet-foot{display:flex;gap:8px;align-items:flex-end;padding:10px 16px 14px;border-top:1px solid var(--line)}
-.sheet-foot textarea{flex:1;min-width:0}
+.sheet-foot textarea{flex:1;min-width:0;background:var(--surface);border-color:var(--line)}
 .sheet-foot .btn{height:44px}
-.msg{border-radius:14px;padding:10px 12px;max-width:92%;min-width:0;font-size:15px}
-.msg.user{justify-self:end;background:var(--accent);color:var(--accent-ink);white-space:pre-wrap}
-.msg.assistant{justify-self:start;background:var(--card);border:1px solid var(--line)}
-@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px)}to{transform:none}}}
+.msg{border-radius:var(--r-card);padding:10px 12px;max-width:92%;min-width:0;font-size:15px}
+.msg.user{justify-self:end;background:var(--ink);color:var(--inv);white-space:pre-wrap}
+.msg.assistant{justify-self:start;background:var(--surface);border:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:420px){.days small{display:none}.days button{padding:10px 8px}}
 </style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Unbounded:wght@600;700&display=swap">
 <div id="root"><div class="top"><div class="brand"><h1>Дневник тренировок</h1><span class="save">Загружаю…</span></div></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/motion@11.18.2/dist/motion.js"></script>
 <script>
 const P = {
   UA:{name:"Верх A", sub:"горизонталь", ex:[
@@ -532,11 +549,17 @@ const cycle=v=>v===0?.5:v<1?1:0;
 const I={
   spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
-  up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z"
+  up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
+  check:"M5 12.5l4.5 4.5L19 7.5", arrowUp:"M12 19V5M6 11l6-6 6 6"
 };
+const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
+const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
+// Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
+const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
+function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${I[n]}/></svg>`;
+  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d=${I[n]}/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;
 
 /* ---------- Выбор мышц ---------- */
@@ -565,7 +588,7 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
       const m=await detectMuscles(name);
       if(!Object.keys(m).length) throw {};
       upd(x=>{ x.mus=m; });
-      const l=musLists(m); setMsg("Клод определил: основные — "+(l.prim.join(", ")||"нет")+(l.sec.length?"; косвенно — "+l.sec.join(", "):"")+". Можно поправить.");
+      const l=musLists(m); setMsg("Клод определил. Основные: "+(l.prim.join(", ")||"нет")+(l.sec.length?". Косвенно: "+l.sec.join(", "):"")+". Можно поправить.");
     }catch(err){ setMsg(err&&err.code==="not_granted"?ERR.not_granted+" Отметь мышцы вручную.":"Не получилось определить. Отметь мышцы вручную."); }
     setBusy(false);
   };
@@ -584,9 +607,10 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
 
   return html`<section class=${"ex"+(done?" complete":"")}>
     <div class="ex-head">
+      <span class="idx">${String(i+1).padStart(2,"0")}</span>
       <div class="ex-title">
-        ${inf.custom?html`<div class="was">Добавлено</div>`:e.alt?html`<div class="was">Замена · по программе: ${inf.base}</div>`:null}
         <h2>${inf.name}</h2>
+        ${inf.custom?html`<div class="sub">добавлено вручную</div>`:e.alt?html`<div class="sub">вместо: ${inf.base}</div>`:null}
       </div>
       <div class="mv">
         <button class="ibtn" disabled=${i===0} aria-label="Поднять выше" onClick=${()=>edit(ss=>{ [ss.ex[i-1],ss.ex[i]]=[ss.ex[i],ss.ex[i-1]]; })}><${Icon} n="up"/></button>
@@ -595,10 +619,10 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
         <button class="ibtn danger" aria-label="Убрать упражнение" onClick=${()=>onRemove(i)}><${Icon} n="trash"/></button>
       </div>
     </div>
-    <div class="plan"><span><b>${planned}×${lo}–${hi}</b></span><span>RIR <b>${rirFor(rir,wk)}</b></span><span>отдых <b>${restTxt(rest)}</b></span></div>
+    <div class="plan spec"><span><b>${planned}×${lo}–${hi}</b></span><span>RIR <b>${rirFor(rir,wk)}</b></span><span>отдых <b>${restTxt(rest)}</b></span></div>
     <div class="plan">${prim.length||sec.length?html`<span>Основные: <b>${prim.join(", ")||"–"}</b></span>${sec.length?html`<span>Косвенно: ${sec.join(", ")}</span>`:null}`:html`<span>Мышцы не указаны. Нажми «Мышцы»</span>`}</div>
     ${note?html`<div class="plan">${note}</div>`:null}
-    ${lt?html`<div class=${"hint"+(up?" up":"")}>${up?"Все подходы на верхней границе. Добавь вес. ":""}Прошлый раз (${dm(lt.date)}): ${lt.e.sets.filter(x=>num(x.r)!==null).map(x=>(x.w||"б/в")+"×"+x.r).join(", ")}</div>`:null}
+    ${lt?html`<div class=${"hint"+(up?" up":"")}>${up?html`<${Icon} n="arrowUp" size=${16}/>`:null}<span>${up?"Все подходы на верхней границе, добавь вес. ":""}${dm(lt.date)}: ${lt.e.sets.filter(x=>num(x.r)!==null).map(x=>(x.w||"б/в")+"×"+x.r).join(", ")}</span></div>`:null}
     <div class="sets">
       <div class="set head"><span>№</span><span>Прошлый</span><span>кг</span><span>повт</span><span>✓</span></div>
       ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<div class="set" key=${j}>
@@ -606,7 +630,7 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
         <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r:"–"}</span>
         <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>setField(j,"w",ev.target.value)}/>
         <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>setField(j,"r",ev.target.value)}/>
-        <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${()=>tick(j)}>✓</button>
+        <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${ev=>{ const el=ev.currentTarget; if(!x.ok) anim(el,{transform:["scale(.82)","scale(1)"]},{bounce:.5,duration:.4}); tick(j); }}><${Icon} n="check" size=${22}/></button>
       </div>`; })}
     </div>
     <div class="row-actions">
@@ -649,7 +673,7 @@ function AddExercise({edit}){
     setOpen(false); setF({name:"",n:"3",lo:"8",hi:"12"}); setMus({});
     if(m==="ai"){
       setMsg("Клод определяет мышцы для «"+name+"»…");
-      try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); const l=musLists(r); setMsg("«"+name+"»: основные — "+(l.prim.join(", ")||"нет")+(l.sec.length?"; косвенно — "+l.sec.join(", "):"")+"."); }
+      try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); const l=musLists(r); setMsg("«"+name+"». Основные: "+(l.prim.join(", ")||"нет")+(l.sec.length?". Косвенно: "+l.sec.join(", "):"")+"."); }
       catch(e){ setMsg("Клод не смог определить мышцы для «"+name+"». Отметь их кнопкой «Мышцы»."); }
     } else setMsg("");
   };
@@ -704,7 +728,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk}){
   const setWeek=d=>edit(ss=>{ ss.week=Math.min(6,Math.max(1,ss.week+d));
     ss.ex.forEach(e=>{ if(e.sets.some(x=>x.w||x.r||x.ok)) return; const want=setsFor(xinfo(ss,e).plan.ns,ss.week); e.sets=Array.from({length:want},blankSet); }); });
   return html`<div>
-    <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}>${P[k].name}<small>${P[k].sub}</small></button>`)}</div>
+    <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/><b>${P[k].name}</b><small>${P[k].sub}</small></button>`)}</div>
     <div class="mchips" aria-label="Подходы по мышцам в этой тренировке">${counts.map((c,k)=>c.d?html`<span key=${k} title=${MUS[k]+": "+fmt(c.d)+" прямых, "+fmt(c.f)+" дробных"}><b>${c.d}</b> ${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind" title=${MUS[k]+": только косвенная нагрузка"}>+${fmt(c.f)} ${MUS[k]}</span>`:null)}</div>
     <div class="meta" style=${{marginTop:"10px"}}>
       <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
@@ -762,14 +786,14 @@ function WeekView({date}){
       <span class="st">${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}</span>
     </div>
     <div class="tbl"><table>
-      <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead>
+      <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead>
       <tbody>${MUS.map((m,k)=>html`<tr key=${k}><td>${m}</td>
         ${pd.map((d,j)=>d[k].d?html`<td key=${j} class="dir">${d[k].d}</td>`:d[k].f?html`<td key=${j} class="mute">+${fmt(d[k].f)}</td>`:html`<td key=${j} class="mute">–</td>`)}
         <td class="dir">${totD[k]||"–"}</td><td>${fmt(totF[k])}</td>
         <td class=${!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low"}>${hasFact?fmt(fact[k]):"–"}</td></tr>`)}</tbody>
       <tfoot><tr><td>Подходов за тренировку</td>${perDay.map((n,j)=>html`<td key=${j}>${n}</td>`)}<td>${perDay.reduce((a,b)=>a+b,0)}</td><td></td><td></td></tr></tfoot>
     </table></div>
-    <p class="note"><b>Верх A … Низ B</b>: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и столбец считается по ней, с заменами и добавленными упражнениями; без «•» — по программе. «+1,5» — только косвенная нагрузка. <b>Дроб.</b>: прямой подход = 1, косвенный = 0,5, ориентир 10–16 в неделю. <b>Факт</b>: подходы, отмеченные галочкой или с записанными повторами (вес не обязателен), за ${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}. Зелёный — план выполнен.</p>
+    <p class="note"><b>Верх A … Низ B</b>: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и столбец считается по ней, с заменами и добавленными упражнениями. Без «•» столбец по программе. «+1,5» значит только косвенную нагрузку. <b>Дроб.</b>: прямой подход = 1, косвенный = 0,5, ориентир 10–16 в неделю. <b>Факт</b>: подходы с галочкой или с записанными повторами (вес не обязателен) за ${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}. Зелёный значит, что план выполнен.</p>
     <h3>Разбор недели</h3>
     <${Review} label="Разобрать неделю" stored=${wdoc&&wdoc.summary} disabledMsg="На этой неделе ещё нет записанных тренировок."
       build=${()=>inWeek.some(hasData)?weekPrompt(MUS.map((m,k)=>({m,plan:totF[k],fact:fact[k]})),ws,we,inWeek.filter(hasData).sort((a,b)=>a.date.localeCompare(b.date))):""}
@@ -783,7 +807,7 @@ function HistoryView(){
   if(!list.length) return html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`;
   return html`<div class="list">${list.map(s=>{
     let vol=0,cnt=0; s.ex.forEach(e=>e.sets.forEach(x=>{ const w=num(x.w),r=num(x.r); if(r!==null){ cnt++; if(w!==null) vol+=w*r; } }));
-    return html`<details class="sess" key=${s.id}><summary><span class="d">${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${cnt} подх. · ${Math.round(vol).toLocaleString("ru")} кг${s.done?" · ✓":""}</span></summary>
+    return html`<details class="sess" key=${s.id}><summary><span class="d"><${Plate} k=${s.day}/>${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${cnt} подх. · ${Math.round(vol).toLocaleString("ru")} кг${s.done?" · ✓":""}</span></summary>
       <div class="body">
         ${s.bw?html`<div class="mono">Вес утром: ${s.bw} кг${s.dur?" · "+s.dur+" мин":""}</div>`:null}
         ${s.ex.map(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}`).join(", "); return sets||e.note?html`<div key=${e.uid}><b>${xinfo(s,e).name}</b><br/><span class="mono">${sets}</span>${e.note?html`<br/>${e.note}`:null}</div>`:null; })}
@@ -819,7 +843,8 @@ function AskSheet({open,onClose,date,day,focus,toast}){
   const [input,setInput]=useState("");
   const [live,setLive]=useState("");
   const [err,setErr]=useState("");
-  const ctl=useRef(null), box=useRef(null), ta=useRef(null);
+  const ctl=useRef(null), box=useRef(null), ta=useRef(null), sheet=useRef(null);
+  useEffect(()=>{ if(open) anim(sheet.current,{transform:["translateY(60px)","translateY(0)"]},{bounce:.18,duration:.5}); },[open]);
   const s=getSession(date,day);
   useEffect(()=>{ if(open&&focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); if(open) setTimeout(()=>ta.current&&ta.current.focus(),50); },[open,focus]);
   useEffect(()=>{ if(box.current) box.current.scrollTop=box.current.scrollHeight; },[turns,live]);
@@ -868,7 +893,7 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
   };
   const chips=["Подбери замену упражнению: тренажёр занят","Какой вес ставить сегодня по ключевым упражнениям?","Чувствую дискомфорт в суставе. Что делать?","Как правильно выполнять первое упражнение?","Добавь упражнение на отстающую мышцу"];
   return html`<div class="sheet-wrap" onClick=${ev=>{ if(ev.target.classList.contains("sheet-wrap")) onClose(); }}>
-    <div class="sheet" role="dialog" aria-label="Спросить Клода">
+    <div class="sheet" role="dialog" aria-label="Спросить Клода" ref=${sheet}>
       <div class="sheet-head"><b><${Icon} n="spark" size=${18}/> Спросить Клода</b>
         ${turns.length?html`<button class="btn quiet" onClick=${()=>{ setTurns([]); setErr(""); }}>Новый чат</button>`:null}
         <button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
@@ -904,10 +929,11 @@ function Timer({t,onStop,onShift}){
     <button onClick=${onStop}>Стоп</button>
   </div>`;
 }
-function Toast({t,onClose}){
-  useEffect(()=>{ if(!t) return; const h=setTimeout(onClose,5000); return ()=>clearTimeout(h); },[t]);
+function Toast({t,onClose,raised}){
+  const ref=useRef(null);
+  useEffect(()=>{ if(!t) return; anim(ref.current,{transform:["translateY(24px)","translateY(0)"],opacity:[0,1]}); const h=setTimeout(onClose,5000); return ()=>clearTimeout(h); },[t]);
   if(!t) return null;
-  return html`<div class="toast" role="status"><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
+  return html`<div class=${"toast"+(raised?" raised":"")} role="status" ref=${ref}><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
 }
 
 /* ---------- Приложение ---------- */
@@ -921,6 +947,9 @@ function App(){
   const [toast,setToast]=useState(null);
   const [ask,setAsk]=useState({open:false,focus:null});
   const day=picked||defaultDay(date);
+  const mainRef=useRef(null);
+  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
+  useEffect(()=>{ anim(mainRef.current,{opacity:[0,1],transform:["translateY(6px)","translateY(0)"]},{type:"tween",duration:.22,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };
     document.addEventListener("visibilitychange",f); return ()=>document.removeEventListener("visibilitychange",f); },[auto,date]);
@@ -932,13 +961,13 @@ function App(){
       <div class="brand"><h1>Дневник тренировок</h1><span class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</span></div>
       <div class="nav" role="tablist">${tabs.map(([k,l])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}>${l}</button>`)}</div>
     </div>
-    <main>
+    <main ref=${mainRef}>
       ${view==="train"?html`<${TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} startTimer=${startTimer} openAsk=${i=>setAsk({open:true,focus:i})}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
     </main>
-    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({open:true,focus:null})} aria-label="Спросить Клода"><${Icon} n="spark"/><span>Спросить Клода</span></button>
-    <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
+    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({open:true,focus:null})} aria-label="Спросить Клода"><${Icon} n="spark" size=${26}/></button>
+    <${Toast} t=${toast} raised=${!!timer} onClose=${()=>setToast(null)}/>
     <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
     <${AskSheet} open=${ask.open} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk({open:false,focus:null})}/>
   <//>`;

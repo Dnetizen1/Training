@@ -222,11 +222,17 @@ const cycle=v=>v===0?.5:v<1?1:0;
 const I={
   spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
-  up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z"
+  up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
+  check:"M5 12.5l4.5 4.5L19 7.5", arrowUp:"M12 19V5M6 11l6-6 6 6"
 };
+const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
+const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
+// Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
+const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
+function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${I[n]}/></svg>`;
+  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d=${I[n]}/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;
 
 /* ---------- Выбор мышц ---------- */
@@ -255,7 +261,7 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
       const m=await detectMuscles(name);
       if(!Object.keys(m).length) throw {};
       upd(x=>{ x.mus=m; });
-      const l=musLists(m); setMsg("Клод определил: основные — "+(l.prim.join(", ")||"нет")+(l.sec.length?"; косвенно — "+l.sec.join(", "):"")+". Можно поправить.");
+      const l=musLists(m); setMsg("Клод определил. Основные: "+(l.prim.join(", ")||"нет")+(l.sec.length?". Косвенно: "+l.sec.join(", "):"")+". Можно поправить.");
     }catch(err){ setMsg(err&&err.code==="not_granted"?ERR.not_granted+" Отметь мышцы вручную.":"Не получилось определить. Отметь мышцы вручную."); }
     setBusy(false);
   };
@@ -274,9 +280,10 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
 
   return html`<section class=${"ex"+(done?" complete":"")}>
     <div class="ex-head">
+      <span class="idx">${String(i+1).padStart(2,"0")}</span>
       <div class="ex-title">
-        ${inf.custom?html`<div class="was">Добавлено</div>`:e.alt?html`<div class="was">Замена · по программе: ${inf.base}</div>`:null}
         <h2>${inf.name}</h2>
+        ${inf.custom?html`<div class="sub">добавлено вручную</div>`:e.alt?html`<div class="sub">вместо: ${inf.base}</div>`:null}
       </div>
       <div class="mv">
         <button class="ibtn" disabled=${i===0} aria-label="Поднять выше" onClick=${()=>edit(ss=>{ [ss.ex[i-1],ss.ex[i]]=[ss.ex[i],ss.ex[i-1]]; })}><${Icon} n="up"/></button>
@@ -285,10 +292,10 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
         <button class="ibtn danger" aria-label="Убрать упражнение" onClick=${()=>onRemove(i)}><${Icon} n="trash"/></button>
       </div>
     </div>
-    <div class="plan"><span><b>${planned}×${lo}–${hi}</b></span><span>RIR <b>${rirFor(rir,wk)}</b></span><span>отдых <b>${restTxt(rest)}</b></span></div>
+    <div class="plan spec"><span><b>${planned}×${lo}–${hi}</b></span><span>RIR <b>${rirFor(rir,wk)}</b></span><span>отдых <b>${restTxt(rest)}</b></span></div>
     <div class="plan">${prim.length||sec.length?html`<span>Основные: <b>${prim.join(", ")||"–"}</b></span>${sec.length?html`<span>Косвенно: ${sec.join(", ")}</span>`:null}`:html`<span>Мышцы не указаны. Нажми «Мышцы»</span>`}</div>
     ${note?html`<div class="plan">${note}</div>`:null}
-    ${lt?html`<div class=${"hint"+(up?" up":"")}>${up?"Все подходы на верхней границе. Добавь вес. ":""}Прошлый раз (${dm(lt.date)}): ${lt.e.sets.filter(x=>num(x.r)!==null).map(x=>(x.w||"б/в")+"×"+x.r).join(", ")}</div>`:null}
+    ${lt?html`<div class=${"hint"+(up?" up":"")}>${up?html`<${Icon} n="arrowUp" size=${16}/>`:null}<span>${up?"Все подходы на верхней границе, добавь вес. ":""}${dm(lt.date)}: ${lt.e.sets.filter(x=>num(x.r)!==null).map(x=>(x.w||"б/в")+"×"+x.r).join(", ")}</span></div>`:null}
     <div class="sets">
       <div class="set head"><span>№</span><span>Прошлый</span><span>кг</span><span>повт</span><span>✓</span></div>
       ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<div class="set" key=${j}>
@@ -296,7 +303,7 @@ function ExerciseCard({s,i,date,day,edit,onRemove,onAsk,startTimer}){
         <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r:"–"}</span>
         <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>setField(j,"w",ev.target.value)}/>
         <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>setField(j,"r",ev.target.value)}/>
-        <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${()=>tick(j)}>✓</button>
+        <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${ev=>{ const el=ev.currentTarget; if(!x.ok) anim(el,{transform:["scale(.82)","scale(1)"]},{bounce:.5,duration:.4}); tick(j); }}><${Icon} n="check" size=${22}/></button>
       </div>`; })}
     </div>
     <div class="row-actions">
@@ -339,7 +346,7 @@ function AddExercise({edit}){
     setOpen(false); setF({name:"",n:"3",lo:"8",hi:"12"}); setMus({});
     if(m==="ai"){
       setMsg("Клод определяет мышцы для «"+name+"»…");
-      try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); const l=musLists(r); setMsg("«"+name+"»: основные — "+(l.prim.join(", ")||"нет")+(l.sec.length?"; косвенно — "+l.sec.join(", "):"")+"."); }
+      try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); const l=musLists(r); setMsg("«"+name+"». Основные: "+(l.prim.join(", ")||"нет")+(l.sec.length?". Косвенно: "+l.sec.join(", "):"")+"."); }
       catch(e){ setMsg("Клод не смог определить мышцы для «"+name+"». Отметь их кнопкой «Мышцы»."); }
     } else setMsg("");
   };
@@ -394,7 +401,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk}){
   const setWeek=d=>edit(ss=>{ ss.week=Math.min(6,Math.max(1,ss.week+d));
     ss.ex.forEach(e=>{ if(e.sets.some(x=>x.w||x.r||x.ok)) return; const want=setsFor(xinfo(ss,e).plan.ns,ss.week); e.sets=Array.from({length:want},blankSet); }); });
   return html`<div>
-    <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}>${P[k].name}<small>${P[k].sub}</small></button>`)}</div>
+    <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/><b>${P[k].name}</b><small>${P[k].sub}</small></button>`)}</div>
     <div class="mchips" aria-label="Подходы по мышцам в этой тренировке">${counts.map((c,k)=>c.d?html`<span key=${k} title=${MUS[k]+": "+fmt(c.d)+" прямых, "+fmt(c.f)+" дробных"}><b>${c.d}</b> ${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind" title=${MUS[k]+": только косвенная нагрузка"}>+${fmt(c.f)} ${MUS[k]}</span>`:null)}</div>
     <div class="meta" style=${{marginTop:"10px"}}>
       <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
@@ -452,14 +459,14 @@ function WeekView({date}){
       <span class="st">${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}</span>
     </div>
     <div class="tbl"><table>
-      <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead>
+      <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead>
       <tbody>${MUS.map((m,k)=>html`<tr key=${k}><td>${m}</td>
         ${pd.map((d,j)=>d[k].d?html`<td key=${j} class="dir">${d[k].d}</td>`:d[k].f?html`<td key=${j} class="mute">+${fmt(d[k].f)}</td>`:html`<td key=${j} class="mute">–</td>`)}
         <td class="dir">${totD[k]||"–"}</td><td>${fmt(totF[k])}</td>
         <td class=${!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low"}>${hasFact?fmt(fact[k]):"–"}</td></tr>`)}</tbody>
       <tfoot><tr><td>Подходов за тренировку</td>${perDay.map((n,j)=>html`<td key=${j}>${n}</td>`)}<td>${perDay.reduce((a,b)=>a+b,0)}</td><td></td><td></td></tr></tfoot>
     </table></div>
-    <p class="note"><b>Верх A … Низ B</b>: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и столбец считается по ней, с заменами и добавленными упражнениями; без «•» — по программе. «+1,5» — только косвенная нагрузка. <b>Дроб.</b>: прямой подход = 1, косвенный = 0,5, ориентир 10–16 в неделю. <b>Факт</b>: подходы, отмеченные галочкой или с записанными повторами (вес не обязателен), за ${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}. Зелёный — план выполнен.</p>
+    <p class="note"><b>Верх A … Низ B</b>: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и столбец считается по ней, с заменами и добавленными упражнениями. Без «•» столбец по программе. «+1,5» значит только косвенную нагрузку. <b>Дроб.</b>: прямой подход = 1, косвенный = 0,5, ориентир 10–16 в неделю. <b>Факт</b>: подходы с галочкой или с записанными повторами (вес не обязателен) за ${dmy(ws).slice(0,5)}–${dmy(we).slice(0,5)}. Зелёный значит, что план выполнен.</p>
     <h3>Разбор недели</h3>
     <${Review} label="Разобрать неделю" stored=${wdoc&&wdoc.summary} disabledMsg="На этой неделе ещё нет записанных тренировок."
       build=${()=>inWeek.some(hasData)?weekPrompt(MUS.map((m,k)=>({m,plan:totF[k],fact:fact[k]})),ws,we,inWeek.filter(hasData).sort((a,b)=>a.date.localeCompare(b.date))):""}
@@ -473,7 +480,7 @@ function HistoryView(){
   if(!list.length) return html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`;
   return html`<div class="list">${list.map(s=>{
     let vol=0,cnt=0; s.ex.forEach(e=>e.sets.forEach(x=>{ const w=num(x.w),r=num(x.r); if(r!==null){ cnt++; if(w!==null) vol+=w*r; } }));
-    return html`<details class="sess" key=${s.id}><summary><span class="d">${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${cnt} подх. · ${Math.round(vol).toLocaleString("ru")} кг${s.done?" · ✓":""}</span></summary>
+    return html`<details class="sess" key=${s.id}><summary><span class="d"><${Plate} k=${s.day}/>${dmy(s.date)} · ${P[s.day].name}</span><span class="s">нед. ${s.week} · ${cnt} подх. · ${Math.round(vol).toLocaleString("ru")} кг${s.done?" · ✓":""}</span></summary>
       <div class="body">
         ${s.bw?html`<div class="mono">Вес утром: ${s.bw} кг${s.dur?" · "+s.dur+" мин":""}</div>`:null}
         ${s.ex.map(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}`).join(", "); return sets||e.note?html`<div key=${e.uid}><b>${xinfo(s,e).name}</b><br/><span class="mono">${sets}</span>${e.note?html`<br/>${e.note}`:null}</div>`:null; })}
@@ -509,7 +516,8 @@ function AskSheet({open,onClose,date,day,focus,toast}){
   const [input,setInput]=useState("");
   const [live,setLive]=useState("");
   const [err,setErr]=useState("");
-  const ctl=useRef(null), box=useRef(null), ta=useRef(null);
+  const ctl=useRef(null), box=useRef(null), ta=useRef(null), sheet=useRef(null);
+  useEffect(()=>{ if(open) anim(sheet.current,{transform:["translateY(60px)","translateY(0)"]},{bounce:.18,duration:.5}); },[open]);
   const s=getSession(date,day);
   useEffect(()=>{ if(open&&focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); if(open) setTimeout(()=>ta.current&&ta.current.focus(),50); },[open,focus]);
   useEffect(()=>{ if(box.current) box.current.scrollTop=box.current.scrollHeight; },[turns,live]);
@@ -558,7 +566,7 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
   };
   const chips=["Подбери замену упражнению: тренажёр занят","Какой вес ставить сегодня по ключевым упражнениям?","Чувствую дискомфорт в суставе. Что делать?","Как правильно выполнять первое упражнение?","Добавь упражнение на отстающую мышцу"];
   return html`<div class="sheet-wrap" onClick=${ev=>{ if(ev.target.classList.contains("sheet-wrap")) onClose(); }}>
-    <div class="sheet" role="dialog" aria-label="Спросить Клода">
+    <div class="sheet" role="dialog" aria-label="Спросить Клода" ref=${sheet}>
       <div class="sheet-head"><b><${Icon} n="spark" size=${18}/> Спросить Клода</b>
         ${turns.length?html`<button class="btn quiet" onClick=${()=>{ setTurns([]); setErr(""); }}>Новый чат</button>`:null}
         <button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
@@ -594,10 +602,11 @@ function Timer({t,onStop,onShift}){
     <button onClick=${onStop}>Стоп</button>
   </div>`;
 }
-function Toast({t,onClose}){
-  useEffect(()=>{ if(!t) return; const h=setTimeout(onClose,5000); return ()=>clearTimeout(h); },[t]);
+function Toast({t,onClose,raised}){
+  const ref=useRef(null);
+  useEffect(()=>{ if(!t) return; anim(ref.current,{transform:["translateY(24px)","translateY(0)"],opacity:[0,1]}); const h=setTimeout(onClose,5000); return ()=>clearTimeout(h); },[t]);
   if(!t) return null;
-  return html`<div class="toast" role="status"><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
+  return html`<div class=${"toast"+(raised?" raised":"")} role="status" ref=${ref}><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
 }
 
 /* ---------- Приложение ---------- */
@@ -611,6 +620,9 @@ function App(){
   const [toast,setToast]=useState(null);
   const [ask,setAsk]=useState({open:false,focus:null});
   const day=picked||defaultDay(date);
+  const mainRef=useRef(null);
+  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
+  useEffect(()=>{ anim(mainRef.current,{opacity:[0,1],transform:["translateY(6px)","translateY(0)"]},{type:"tween",duration:.22,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };
     document.addEventListener("visibilitychange",f); return ()=>document.removeEventListener("visibilitychange",f); },[auto,date]);
@@ -622,13 +634,13 @@ function App(){
       <div class="brand"><h1>Дневник тренировок</h1><span class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</span></div>
       <div class="nav" role="tablist">${tabs.map(([k,l])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}>${l}</button>`)}</div>
     </div>
-    <main>
+    <main ref=${mainRef}>
       ${view==="train"?html`<${TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} startTimer=${startTimer} openAsk=${i=>setAsk({open:true,focus:i})}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
     </main>
-    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({open:true,focus:null})} aria-label="Спросить Клода"><${Icon} n="spark"/><span>Спросить Клода</span></button>
-    <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
+    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({open:true,focus:null})} aria-label="Спросить Клода"><${Icon} n="spark" size=${26}/></button>
+    <${Toast} t=${toast} raised=${!!timer} onClose=${()=>setToast(null)}/>
     <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
     <${AskSheet} open=${ask.open} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk({open:false,focus:null})}/>
   <//>`;
