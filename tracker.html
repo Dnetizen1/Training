@@ -27,8 +27,8 @@ button{cursor:pointer}
 h1{font:700 28px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;margin:0}
 .save{font-size:13px;color:var(--mute)}
 .save.bad{color:var(--warn)}
-.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--line);padding:3px;border-radius:10px}
-.nav button{border:0;background:transparent;padding:8px 4px;border-radius:8px;font-weight:600;color:var(--mute)}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--line);padding:3px;border-radius:10px}
+.nav button{border:0;background:transparent;padding:8px 2px;font-size:14px;border-radius:8px;font-weight:600;color:var(--mute)}
 .nav button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .days{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .days button{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 2px;font:700 17px/1.1 var(--display);letter-spacing:.03em;text-transform:uppercase}
@@ -108,6 +108,16 @@ h3{font:700 18px var(--display);letter-spacing:.04em;text-transform:uppercase;ma
 .sum ul,.sum ol{padding-left:20px;display:grid;gap:4px}
 .sum code{background:var(--field);padding:1px 5px;border-radius:5px;font-size:.92em}
 .sum .st{color:var(--mute);font-size:14px}
+
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mchips span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;font-variant-numeric:tabular-nums}
+.mchips span b{font-weight:700}
+.mchips span.ind{background:transparent;color:var(--mute);border-style:dashed}
+.tbl td.dir{font-weight:600}
+.tbl td.ok{color:var(--ok);font-weight:600}
+.tbl td.low{color:var(--warn);font-weight:600}
+.tbl tfoot td{font-weight:700;border-top:2px solid var(--line);background:var(--field)}
+.note{color:var(--mute);font-size:13.5px;margin-top:10px}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
 
@@ -115,6 +125,7 @@ h3{font:700 18px var(--display);letter-spacing:.04em;text-transform:uppercase;ma
   <div class="brand"><h1>Дневник тренировок</h1><span class="save" id="save" role="status"></span></div>
   <div class="nav" role="tablist">
     <button role="tab" data-view="train" aria-selected="true">Тренировка</button>
+    <button role="tab" data-view="week" aria-selected="false">Неделя</button>
     <button role="tab" data-view="hist" aria-selected="false">История</button>
     <button role="tab" data-view="body" aria-selected="false">Замеры</button>
   </div>
@@ -199,15 +210,35 @@ const ALT = {
  "Обратные разведения, кроссовер (суперсет)":["Задние дельты в тренажёре","Тяга к лицу на канате","Разведения гантелей лёжа на скамье"]
 };
 const exName=(s,i)=>(s.ex[i]&&s.ex[i].alt)||P[s.day].ex[i][0];
-const WEEKS = {1:"RIR 3 · −1 подход",2:"RIR 2",3:"RIR 1–2",4:"изоляция 0–1 RIR",5:"изоляция 0–1 RIR",6:"разгрузка: ½ подходов, RIR 3–4"};
+const WEEKS = {1:"RIR 3",2:"RIR 2",3:"RIR 1–2",4:"изоляция 0–1 RIR",5:"изоляция 0–1 RIR",6:"разгрузка: ½ подходов, RIR 3–4"};
 const START = "2026-10-01";
 
-function setsFor(n, wk){ return wk===1 ? Math.max(1,n-1) : wk===6 ? Math.ceil(n/2) : n; }
+function setsFor(n, wk){ return wk===6 ? Math.ceil(n/2) : n; }
 function rirFor(rir, wk){ return wk===1 ? "3" : wk===6 ? "3–4" : rir; }
 function weekFromDate(d){
   const days = Math.floor((new Date(d+"T00:00:00") - new Date(START+"T00:00:00"))/864e5);
   return ((Math.max(0,Math.floor(days/7)))%6)+1;
 }
+
+/* ---------- Мышцы ---------- */
+const MUS=["Грудь","Спина","Передняя дельта","Средняя дельта","Задняя дельта","Бицепс","Трицепс","Квадрицепс","Бицепс бедра","Ягодицы","Икры"];
+// на упражнение: {мышца: вес}; 1 = основная (прямой подход), .5 = вспомогательная
+const MAP={
+ UA:[{0:1,6:.5,2:.5},{1:1,5:.5,4:.5},{1:1,5:.5},{2:1,6:.5},{3:1},{5:1},{6:1}],
+ LA:[{7:1,9:.5},{8:1,9:.5},{7:1,9:.5},{8:1},{10:1},{4:1}],
+ UB:[{0:1,6:.5,2:.5},{1:1,5:.5,4:.5},{1:1,5:.5,4:.5},{0:1,2:.5},{3:1},{5:1},{6:1},{5:1}],
+ LB:[{7:1,9:.5},{7:1,9:.5},{8:1},{7:1},{9:1},{10:1},{3:1},{4:1}]
+};
+// setsAt(i) -> число подходов упражнения i; возвращает [{d:прямые, f:дробные}] по мышцам
+function muscleCount(day,setsAt){
+  const r=MUS.map(()=>({d:0,f:0}));
+  MAP[day].forEach((m,i)=>{ const n=setsAt(i); for(const k in m){ if(m[k]===1) r[k].d+=n; r[k].f+=n*m[k]; } });
+  return r;
+}
+const planSets=(day,wk)=>i=>setsFor(P[day].ex[i][1],wk);
+const doneSets=s=>i=>(s.ex[i]?s.ex[i].sets.filter(x=>num(x.w)!==null&&num(x.r)!==null).length:0);
+function weekStart(d){ const t=new Date(d+"T00:00:00"); const wd=(t.getDay()+6)%7; t.setDate(t.getDate()-wd); return t.toLocaleDateString("sv-SE"); }
+function weekEnd(d){ const t=new Date(weekStart(d)+"T00:00:00"); t.setDate(t.getDate()+6); return t.toLocaleDateString("sv-SE"); }
 
 /* ---------- Хранилище ---------- */
 let db=null, uid=null, store={}, local=false;
@@ -268,6 +299,7 @@ function renderTrain(){
   const day=P[dayKey];
   let h=`<div class="top-pad"></div>
   <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>`<button data-day="${k}" aria-pressed="${k===dayKey}">${P[k].name}<small>${P[k].sub}</small></button>`).join("")}</div>
+  <div class="mchips" aria-label="Подходы по мышцам в этой тренировке">${muscleCount(dayKey,i=>Math.max(s.ex[i]?s.ex[i].sets.length:0,setsFor(P[dayKey].ex[i][1],wk))).map((c,k)=>c.d?`<span title="${MUS[k]}: ${fmt(c.d)} прямых, ${fmt(c.f)} дробных"><b>${c.d}</b> ${MUS[k]}</span>`:c.f?`<span class="ind" title="${MUS[k]}: только косвенная нагрузка">+${fmt(c.f)} ${MUS[k]}</span>`:"").join("")}</div>
   <div class="meta" style="margin-top:10px">
     <input type="date" id="date" value="${date}" aria-label="Дата">${date!==todayStr()?`<button class="btn" id="totoday">Сегодня</button>`:""}
     <div class="stepper"><button data-wk="-1" aria-label="Неделя назад">−</button><span>Неделя ${wk}</span><button data-wk="1" aria-label="Неделя вперёд">+</button></div>
@@ -450,7 +482,7 @@ function buildPrompt(s){
   return `Ты опытный тренер по гипертрофии. Оцени мою тренировку и дай конкретные рекомендации.
 
 Контекст: мужчина 26 лет, 177 см, ~83 кг, ~20% жира, стаж ~6 месяцев, цель — гипертрофия. Принимаю ААС под наблюдением врача, поэтому особое внимание сухожилиям (грудь, бицепс, надколенник) и давлению. Препараты не обсуждай.
-Программа: верх/низ, 4 дня в неделю (Верх A, Низ A, Верх B, Низ B), мезоцикл 6 недель: нед.1 вход (RIR 3, −1 подход), нед.2 RIR 2, нед.3 RIR 1–2, нед.4–5 изоляция 0–1 RIR, нед.6 разгрузка (½ подходов, RIR 3–4). Жимы — 1–3 RIR, без отказа и отбива, прибавка веса в базе не более ~5% в неделю. Двойная прогрессия: все подходы на верхней границе повторов при целевом RIR → вес +2,5–5% (изоляция +1–2 кг).
+Программа: верх/низ, 4 дня в неделю (Верх A, Низ A, Верх B, Низ B), мезоцикл 6 недель: нед.1 RIR 3, полный объём, нед.2 RIR 2, нед.3 RIR 1–2, нед.4–5 изоляция 0–1 RIR, нед.6 разгрузка (½ подходов, RIR 3–4). Жимы — 1–3 RIR, без отказа и отбива, прибавка веса в базе не более ~5% в неделю. Двойная прогрессия: все подходы на верхней границе повторов при целевом RIR → вес +2,5–5% (изоляция +1–2 кг).
 Питание сейчас: лёгкий дефицит ~2400 ккал, белок ~180 г.
 
 ТРЕНИРОВКА ДЛЯ ОЦЕНКИ:
@@ -491,6 +523,36 @@ async function runSummary(){
   }
   if(sid()===id) paintSummary();
 }
+
+/* ---------- Неделя ---------- */
+let planWeek=null;
+function renderWeek(){
+  const wk=planWeek||weekFromDate(date);
+  const pd=ORDER.map(k=>muscleCount(k,planSets(k,wk)));
+  const ws=weekStart(date), we=weekEnd(date);
+  const fact=MUS.map(()=>0);
+  sessions().filter(x=>x.date>=ws&&x.date<=we&&x.ex).forEach(x=>{ muscleCount(x.day,doneSets(x)).forEach((c,k)=>{ fact[k]+=c.f; }); });
+  const totD=MUS.map((_,k)=>pd.reduce((a,d)=>a+d[k].d,0));
+  const totF=MUS.map((_,k)=>pd.reduce((a,d)=>a+d[k].f,0));
+  const perDay=ORDER.map(k=>P[k].ex.reduce((a,e,i)=>a+setsFor(e[1],wk),0));
+  const hasFact=fact.some(v=>v>0);
+  const d2=x=>x.split("-").reverse().slice(0,2).join(".");
+  main.innerHTML=`<div class="meta" style="margin-top:6px">
+      <div class="stepper"><button data-pw="-1" aria-label="Неделя назад">−</button><span>Неделя ${wk}</span><button data-pw="1" aria-label="Неделя вперёд">+</button></div>
+      <span class="chip${wk===6?" warn":""}">${esc(WEEKS[wk])}</span>
+    </div>
+    <div class="tbl"><table><thead><tr><th>Мышца</th>${ORDER.map(k=>`<th>${P[k].name}</th>`).join("")}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead><tbody>
+    ${MUS.map((m,k)=>{
+      const cls=!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low";
+      return `<tr><td>${m}</td>${pd.map(d=>d[k].d?`<td class="dir">${d[k].d}</td>`:d[k].f?`<td style="color:var(--mute)">+${fmt(d[k].f)}</td>`:`<td style="color:var(--mute)">–</td>`).join("")}<td class="dir">${totD[k]||"–"}</td><td>${fmt(totF[k])}</td><td class="${cls}">${hasFact?fmt(fact[k]):"–"}</td></tr>`;
+    }).join("")}
+    </tbody><tfoot><tr><td>Подходов за тренировку</td>${perDay.map(n=>`<td>${n}</td>`).join("")}<td>${perDay.reduce((a,b)=>a+b,0)}</td><td></td><td></td></tr></tfoot></table></div>
+    <p class="note"><b>Верх A … Низ B</b>: прямые подходы на мышцу в каждой тренировке; «+1,5» значит только косвенная нагрузка (например, трицепс от жимов). <b>Всего</b> прямых за неделю. <b>Дроб.</b>: прямой подход = 1, косвенный = 0,5; ориентир 10–16 в неделю. <b>Факт</b>: дробные подходы с заполненными весом и повторами за календарную неделю ${d2(ws)}–${d2(we)}; зелёный, если план выполнен.</p>`;
+}
+main.addEventListener("click",ev=>{
+  const b=ev.target.closest("[data-pw]"); if(!b) return;
+  planWeek=Math.min(6,Math.max(1,(planWeek||weekFromDate(date))+Number(b.dataset.pw))); renderWeek();
+});
 
 /* ---------- История ---------- */
 function renderHist(){
@@ -540,7 +602,7 @@ main.addEventListener("click",ev=>{
 /* ---------- Навигация ---------- */
 function render(){
   document.querySelectorAll(".nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===view));
-  if(view==="train") renderTrain(); else if(view==="hist") renderHist(); else renderBody();
+  if(view==="train") renderTrain(); else if(view==="week") renderWeek(); else if(view==="hist") renderHist(); else renderBody();
 }
 document.querySelector(".nav").addEventListener("click",ev=>{
   const b=ev.target.closest("button"); if(!b) return; view=b.dataset.view; render(); window.scrollTo(0,0);
