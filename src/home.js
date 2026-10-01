@@ -55,7 +55,7 @@ function HomeView({date,day,go,openHistory}){
   return html`<div class="home">
     <header class="large">
       <span class="eyebrow">${longDate(date)}</span>
-      <h1>Сводка</h1>
+      <h1>Прогресс</h1>
     </header>
 
     <section class="card today">
@@ -86,7 +86,7 @@ function HomeView({date,day,go,openHistory}){
       </dl>
     </button>
 
-    ${main?html`<h2 class="sec">Прогресс</h2>
+    ${main?html`<h2 class="sec">Динамика</h2>
     <button class="card prog" onClick=${()=>openHistory(main.name)}>
       <div class="card-h"><span class="card-t">${main.name}</span><span class="card-s">${main.h.length} ${main.h.length===1?"тренировка":main.h.length<5?"тренировки":"тренировок"}</span></div>
       <div class="prog-row">
@@ -139,11 +139,6 @@ function WeekScreen({date,toast}){
   const ref=d.toLocaleDateString("sv-SE"), w=weekData(ref), tip=mode==="now"?lagTip(date):null;
   // мезоцикл: среднее в неделю по неделям, где были тренировки
   let rows=MUS_ORDER.map(m=>({m,v:w.fact[m],plan:w.plan[m]}));
-  if(mode==="meso"){
-    const weeks=[...new Set(sessions().filter(hasData).map(x=>weekStart(x.date)))];
-    const acc=MUS.map(()=>0); weeks.forEach(ws=>{ const wd=weekData(ws); MUS.forEach((_,m)=>{ acc[m]+=wd.fact[m]; }); });
-    rows=MUS_ORDER.map(m=>({m,v:weeks.length?acc[m]/weeks.length:0,plan:w.plan[m]}));
-  }
   const max=16;
   const zero=rows.filter(r=>r.plan>0&&!(r.v>0)).length;
   const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.v>0||(all&&r.plan>0)))]).filter(g=>g[1].length);
@@ -151,13 +146,13 @@ function WeekScreen({date,toast}){
   return html`<div class="weekscr">
     <header class="large">
       <span class="eyebrow">${dayMonth(w.ws)} – ${dayMonth(w.we)}</span>
-      <h1>${mode==="meso"?"Мезоцикл":"Неделя "+w.wk}</h1>
+      <h1>Неделя ${w.wk}</h1>
     </header>
     <div class="seg3" role="group" aria-label="Период">
-      ${[["now","Эта неделя"],["prev","Прошлая"],["meso","Мезоцикл"]].map(([k,l])=>html`<button key=${k} aria-pressed=${String(mode===k)} onClick=${()=>setMode(k)}>${l}</button>`)}
+      ${[["now","Эта неделя"],["prev","Прошлая"]].map(([k,l])=>html`<button key=${k} aria-pressed=${String(mode===k)} onClick=${()=>setMode(k)}>${l}</button>`)}
     </div>
     <section class="card eff">
-      <div class="card-h"><span class="card-t">Эффективные подходы${mode==="meso"?" в среднем за неделю":""}</span><span class="card-s">цель 10–16</span></div>
+      <div class="card-h"><span class="card-t">Эффективные подходы</span><span class="card-s">цель 10–16</span></div>
       ${!groups.length?html`<p class="st">Пока нет данных.</p>`:groups.map(([g,rs])=>html`<div key=${g} class="effg">
         <span class="effg-t">${g}</span>
         ${rs.map(r=>{ const target=Math.min(10,r.plan||10), ok=r.v>=target-0.01; return html`<div key=${r.m} class="effr">

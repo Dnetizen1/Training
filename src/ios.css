@@ -658,3 +658,37 @@ details.grp .form{box-shadow:none;border-radius:0;padding-top:4px}
 .segs button.on{background:color-mix(in srgb,var(--accf) 45%,var(--fill))}
 .finish .corr .row-actions .btn:not(.primary){background:none;color:var(--acc);min-height:36px;font-size:15px;font-weight:500}
 .effr > span:first-child{white-space:normal;overflow:visible;line-height:1.2}
+
+/* ===== v5: переключатель вида, пять вкладок, итог ===== */
+:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.vswitch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));background:var(--fill);border-radius:12px;padding:3px;margin-top:16px}
+.vswitch button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;border:0;border-radius:9px;background:transparent;color:var(--ink);font-size:15px;font-weight:500}
+.vswitch button[aria-pressed="true"]{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.vswitch button svg{color:var(--mute)}
+.vswitch button[aria-pressed="true"] svg{color:var(--acc)}
+.ttl + .vswitch{margin:0 0 4px}
+.tabbar{grid-template-columns:repeat(5,minmax(0,1fr));align-items:end}
+.tabbar .tb-ask{color:var(--ink);font-weight:600}
+.tb-ask-i{display:grid;place-items:center;width:52px;height:52px;margin-top:-22px;border-radius:26px;background:var(--accf);color:#fff;box-shadow:0 4px 14px color-mix(in srgb,var(--accf) 45%,transparent),0 0 0 4px var(--bg)}
+:root[data-theme="dark"] .tb-ask-i{color:#000}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tb-ask-i{color:#000}}
+.large .ttl-s{display:block;margin-top:2px}
+/* перенос: кнопка внутри блока */
+.corr-card .corr-item{border-bottom:.5px solid var(--sep)}
+.corr-foot{display:grid;gap:6px;padding:12px 16px 14px;justify-items:center}
+.corr-foot .btn.primary{width:100%;min-height:50px;border-radius:25px;font-size:17px;font-weight:700}
+.corr-foot .linkbtn{font-size:15px;padding:6px 0}
+/* кнопки в конце итога — как плитки, белый текст */
+.finish .review .row-actions .btn,.finish details.more > summary{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:54px;padding:12px 14px;border-radius:16px;background:var(--card);color:var(--ink);font-size:17px;font-weight:600;box-shadow:var(--shadow);text-align:left}
+.finish .review .row-actions .btn{justify-content:center}
+.finish .review .row-actions .btn svg{color:var(--acc)}
+.finish details.more{background:transparent;overflow:visible}
+.finish details.more > summary svg{color:var(--mute);transition:transform .2s}
+.finish details.more[open] > summary svg{transform:rotate(180deg)}
+.finish details.more[open] > summary{border-radius:16px 16px 0 0}
+.finish details.more .form{background:var(--card);border-radius:0 0 16px 16px}
+/* подробно по дням: таблица листается вбок */
+.weekscr details.grp{display:block;min-width:0;max-width:100%}
+.weekscr details .tbl{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:calc(100% - 24px)}
+.weekscr details .tbl table{min-width:max-content}
+.weekscr details .tbl th:first-child,.weekscr details .tbl td:first-child{position:sticky;left:0;z-index:1;background:var(--card)}
