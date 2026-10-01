@@ -296,3 +296,34 @@ tfoot td{font-weight:700;border-top:1px solid var(--line);background:var(--sunk)
 .lvline .more{color:var(--mute)}
 .sheet,.sheet-body{grid-template-columns:minmax(0,1fr)}
 @media (max-width:400px){.lvrow{grid-template-columns:minmax(0,1fr) 34px 28px 34px}.lvc{display:none}}
+
+
+/* v4: на iPhone плавающая панель Safari перекрывает низ окна артефакта,
+   поэтому всё нужное (вкладки, таймер, кнопка тренера, всплывашка) живёт в липкой шапке,
+   а шторки выезжают сверху с кнопками действий под заголовком. */
+html,body{overflow-x:clip}
+input,textarea,select{max-width:100%}
+body{padding-block:0 140px}
+.tabbar,.fab{display:none!important}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);margin-inline:-16px;padding:8px 16px 0;border-bottom:1px solid var(--line);display:grid}
+.topbar-row{display:flex;align-items:center;gap:6px;min-width:0}
+.tabs{flex:1;min-width:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tabs button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px 8px;color:var(--mute);font-size:11.5px;font-weight:600;border-bottom:3px solid transparent;min-width:0}
+.tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--day)}
+.tabs button[aria-selected="true"] svg{color:var(--day)}
+.save{position:static;width:auto;pointer-events:auto;flex:none}
+.save > span{display:none}
+@media (min-width:560px){.save > span{display:inline}}
+.askbtn{flex:none;width:42px;height:42px;display:grid;place-items:center;background:var(--ink);color:var(--day);border:0;border-radius:12px;margin-bottom:6px}
+.timer{position:static;margin:0 -16px;border-radius:0;padding:6px 16px}
+.timer .t{font-size:19px}
+.toast{position:static;margin:0 -16px;max-width:none;border-radius:0;box-shadow:none;border-top:1px solid rgba(255,255,255,.12)}
+.wk{position:static;margin-inline:0;padding-inline:0;padding-block:16px 10px}
+.sheet-wrap{align-items:flex-start}
+.sheet{border-radius:0 0 10px 10px;max-height:calc(100% - 120px);grid-template-rows:auto auto minmax(0,1fr);padding-bottom:0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.sheet-head{padding-top:calc(12px + env(safe-area-inset-top,0px))}
+.sheet-foot{border-top:0;border-bottom:1px solid var(--line);padding:10px 16px}
+.sheet-body{padding-bottom:20px}
+.topbar{grid-template-columns:minmax(0,1fr)}.timer .l{flex:1}
+@media (max-width:400px){.tabs button{font-size:10.5px;letter-spacing:-.01em;padding-inline:0}.topbar-row{gap:4px}.askbtn{width:40px;height:40px}}

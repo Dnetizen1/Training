@@ -18,13 +18,13 @@ function LevelPicker({value,onChange}){
 }
 function Sheet({title,onClose,children,foot}){
   const ref=useRef(null);
-  useEffect(()=>{ anim(ref.current,{transform:["translateY(60px)","translateY(0)"]},{bounce:.16,duration:.5});
+  useEffect(()=>{ anim(ref.current,{transform:["translateY(-40px)","translateY(0)"],opacity:[.4,1]},{bounce:.12,duration:.45});
     const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
   return ReactDOM.createPortal(html`<div class="sheet-wrap" onClick=${ev=>{ if(ev.target===ev.currentTarget) onClose(); }}>
     <div class="sheet" role="dialog" aria-label=${title} ref=${ref}>
       <div class="sheet-head"><b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
-      <div class="sheet-body">${children}</div>
       ${foot?html`<div class="sheet-foot">${foot}</div>`:null}
+      <div class="sheet-body">${children}</div>
     </div></div>`,document.body);
 }
 const qTone=q=>q===""||q==null?"":q==="0"?"q0":q==="1"?"q1":q==="4+"?"q4":"q2";
@@ -359,7 +359,7 @@ function AskSheet({focus,onClose,date,day,toast}){
   const ctl=useRef(null), box=useRef(null);
   const s=getSession(date,day);
   useEffect(()=>{ if(focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); },[]);
-  useEffect(()=>{ if(box.current) box.current.parentNode.scrollTop=1e6; },[turns,live]);
+  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b) b.scrollTop=b.scrollHeight; },[turns,live]);
   const context=()=>{ const cur=getSession(date,day), prev=recent(date,3);
     return `Ты персональный тренер по гипертрофии внутри приложения-дневника тренировок. Отвечай по-русски, коротко и по делу (до 150 слов, если не просят подробнее), списками где уместно. Не называй себя ИИ или Claude, ты просто тренер в приложении. При боли в сухожилии советуй убрать упражнение и показаться спортивному врачу.
 ${PROFILE}
@@ -427,11 +427,11 @@ function Timer({t,onStop,onShift}){
     <button onClick=${onStop} aria-label="Остановить таймер"><${Icon} n="close" size=${16}/></button>
   </div>`;
 }
-function Toast({t,onClose,raised}){
+function Toast({t,onClose}){
   const ref=useRef(null);
-  useEffect(()=>{ if(!t) return; anim(ref.current,{transform:["translateY(24px)","translateY(0)"],opacity:[0,1]}); const h=setTimeout(onClose,5000); return ()=>clearTimeout(h); },[t]);
+  useEffect(()=>{ if(!t) return; anim(ref.current,{transform:["translateY(-8px)","translateY(0)"],opacity:[0,1]}); const h=setTimeout(onClose,5000); return ()=>clearTimeout(h); },[t]);
   if(!t) return null;
-  return html`<div class=${"toast"+(raised?" raised":"")} role="status" ref=${ref}><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
+  return html`<div class="toast" role="status" ref=${ref}><span>${t.text}</span>${t.action?html`<button onClick=${()=>{ t.run(); onClose(); }}>${t.action}</button>`:null}</div>`;
 }
 
 function App(){
@@ -453,16 +453,20 @@ function App(){
   const showToast=t=>setToast(Object.assign({id:rid()},t));
   const tabs=[["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"],["body","Замеры","ruler"]];
   return html`<${React.Fragment}>
-    <div class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</div>
+    <div class="topbar">
+      <div class="topbar-row">
+        <nav class="tabs" role="tablist">${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}><${Icon} n=${ic} size=${18}/><span>${l}</span></button>`)}</nav>
+        <span class=${"save"+(S.bad?" bad":"")} role="status" title=${S.status} aria-label=${S.status}><span>${S.status}</span></span>
+        <button class="askbtn" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${22}/></button>
+      </div>
+      <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
+      <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
+    </div>
     <main ref=${mainRef}>
       ${view==="train"?html`<${TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} startTimer=${(sec,label)=>setTimer({end:Date.now()+sec*1000,label})} openAsk=${i=>setAsk({focus:i})}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
     </main>
-    <button class=${"fab"+(timer?" raised":"")} onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${26}/></button>
-    <${Toast} t=${toast} raised=${!!timer} onClose=${()=>setToast(null)}/>
-    <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
-    <nav class="tabbar" role="tablist">${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}><${Icon} n=${ic} size=${22}/><span>${l}</span></button>`)}</nav>
     ${ask?html`<${AskSheet} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk(null)}/>`:null}
   <//>`;
 }
