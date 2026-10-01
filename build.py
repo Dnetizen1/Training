@@ -5,6 +5,8 @@ src = Path(__file__).parent / "src"
 css = (src / "ios.css").read_text()
 js = "\n".join((src / f).read_text() for f in ("data.js", "exdb.js", "core.js", "ui.js", "home.js", "focus.js"))
 out = f"""<title>Дневник тренировок</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Тренировки">
 <style>
 {css}</style>
 <div id="root"><div class="empty">Загружаю дневник…</div></div>
