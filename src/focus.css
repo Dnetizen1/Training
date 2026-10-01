@@ -104,3 +104,7 @@
 @media (max-width:370px){.stp-row{grid-template-columns:60px minmax(0,1fr) 60px}.stp-b{height:64px}.stp-v .big{font-size:64px}}
 .chips{gap:5px}.chip-s{min-width:52px}.chip-s.add{min-width:40px}
 @media (max-width:380px){.qrow{gap:4px}.qrow button{min-width:40px}.qrow span{width:100%;text-align:center;margin:0}}
+
+/* v6: акцент — оранжевый (без синего) */
+:root[data-ui="focus"],:root[data-ui="focus"][data-day]{--day:#ff8a4a;--day-ink:#141416;--day-soft:#3b261a}
+:root[data-ui="focus"][data-day="UB"] .st-name h2{color:var(--day)}

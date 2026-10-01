@@ -371,3 +371,35 @@ body{padding-block:0 170px}
 .applied{margin-top:12px;background:var(--day-soft);border-radius:var(--r-card);padding:10px 12px;font-size:14px}
 .applied ul{margin:6px 0 2px;padding-left:18px;display:grid;gap:3px}
 .applied .btn{padding-left:0}
+
+/* v6: акцент — один тёплый оранжевый вместо синего; цвет дня остаётся только на значке-диске */
+:root,:root[data-day]{--day:#d9530f;--day-ink:#ffffff;--day-soft:#fbe6da}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]),:root:not([data-theme="light"])[data-day]{--day:#ff8a4a;--day-ink:#1b1b1d;--day-soft:#3b261a}}
+:root[data-theme="dark"],:root[data-theme="dark"][data-day]{--day:#ff8a4a;--day-ink:#1b1b1d;--day-soft:#3b261a}
+:root[data-day="UB"] .exb-title{color:var(--day)}
+
+/* журнал без галочек: столбец «Запас» шире, текущий подход подсвечен рамкой */
+.row{grid-template-columns:28px minmax(0,1fr) minmax(0,1.05fr) minmax(0,.9fr) 54px}
+.row.cur input[type=text]{border-color:color-mix(in srgb,var(--day) 55%,transparent)}
+.q{height:40px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);font:600 15px var(--mono);color:var(--mute)}
+.q.open{border-color:var(--day);color:var(--ink)}
+.qpick{display:grid;gap:8px;padding:10px;margin:2px 0 6px;background:var(--surface);border:1px solid var(--day);border-radius:var(--r-card)}
+.qpick-t{font-size:13.5px;color:var(--ink)}
+.qpick-t span{color:var(--mute)}
+.qpick-b{display:flex;gap:6px;flex-wrap:wrap}
+.qpick-b button{flex:1;min-width:46px;height:44px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);font:600 16px var(--mono)}
+.qpick-b button.on{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+.qpick-b button.q0.on{background:var(--p-red);border-color:var(--p-red);color:#fff}
+.qpick-b .clr{flex:none;font:500 13px var(--body);color:var(--mute);padding:0 10px}
+.exb-tt{flex:1;min-width:0}
+.exb-tt .exb-title{width:100%}
+.exb-sub{font-size:12.5px;color:var(--mute);margin-top:1px}
+.exb-add .btn.wide{font-size:15px}
+
+/* переключатель вида: отдельной строкой над экраном тренировки */
+.viewseg{display:grid;grid-template-columns:1fr 1fr;margin-top:28px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.viewseg button{display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;padding:9px 6px;font-size:14px;font-weight:600;color:var(--mute)}
+.viewseg button + button{border-left:1px solid var(--line)}
+.viewseg button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
+.viewseg button[aria-pressed="true"] svg{color:var(--day)}
+.viewseg + div .wk,.viewseg + div .fhead{padding-top:12px}

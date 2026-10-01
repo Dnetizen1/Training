@@ -374,6 +374,38 @@ body{padding-block:0 170px}
 .applied ul{margin:6px 0 2px;padding-left:18px;display:grid;gap:3px}
 .applied .btn{padding-left:0}
 
+/* v6: акцент — один тёплый оранжевый вместо синего; цвет дня остаётся только на значке-диске */
+:root,:root[data-day]{--day:#d9530f;--day-ink:#ffffff;--day-soft:#fbe6da}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]),:root:not([data-theme="light"])[data-day]{--day:#ff8a4a;--day-ink:#1b1b1d;--day-soft:#3b261a}}
+:root[data-theme="dark"],:root[data-theme="dark"][data-day]{--day:#ff8a4a;--day-ink:#1b1b1d;--day-soft:#3b261a}
+:root[data-day="UB"] .exb-title{color:var(--day)}
+
+/* журнал без галочек: столбец «Запас» шире, текущий подход подсвечен рамкой */
+.row{grid-template-columns:28px minmax(0,1fr) minmax(0,1.05fr) minmax(0,.9fr) 54px}
+.row.cur input[type=text]{border-color:color-mix(in srgb,var(--day) 55%,transparent)}
+.q{height:40px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);font:600 15px var(--mono);color:var(--mute)}
+.q.open{border-color:var(--day);color:var(--ink)}
+.qpick{display:grid;gap:8px;padding:10px;margin:2px 0 6px;background:var(--surface);border:1px solid var(--day);border-radius:var(--r-card)}
+.qpick-t{font-size:13.5px;color:var(--ink)}
+.qpick-t span{color:var(--mute)}
+.qpick-b{display:flex;gap:6px;flex-wrap:wrap}
+.qpick-b button{flex:1;min-width:46px;height:44px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);font:600 16px var(--mono)}
+.qpick-b button.on{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+.qpick-b button.q0.on{background:var(--p-red);border-color:var(--p-red);color:#fff}
+.qpick-b .clr{flex:none;font:500 13px var(--body);color:var(--mute);padding:0 10px}
+.exb-tt{flex:1;min-width:0}
+.exb-tt .exb-title{width:100%}
+.exb-sub{font-size:12.5px;color:var(--mute);margin-top:1px}
+.exb-add .btn.wide{font-size:15px}
+
+/* переключатель вида: отдельной строкой над экраном тренировки */
+.viewseg{display:grid;grid-template-columns:1fr 1fr;margin-top:28px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.viewseg button{display:flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;padding:9px 6px;font-size:14px;font-weight:600;color:var(--mute)}
+.viewseg button + button{border-left:1px solid var(--line)}
+.viewseg button[aria-pressed="true"]{background:var(--ink);color:var(--inv)}
+.viewseg button[aria-pressed="true"] svg{color:var(--day)}
+.viewseg + div .wk,.viewseg + div .fhead{padding-top:12px}
+
 /* Вид «Фокус». Сознательно одна тема — тёмная «сцена»: в зале экран смотрят с вытянутой руки, между подходами.
    Огромные цифры (Oswald), одна главная кнопка, акцент — цвет диска дня. Включается атрибутом data-ui="focus". */
 :root[data-ui="focus"]{
@@ -480,6 +512,10 @@ body{padding-block:0 170px}
 @media (max-width:370px){.stp-row{grid-template-columns:60px minmax(0,1fr) 60px}.stp-b{height:64px}.stp-v .big{font-size:64px}}
 .chips{gap:5px}.chip-s{min-width:52px}.chip-s.add{min-width:40px}
 @media (max-width:380px){.qrow{gap:4px}.qrow button{min-width:40px}.qrow span{width:100%;text-align:center;margin:0}}
+
+/* v6: акцент — оранжевый (без синего) */
+:root[data-ui="focus"],:root[data-ui="focus"][data-day]{--day:#ff8a4a;--day-ink:#141416;--day-soft:#3b261a}
+:root[data-ui="focus"][data-day="UB"] .st-name h2{color:var(--day)}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Oswald:wght@500;600&family=JetBrains+Mono:wght@500;600;700&family=Unbounded:wght@600;700&display=swap">
 <div id="root"><div class="empty">Загружаю дневник…</div></div>
@@ -569,14 +605,15 @@ function weekFromDate(d){
 const MUS=["Грудь","Широчайшие","Передняя дельта","Средняя дельта","Задняя дельта","Бицепс","Трицепс","Квадрицепс","Бицепс бедра","Ягодицы","Икры","Середина спины","Предплечья"];
 // порядок показа (индексы MUS фиксированы, т.к. сохраняются в записях)
 const MUS_ORDER=[0,1,11,2,3,4,5,6,12,7,8,9,10];
-// Нагрузка на мышцы по шкале 0–10 (как в «Твой тренер»): 7–10 высокая, 4–6 средняя, 1–3 низкая.
+// Нагрузка на мышцы по шкале 0–10 (как в «Твой тренер», состав мышц по ExRx): 7–10 высокая, 4–6 средняя, 1–3 низкая.
+// Стабилизаторы не считаются: бицепс в тягах к поясу — стабилизатор, поэтому его нет или он низкий.
 // Индексы: 0 грудь, 1 широчайшие, 2 пер. дельта, 3 ср. дельта, 4 задн. дельта, 5 бицепс, 6 трицепс,
 // 7 квадрицепс, 8 бицепс бедра, 9 ягодицы, 10 икры, 11 середина спины, 12 предплечья
 const LV={
- UA:[{0:9,2:6,6:6},            // жим штанги лёжа
-     {11:8,1:6,4:5,5:4,12:3},  // тяга с упором грудью
-     {1:8,11:5,4:4,5:5,12:4},  // подтягивания / верхний блок
-     {2:9,3:5,6:5},            // жим гантелей сидя
+ UA:[{0:9,2:4,6:5},            // жим штанги лёжа
+     {11:9,1:6,4:4,12:2},       // тяга с упором грудью (бицепс — стабилизатор)
+     {1:9,11:4,5:3,4:2,12:2},  // подтягивания / верхний блок
+     {2:9,3:4,6:5},            // жим гантелей сидя
      {3:9,2:2},                // махи в кроссовере
      {5:9,12:3},               // сгибания на наклонной
      {6:9}],                   // разгибания из-за головы
@@ -585,10 +622,10 @@ const LV={
      {7:9,9:5,8:2},            // жим ногами
      {8:10},                   // сгибания ног сидя
      {10:10},                  // носки стоя
-     {4:9,11:4}],              // задняя дельта в тренажёре
+     {4:9,11:3}],              // задняя дельта в тренажёре
  UB:[{0:9,2:7,6:5},            // жим гантелей на наклонной
-     {1:8,11:6,4:4,5:4,12:3},  // тяга гантели одной рукой
-     {1:8,11:5,5:4,4:3,12:3},  // тяга блока
+     {1:8,11:6,4:3,12:2},      // тяга гантели одной рукой
+     {1:8,11:5,4:3,5:2,12:2},  // тяга блока
      {0:9,2:3},                // сведения / пек-дек
      {3:9,2:2},                // махи гантелями
      {5:9,12:2},               // байесиан
@@ -601,7 +638,7 @@ const LV={
      {9:10,8:4},               // хип-траст
      {10:10},                  // носки сидя
      {3:9,2:2},                // махи в кроссовере
-     {4:9,11:4}]               // обратные разведения
+     {4:9,11:3}]               // обратные разведения
 };
 
 /* Дневник тренировок: ядро (утилиты, модель, хранилище, промпты, иконки). React 18 + htm, без сборки. */
@@ -915,11 +952,59 @@ const ERR={not_granted:"Помощник не включён: доступ не 
 const errText=e=>ERR[e&&e.code]||"Не получилось получить ответ. Попробуй ещё раз.";
 async function copyText(t,ok){ try{ await navigator.clipboard.writeText(t); setStatus(ok||"Скопировано"); }catch(e){ setStatus("Копирование недоступно",true); } }
 
+/* Справочник нагрузки по типовым упражнениям (по ExRx: target / synergists / stabilizers).
+   Основная мышца 9–10; значимый синергист 4–5; мелкий 2–3. Стабилизаторы не считаем (бицепс в тягах к поясу — стабилизатор).
+   Индексы: 0 грудь, 1 широчайшие, 2 пер. дельта, 3 ср. дельта, 4 задн. дельта, 5 бицепс, 6 трицепс,
+   7 квадрицепс, 8 бицепс бедра, 9 ягодицы, 10 икры, 11 середина спины, 12 предплечья. Порядок важен: от частного к общему. */
+const LIB=[
+  [/мах\S*.*(наклон|задн)|обратн\S* развед|развед\S*.*(наклон|задн)|задн\S* дельт|reverse fly|rear delt|тяга к лицу|face ?pull/, {4:9,11:4}],
+  [/мах\S*.*вперед|подъем\S* перед собой|front raise/, {2:9}],
+  [/мах|развед\S* в стороны|lateral raise|подъем\S* в стороны/, {3:9,2:2}],
+  [/шраг|shrug/, {11:9,12:3}],
+  [/пуловер на блоке|прям\S* рук\S*.*блок|straight.?arm/, {1:9}],
+  [/пуловер|pullover/, {1:7,0:5,6:2}],
+  [/подтягив|pull.?up|chin.?up|гравитрон|верхн\S* блок|вертикальн\S* тяга|тяга сверху|lat ?pulldown/, {1:9,11:4,5:3,4:2,12:2}],
+  [/тяга.*(одной рукой|гантели)|one.?arm row|dumbbell row/, {1:8,11:6,4:3,12:2}],
+  [/тяга.*(к поясу|в наклоне|т.?гриф|упором|горизонт|нижн\S* блок|сидя|мейдоу|пендли)|тяга штанги|row/, {11:9,1:7,4:4,12:2}],
+  [/румынск|мертв\S* тяга|прям\S* ног|rdl|romanian/, {8:9,9:7,11:3,12:3}],
+  [/станов|deadlift/, {9:8,8:7,7:5,11:5,12:4}],
+  [/гиперэкстенз|good ?morning|гуд ?морнинг/, {9:7,8:6}],
+  [/хип.?траст|ягодичн\S* мост|hip ?thrust|glute bridge/, {9:10,8:3}],
+  [/отведен\S* ног|ягодичн\S* (тренаж|машин)|kickback/, {9:9}],
+  [/сведен\S* ног|приводящ/, {}],
+  [/разгибан\S* ног|leg extension|сисси/, {7:10}],
+  [/сгибан\S* ног|нордик|leg curl|ham curl/, {8:10}],
+  [/выпад|сплит|болгарск|степ.?ап|зашагив|lunge|split squat/, {7:8,9:8,8:2}],
+  [/жим ногами|leg press/, {7:9,9:5}],
+  [/гакк|hack/, {7:9,9:5}],
+  [/присед|squat|гоблет/, {7:9,9:7,8:2}],
+  [/икр|носк|голен|calf/, {10:10}],
+  [/французск|пушдаун|pushdown|разгибан\S*.*(рук|из-за|блок|трицеп|канат)|skull/, {6:9}],
+  [/свенд|svend/, {0:9,2:3}],
+  [/жим.*узк|close.?grip/, {6:8,0:6,2:4}],
+  [/брус|dip/, {0:7,6:7,2:5}],
+  [/сведен|пек.?дек|бабочк|кроссовер.*груд|fly|flye/, {0:9,2:2}],
+  [/жим.*(наклон|incline)/, {0:9,2:6,6:4}],
+  [/жим.*(лежа|скамь|bench|груд)|отжиман|push.?up/, {0:9,2:4,6:5}],
+  [/жим.*(сидя|стоя|над голов|армейск|арнольд|плеч|вверх)|overhead|shoulder press|military/, {2:9,3:4,6:5}],
+  [/молот|hammer/, {5:7,12:6}],
+  [/сгибан\S*.*обратн\S* хват|reverse curl/, {12:8,5:4}],
+  [/сгибан\S*|бицепс|байесиан|скотт|curl/, {5:9,12:2}],
+  [/разгибан\S*|трицепс|французск|пушдаун|pushdown|triceps|extension|kickback/, {6:9}],
+  [/запясть|предплеч|wrist/, {12:9}]
+];
+const normName=n=>String(n||"").toLowerCase().replace(/ё/g,"е");
+function libLevels(name){ const n=normName(name); for(const [re,lv] of LIB) if(re.test(n)) return Object.assign({},lv); return null; }
 async function detectMuscles(name){
-  const r=await S.sample.json(`Оцени нагрузку на мышцы в силовом упражнении «${name}» по шкале от 0 до 10, как в справочниках упражнений (7–10 высокая, 4–6 средняя, 1–3 низкая, 0 не работает).
-Учитывай, что в тренажёрах вспомогательные мышцы работают слабее, чем со свободным весом.
-Используй ТОЛЬКО эти мышцы: ${MUS.join(", ")}. Указывай только мышцы с нагрузкой от 1.
-Ответь только JSON вида {"levels":{"Широчайшие":8,"Середина спины":5,"Бицепс":4}}`,{modelTier:"quick"});
+  const lib=libLevels(name); if(lib&&Object.keys(lib).length) return lib;
+  const r=await S.sample.json(`Определи нагрузку на мышцы в силовом упражнении «${name}» по шкале 0–10, как в ExRx (target / synergists; стабилизаторы НЕ указывай).
+Правила:
+- Целевая мышца 9–10. Значимый синергист 4–5. Мелкий синергист 2–3. Всё остальное не указывай.
+- Изолирующее упражнение (махи, сгибания, разгибания, сведения) — обычно только одна мышца.
+- Не завышай вторичные: например, бицепс в тягах к поясу — стабилизатор (не указывать или 2–3); в махах в стороны работает средняя дельта (9), передняя 2, грудь и спина не работают.
+- В тренажёрах вспомогательные мышцы работают слабее.
+Мышцы только из списка: ${MUS.join(", ")}.
+Ответь только JSON вида {"levels":{"Средняя дельта":9,"Передняя дельта":2}}`,{modelTier:"default"});
   return lvFromObj(r&&r.levels);
 }
 const musIndex=n=>{ const t=String(n).trim(); return t==="Спина"?1:MUS.indexOf(t); };
@@ -929,6 +1014,18 @@ function lvFromTool(inp){ const lv=lvFromObj(inp&&inp.muscle_levels); if(Object.
   (Array.isArray(inp&&inp.secondary_muscles)?inp.secondary_muscles:[]).forEach(n=>{ const k=musIndex(n); if(k>=0) lv[k]=4; });
   (Array.isArray(inp&&inp.primary_muscles)?inp.primary_muscles:[]).forEach(n=>{ const k=musIndex(n); if(k>=0) lv[k]=8; });
   return lv; }
+
+/* ---------- Звуковой сигнал конца отдыха ---------- */
+// Звук в браузере разрешён только после нажатия пользователя, поэтому «разблокируем» его при запуске отдыха.
+let AC=null;
+function unlockSound(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended") AC.resume(); }catch(e){} }
+function beep(){
+  try{ if(navigator.vibrate) navigator.vibrate([250,120,250]); }catch(e){}
+  try{ if(!AC) return; const t0=AC.currentTime;
+    [0,.28,.56].forEach((d,k)=>{ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.value=k===2?1175:880;
+      g.gain.setValueAtTime(.0001,t0+d); g.gain.exponentialRampToValueAtTime(.35,t0+d+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+d+.22);
+      o.connect(g); g.connect(AC.destination); o.start(t0+d); o.stop(t0+d+.24); }); }catch(e){}
+}
 
 /* ---------- Иконки ---------- */
 const I={
@@ -997,52 +1094,58 @@ const Elapsed=({s})=>{
 };
 
 /* ---------- Упражнение: журнал подходов ---------- */
-function ExerciseBlock({s,i,date,edit,openSheet,startTimer,qHelp}){
+// текущий подход упражнения: первый, где ещё нет повторов (или отметки)
+const curSet=(s,e)=>{ const rows=rowsOf(s,e); for(let j=0;j<rows;j++) if(!setDone(e.sets[j]||blankSet())) return j; return -1; };
+function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
   const e=s.ex[i], inf=xinfo(s,e), {lo,hi,rir,rest,note}=inf.plan, wk=s.week;
   const [qOpen,setQOpen]=useState(null);
   const rows=rowsOf(s,e);
   const lt=lastTime(inf.name,date);
   const up=lt&&lt.e.sets.length&&lt.e.sets.every(x=>num(x.r)!==null&&num(x.r)>=hi);
   const top=lvSorted(inf.lv);
-  const done=rows>0&&e.sets.length>=rows&&e.sets.slice(0,rows).every(x=>x.ok);
+  const cj=curSet(s,e), done=rows>0&&cj<0;
   const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x){ if(x.n==null) x.n=rowsOf(ss,x); while(x.sets.length<x.n) x.sets.push(blankSet()); fn(x,ss); } });
-  const tick=(j,el)=>{
-    let started=false;
-    upd(x=>{ const st=x.sets[j]; st.ok=!st.ok;
-      if(st.ok){ const lp=lt&&lt.e.sets[j]; if(!st.w&&lp&&lp.w) st.w=lp.w; if(!st.r) st.r=String(lp&&lp.r||lo); started=true; } });
-    if(started){ anim(el,{transform:["scale(.8)","scale(1)"]},{bounce:.5,duration:.4}); startTimer(rest,inf.name); }
+  // «Подход сделан»: дозаполнить текущий подход (прошлый подход сегодня → прошлая тренировка) и запустить отдых
+  const setDoneNow=ev=>{
+    if(cj>=0) upd(x=>{ const st=x.sets[cj], prev=cj>0?x.sets[cj-1]:null, lp=lt&&lt.e.sets[cj];
+      if(!st.w) st.w=(prev&&prev.w)||(lp&&lp.w)||""; if(!st.r) st.r=String((lp&&lp.r)||lo); st.ok=true; });
+    anim(ev.currentTarget,{transform:["scale(.96)","scale(1)"]},{bounce:.4,duration:.4});
+    startTimer(rest,inf.name);
   };
   return html`<section class=${"exb"+(done?" complete":"")}>
     <div class="exb-head">
-      <button class="exb-title" onClick=${()=>openSheet("menu",e.uid)}>${inf.name}</button>
+      <div class="exb-tt">
+        <button class="exb-title" onClick=${()=>openSheet("menu",e.uid)}>${inf.name}</button>
+        ${inf.custom?html`<div class="exb-sub">добавлено в эту тренировку</div>`:e.alt?html`<div class="exb-sub">вместо: ${inf.base}</div>`:null}
+      </div>
       <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="more"/></button>
     </div>
     <div class="exb-meta">
       <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
       ${top.length?html`<button class="lvline" onClick=${()=>openSheet("mus",e.uid)} aria-label="Нагрузка на мышцы">${top.slice(0,4).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}${top.length>4?html`<span class="more">+${top.length-4}</span>`:null}</button>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать нагрузку на мышцы</button>`}
-      ${inf.custom?html`<span class="mute">добавлено</span>`:e.alt?html`<span class="mute">вместо: ${inf.base}</span>`:null}
     </div>
     ${note?html`<div class="exb-note">${note}</div>`:null}
     ${up?html`<div class="hint up"><${Icon} n="arrowUp" size=${16}/><span>В прошлый раз все подходы на верхней границе (${hi}). Добавь вес.</span></div>`:null}
     <div class="log" role="table" aria-label=${"Подходы: "+inf.name}>
-      <div class="row head" role="row"><span>Сет</span><span>Прошлый</span><span>кг</span><span>Повт</span><button class="qh" onClick=${qHelp} aria-label="Что такое запас">Запас</button><span aria-hidden="true">✓</span></div>
+      <div class="row head" role="row"><span>Сет</span><span>Прошлый</span><span>кг</span><span>Повт</span><span>Запас</span></div>
       ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<${React.Fragment} key=${j}>
-        <div class=${"row"+(x.ok?" done":"")} role="row">
+        <div class=${"row"+(setDone(x)?" done":"")+(j===cj?" cur":"")} role="row">
           <span class="n">${j+1}</span>
           <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r+(lp.q?" ·"+lp.q:""):"–"}</span>
           <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].w=ev.target.value; })}/>
-          <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].r=ev.target.value; })}/>
-          <button class=${"q "+qTone(x.q)} aria-label=${"Запас повторов, подход "+(j+1)} onClick=${()=>setQOpen(qOpen===j?null:j)}>${x.q||"–"}</button>
-          <button class="tick" aria-pressed=${String(!!x.ok)} aria-label="Подход выполнен" onClick=${ev=>tick(j,ev.currentTarget)}><${Icon} n="check" size=${20}/></button>
+          <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].r=ev.target.value; if(!ev.target.value) y.sets[j].ok=false; })}/>
+          <button class=${"q "+qTone(x.q)+(qOpen===j?" open":"")} aria-expanded=${String(qOpen===j)} aria-label=${"Запас повторов, подход "+(j+1)+": "+(x.q||"не указан")} onClick=${()=>setQOpen(qOpen===j?null:j)}>${x.q||"?"}</button>
         </div>
         ${qOpen===j?html`<div class="qpick" role="group" aria-label="Сколько повторов ещё мог сделать">
-          <span>Ещё мог:</span>
-          ${["0","1","2","3","4+"].map(v=>html`<button key=${v} class=${qTone(v)+(x.q===v?" on":"")} onClick=${()=>{ upd(y=>{ y.sets[j].q=y.sets[j].q===v?"":v; }); setQOpen(null); }}>${v}</button>`)}
+          <div class="qpick-t">Подход ${j+1}: сколько повторов ещё мог сделать? <span>0 = отказ</span></div>
+          <div class="qpick-b">${["0","1","2","3","4+"].map(v=>html`<button key=${v} class=${qTone(v)+(x.q===v?" on":"")} onClick=${()=>{ upd(y=>{ y.sets[j].q=v; }); setQOpen(null); }}>${v}</button>`)}
+            ${x.q?html`<button class="clr" onClick=${()=>{ upd(y=>{ y.sets[j].q=""; }); setQOpen(null); }}>Очистить</button>`:null}</div>
         </div>`:null}
       <//>`; })}
     </div>
     <div class="exb-add">
-      <button class="btn wide" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/> Подход</button>
+      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${18}/> ${done?"Отдых":"Подход "+(cj+1)+" сделан"} · ${restTxt(rest)}</button>
+      <button class="btn" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/></button>
       <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${16}/></button>
     </div>
     <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
@@ -1241,13 +1344,11 @@ function AppliedBanner({s,date,day,edit}){
 function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
-  const [help,setHelp]=useState(false);
   const counts=muscleCount(s,e=>rowsOf(s,e));
   return html`<div>
     <header class="wk">
       <div class="wk-top">
         <div class="wk-name"><${Plate} k=${day}/><h1>${P[day].name}</h1></div>
-        <${Elapsed} s=${s}/>
         <button class=${"btn "+(s.done?"ok":"primary")} onClick=${finish}>${s.done?"Завершена":"Завершить"}</button>
       </div>
       <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
@@ -1256,14 +1357,12 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
         ${date!==todayStr()?html`<button class="btn quiet" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
         <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
         <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
-        <button class="btn quiet uiswitch" onClick=${()=>setUi("focus")}><${Icon} n="target" size=${16}/> Фокус-режим</button>
       </div>
     </header>
     <div class="mline" aria-label="Подходы по мышцам в этой тренировке">${MUS_ORDER.map(k=>{ const c=counts[k]; return c.d?html`<span key=${k}><b>${c.d}</b>${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind">+${fmt(c.f)} ${MUS[k]}</span>`:null; })}</div>
-    ${help?html`<div class="helpbox"><b>Запас (RIR)</b>: сколько повторов ты ещё мог бы сделать в этом подходе. 0 = отказ, больше ни одного. 2 = мог ещё два. Цель этой недели: <b>${WEEKS[wk]}</b>. Нажми на ячейку «Запас» в подходе, чтобы указать. Поле необязательное.<div><button class="btn quiet" onClick=${()=>setHelp(false)}>Понятно</button></div></div>`:null}
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <div class="exlist">
-      ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} qHelp=${()=>setHelp(!help)} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
+      ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
       ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
       <button class="btn wide addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
     </div>
@@ -1470,6 +1569,9 @@ function App(){
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };
     document.addEventListener("visibilitychange",f); return ()=>document.removeEventListener("visibilitychange",f); },[auto,date]);
   const showToast=t=>setToast(Object.assign({id:rid()},t));
+  // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
+  useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
+    const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
   const tabs=[["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"],["body","Замеры","ruler"]];
   return html`<${React.Fragment}>
     ${(timer&&!(ui==="focus"&&view==="train"))||toast?html`<div class="topbar">
@@ -1478,7 +1580,11 @@ function App(){
     </div>`:null}
     <div class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</div>
     <main ref=${mainRef}>
-      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>setTimer({end:Date.now()+sec*1000,label})} openAsk=${i=>setAsk({focus:i})} setUi=${setUi}/>`
+      ${view==="train"?html`<div class="viewseg" role="group" aria-label="Вид экрана тренировки">
+        <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${16}/> Журнал</button>
+        <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${16}/> Фокус</button>
+      </div>`:null}
+      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
     </main>
@@ -1540,7 +1646,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [panel,setPanel]=useState(null), [draft,setDraft]=useState(null);
   useEffect(()=>{ setIdx(null); setDraft(null); },[day,date]);
-  const open=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e)||e.sets.slice(0,rowsOf(s,e)).some(x=>!x.ok));
+  const open=s.ex.findIndex(e=>curSet(s,e)>=0);
   const i=idx!=null&&idx<s.ex.length?idx:(open>=0?open:Math.max(0,s.ex.length-1));
   const e=s.ex[i];
   const allDone=s.ex.length>0&&open<0;
@@ -1550,7 +1656,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
   let inf=null, rows=0, j=0, lt=null, exDone=false, def={w:"",r:"",q:""};
   if(e){
     inf=xinfo(s,e); rows=rowsOf(s,e); lt=lastTime(inf.name,date);
-    j=e.sets.slice(0,rows).findIndex(x=>!x.ok); exDone=j<0; if(j<0) j=Math.max(0,rows-1);
+    j=curSet(s,e); exDone=j<0; if(j<0) j=Math.max(0,rows-1);
     const cur=e.sets[j]||blankSet(), prev=j>0?e.sets[j-1]:null, lp=lt&&(lt.e.sets[j]||lt.e.sets[lt.e.sets.length-1]);
     def={w:cur.w||(prev&&prev.w)||(lp&&lp.w)||"", r:cur.r||(lp&&lp.r)||String(inf.plan.lo), q:cur.q||""};
   }
@@ -1562,15 +1668,15 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
   const nextLabel=()=>{
     if(!e) return "";
     if(j+1<rows) return `${inf.name}: подход ${j+2} из ${rows}`;
-    const n=s.ex.findIndex((x,k)=>k>i&&doneOf(x)<rowsOf(s,x)); return n>=0?xinfo(s,s.ex[n]).name:"тренировка закончена";
+    const n=s.ex.findIndex((x,k)=>k>i&&curSet(s,x)>=0); return n>=0?xinfo(s,s.ex[n]).name:"тренировка закончена";
   };
   const logSet=ev=>{
     const nl=nextLabel();
     upd(x=>{ x.sets[j]=Object.assign({},x.sets[j],{w:val.w,r:val.r,q:val.q,ok:true}); });
     anim(ev.currentTarget,{transform:["scale(.94)","scale(1)"]},{bounce:.45,duration:.45});
-    setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next:nl});
+    unlockSound(); setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next:nl});
     setDraft(null);
-    if(j>=rows-1){ const n=s.ex.findIndex((x,k)=>k>i&&doneOf(x)<rowsOf(s,x)); setIdx(n>=0?n:i); }
+    if(j>=rows-1){ const n=s.ex.findIndex((x,k)=>k>i&&curSet(s,x)>=0); setIdx(n>=0?n:i); }
   };
   const restOn=timer&&(timer.end>Date.now()-60000);
 
@@ -1579,8 +1685,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
   return html`<div class="focus">
     <header class="fhead">
       <button class="fday" onClick=${()=>setPanel(panel==="day"?null:"day")} aria-expanded=${String(panel==="day")}><${Plate} k=${day}/><span>${P[day].name}</span><small>нед. ${wk} · ${WEEKS[wk]}</small></button>
-      <${Elapsed} s=${s}/>
-      <button class="ibtn" aria-label="Вид «Журнал»" title="Вид «Журнал»" onClick=${()=>setUi("journal")}><${Icon} n="list" size=${20}/></button>
+      <button class="ibtn" aria-label="Все упражнения" onClick=${()=>setPanel(panel==="list"?null:"list")}><${Icon} n="list" size=${20}/></button>
     </header>
     ${panel==="day"?html`<div class="fpanel">
       <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>{ setDay(k); setPanel(null); }}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
@@ -1589,7 +1694,6 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
         ${date!==todayStr()?html`<button class="btn quiet" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
         <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
       </div>
-      <button class="btn quiet" onClick=${()=>setUi("journal")}><${Icon} n="list" size=${16}/> Перейти в вид «Журнал»</button>
     </div>`:null}
     ${progress}
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
@@ -1624,12 +1728,12 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
         </div>
         ${lt?html`<div class="fwas">В прошлый раз (${dm(lt.date)}): ${lt.e.sets.filter(x=>num(x.r)!==null).map(x=>(x.w||"б/в")+"×"+x.r).join(", ")}</div>`:null}
         <button class="fbtn main hero" onClick=${logSet}><${Icon} n="check" size=${26}/> Подход сделан</button>
-      `:html`<button class="fbtn main hero" onClick=${()=>{ const n=s.ex.findIndex((x,k)=>k!==i&&doneOf(x)<rowsOf(s,x)); n>=0?go(n):setPanel("finish"); }}>${allDone?"Подвести итог":"Следующее упражнение"}</button>`}
+      `:html`<button class="fbtn main hero" onClick=${()=>{ const n=s.ex.findIndex((x,k)=>k!==i&&curSet(s,x)>=0); n>=0?go(n):setPanel("finish"); }}>${allDone?"Подвести итог":"Следующее упражнение"}</button>`}
 
       <div class="chips" aria-label="Подходы">
-        ${Array.from({length:rows},(_,k)=>{ const x=e.sets[k]||blankSet(); return html`<button key=${k} class=${"chip-s"+(x.ok?" ok":"")+(k===j&&!exDone?" cur":"")}
-          onClick=${()=>{ if(x.ok){ upd(y=>{ y.sets[k].ok=false; }); setDraft(null); } }} aria-label=${x.ok?"Подход "+(k+1)+" сделан, нажми чтобы переделать":"Подход "+(k+1)}>
-          <small>${k+1}</small><span>${x.ok?(x.w?nfmt(x.w)+"×":"")+x.r:"–"}</span></button>`; })}
+        ${Array.from({length:rows},(_,k)=>{ const x=e.sets[k]||blankSet(); return html`<button key=${k} class=${"chip-s"+(setDone(x)?" ok":"")+(k===j&&!exDone?" cur":"")}
+          onClick=${()=>{ if(setDone(x)){ upd(y=>{ y.sets[k].ok=false; y.sets[k].r=""; }); setDraft(null); } }} aria-label=${setDone(x)?"Подход "+(k+1)+" сделан, нажми чтобы переделать":"Подход "+(k+1)}>
+          <small>${k+1}</small><span>${setDone(x)?(x.w?nfmt(x.w)+"×":"")+(x.r||"✓"):"–"}</span></button>`; })}
         <button class="chip-s add" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n+=1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/></button>
         ${rows>1?html`<button class="chip-s add" aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${16}/></button>`:null}
       </div>

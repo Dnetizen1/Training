@@ -309,11 +309,59 @@ const ERR={not_granted:"Помощник не включён: доступ не 
 const errText=e=>ERR[e&&e.code]||"Не получилось получить ответ. Попробуй ещё раз.";
 async function copyText(t,ok){ try{ await navigator.clipboard.writeText(t); setStatus(ok||"Скопировано"); }catch(e){ setStatus("Копирование недоступно",true); } }
 
+/* Справочник нагрузки по типовым упражнениям (по ExRx: target / synergists / stabilizers).
+   Основная мышца 9–10; значимый синергист 4–5; мелкий 2–3. Стабилизаторы не считаем (бицепс в тягах к поясу — стабилизатор).
+   Индексы: 0 грудь, 1 широчайшие, 2 пер. дельта, 3 ср. дельта, 4 задн. дельта, 5 бицепс, 6 трицепс,
+   7 квадрицепс, 8 бицепс бедра, 9 ягодицы, 10 икры, 11 середина спины, 12 предплечья. Порядок важен: от частного к общему. */
+const LIB=[
+  [/мах\S*.*(наклон|задн)|обратн\S* развед|развед\S*.*(наклон|задн)|задн\S* дельт|reverse fly|rear delt|тяга к лицу|face ?pull/, {4:9,11:4}],
+  [/мах\S*.*вперед|подъем\S* перед собой|front raise/, {2:9}],
+  [/мах|развед\S* в стороны|lateral raise|подъем\S* в стороны/, {3:9,2:2}],
+  [/шраг|shrug/, {11:9,12:3}],
+  [/пуловер на блоке|прям\S* рук\S*.*блок|straight.?arm/, {1:9}],
+  [/пуловер|pullover/, {1:7,0:5,6:2}],
+  [/подтягив|pull.?up|chin.?up|гравитрон|верхн\S* блок|вертикальн\S* тяга|тяга сверху|lat ?pulldown/, {1:9,11:4,5:3,4:2,12:2}],
+  [/тяга.*(одной рукой|гантели)|one.?arm row|dumbbell row/, {1:8,11:6,4:3,12:2}],
+  [/тяга.*(к поясу|в наклоне|т.?гриф|упором|горизонт|нижн\S* блок|сидя|мейдоу|пендли)|тяга штанги|row/, {11:9,1:7,4:4,12:2}],
+  [/румынск|мертв\S* тяга|прям\S* ног|rdl|romanian/, {8:9,9:7,11:3,12:3}],
+  [/станов|deadlift/, {9:8,8:7,7:5,11:5,12:4}],
+  [/гиперэкстенз|good ?morning|гуд ?морнинг/, {9:7,8:6}],
+  [/хип.?траст|ягодичн\S* мост|hip ?thrust|glute bridge/, {9:10,8:3}],
+  [/отведен\S* ног|ягодичн\S* (тренаж|машин)|kickback/, {9:9}],
+  [/сведен\S* ног|приводящ/, {}],
+  [/разгибан\S* ног|leg extension|сисси/, {7:10}],
+  [/сгибан\S* ног|нордик|leg curl|ham curl/, {8:10}],
+  [/выпад|сплит|болгарск|степ.?ап|зашагив|lunge|split squat/, {7:8,9:8,8:2}],
+  [/жим ногами|leg press/, {7:9,9:5}],
+  [/гакк|hack/, {7:9,9:5}],
+  [/присед|squat|гоблет/, {7:9,9:7,8:2}],
+  [/икр|носк|голен|calf/, {10:10}],
+  [/французск|пушдаун|pushdown|разгибан\S*.*(рук|из-за|блок|трицеп|канат)|skull/, {6:9}],
+  [/свенд|svend/, {0:9,2:3}],
+  [/жим.*узк|close.?grip/, {6:8,0:6,2:4}],
+  [/брус|dip/, {0:7,6:7,2:5}],
+  [/сведен|пек.?дек|бабочк|кроссовер.*груд|fly|flye/, {0:9,2:2}],
+  [/жим.*(наклон|incline)/, {0:9,2:6,6:4}],
+  [/жим.*(лежа|скамь|bench|груд)|отжиман|push.?up/, {0:9,2:4,6:5}],
+  [/жим.*(сидя|стоя|над голов|армейск|арнольд|плеч|вверх)|overhead|shoulder press|military/, {2:9,3:4,6:5}],
+  [/молот|hammer/, {5:7,12:6}],
+  [/сгибан\S*.*обратн\S* хват|reverse curl/, {12:8,5:4}],
+  [/сгибан\S*|бицепс|байесиан|скотт|curl/, {5:9,12:2}],
+  [/разгибан\S*|трицепс|французск|пушдаун|pushdown|triceps|extension|kickback/, {6:9}],
+  [/запясть|предплеч|wrist/, {12:9}]
+];
+const normName=n=>String(n||"").toLowerCase().replace(/ё/g,"е");
+function libLevels(name){ const n=normName(name); for(const [re,lv] of LIB) if(re.test(n)) return Object.assign({},lv); return null; }
 async function detectMuscles(name){
-  const r=await S.sample.json(`Оцени нагрузку на мышцы в силовом упражнении «${name}» по шкале от 0 до 10, как в справочниках упражнений (7–10 высокая, 4–6 средняя, 1–3 низкая, 0 не работает).
-Учитывай, что в тренажёрах вспомогательные мышцы работают слабее, чем со свободным весом.
-Используй ТОЛЬКО эти мышцы: ${MUS.join(", ")}. Указывай только мышцы с нагрузкой от 1.
-Ответь только JSON вида {"levels":{"Широчайшие":8,"Середина спины":5,"Бицепс":4}}`,{modelTier:"quick"});
+  const lib=libLevels(name); if(lib&&Object.keys(lib).length) return lib;
+  const r=await S.sample.json(`Определи нагрузку на мышцы в силовом упражнении «${name}» по шкале 0–10, как в ExRx (target / synergists; стабилизаторы НЕ указывай).
+Правила:
+- Целевая мышца 9–10. Значимый синергист 4–5. Мелкий синергист 2–3. Всё остальное не указывай.
+- Изолирующее упражнение (махи, сгибания, разгибания, сведения) — обычно только одна мышца.
+- Не завышай вторичные: например, бицепс в тягах к поясу — стабилизатор (не указывать или 2–3); в махах в стороны работает средняя дельта (9), передняя 2, грудь и спина не работают.
+- В тренажёрах вспомогательные мышцы работают слабее.
+Мышцы только из списка: ${MUS.join(", ")}.
+Ответь только JSON вида {"levels":{"Средняя дельта":9,"Передняя дельта":2}}`,{modelTier:"default"});
   return lvFromObj(r&&r.levels);
 }
 const musIndex=n=>{ const t=String(n).trim(); return t==="Спина"?1:MUS.indexOf(t); };
@@ -323,6 +371,18 @@ function lvFromTool(inp){ const lv=lvFromObj(inp&&inp.muscle_levels); if(Object.
   (Array.isArray(inp&&inp.secondary_muscles)?inp.secondary_muscles:[]).forEach(n=>{ const k=musIndex(n); if(k>=0) lv[k]=4; });
   (Array.isArray(inp&&inp.primary_muscles)?inp.primary_muscles:[]).forEach(n=>{ const k=musIndex(n); if(k>=0) lv[k]=8; });
   return lv; }
+
+/* ---------- Звуковой сигнал конца отдыха ---------- */
+// Звук в браузере разрешён только после нажатия пользователя, поэтому «разблокируем» его при запуске отдыха.
+let AC=null;
+function unlockSound(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended") AC.resume(); }catch(e){} }
+function beep(){
+  try{ if(navigator.vibrate) navigator.vibrate([250,120,250]); }catch(e){}
+  try{ if(!AC) return; const t0=AC.currentTime;
+    [0,.28,.56].forEach((d,k)=>{ const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.value=k===2?1175:880;
+      g.gain.setValueAtTime(.0001,t0+d); g.gain.exponentialRampToValueAtTime(.35,t0+d+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+d+.22);
+      o.connect(g); g.connect(AC.destination); o.start(t0+d); o.stop(t0+d+.24); }); }catch(e){}
+}
 
 /* ---------- Иконки ---------- */
 const I={
