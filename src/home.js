@@ -24,6 +24,7 @@ function Spark({values,w,h,big}){
 }
 const RU_DAYS=["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"];
 const RU_MONTHS=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const dayMonth=d=>{ const t=new Date(d+"T00:00:00"); return t.getDate()+" "+RU_MONTHS[t.getMonth()]; };
 const longDate=d=>{ const t=new Date(d+"T00:00:00"); return RU_DAYS[t.getDay()]+", "+t.getDate()+" "+RU_MONTHS[t.getMonth()]; };
 const kgf=v=>fmt(Math.round(v*2)/2);
 
@@ -133,7 +134,7 @@ function lagTip(date){
     mod:day?{id:rid(),day,type:"add_sets",base:bi,n,from:inWeek.map(x=>x.date).sort().slice(-1)[0],reason:`не добрано ${fmt(best.gap)} подх. на «${MUS[best.m]}»`}:null};
 }
 function WeekScreen({date,toast}){
-  const [mode,setMode]=useState("now");
+  const [mode,setMode]=useState("now"), [all,setAll]=useState(false);
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
   const ref=d.toLocaleDateString("sv-SE"), w=weekData(ref), tip=mode==="now"?lagTip(date):null;
   // мезоцикл: среднее в неделю по неделям, где были тренировки
@@ -144,11 +145,12 @@ function WeekScreen({date,toast}){
     rows=MUS_ORDER.map(m=>({m,v:weeks.length?acc[m]/weeks.length:0,plan:w.plan[m]}));
   }
   const max=16;
-  const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.plan>0||r.v>0))]).filter(g=>g[1].length);
+  const zero=rows.filter(r=>r.plan>0&&!(r.v>0)).length;
+  const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.v>0||(all&&r.plan>0)))]).filter(g=>g[1].length);
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
   return html`<div class="weekscr">
     <header class="large">
-      <span class="eyebrow">${dmy(w.ws).slice(0,5)} – ${dmy(w.we).slice(0,5)}</span>
+      <span class="eyebrow">${dayMonth(w.ws)} – ${dayMonth(w.we)}</span>
       <h1>${mode==="meso"?"Мезоцикл":"Неделя "+w.wk}</h1>
     </header>
     <div class="seg3" role="group" aria-label="Период">
@@ -164,6 +166,7 @@ function WeekScreen({date,toast}){
           <b class="num">${fmt(Math.round(r.v*4)/4)}</b>
         </div>`; })}
       </div>`)}
+      ${zero?html`<button class="linkbtn effmore" onClick=${()=>setAll(!all)}>${all?"Скрыть мышцы без подходов":"Ещё без подходов: "+zero}</button>`:null}
       <div class="efflg"><span><i style=${{background:"var(--acc)"}}></i>ниже нормы</span><span><i style=${{background:"var(--grn)"}}></i>в норме</span></div>
     </section>
     ${tip?html`<section class="card tip">

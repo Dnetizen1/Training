@@ -467,6 +467,7 @@ function beep(){
 
 /* ---------- Иконки ---------- */
 const I={
+  summ:"M12 4a8 8 0 1 0 .01 0M12 7v5l3 2", star:"M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z",
   spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
   up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
@@ -481,7 +482,8 @@ const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="tru
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
+const TAB_I={summ:1,star:1,dumbbell:1,bars:1};
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"?3.5:2.25} stroke-linecap=${n==="more"?"round":"square"} stroke-linejoin="miter" aria-hidden="true"><path d=${I[n]}/></svg>`;
+  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"?3.5:TAB_I[n]?2:2.25} stroke-linecap=${n==="more"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;

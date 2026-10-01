@@ -606,6 +606,60 @@ details.grp .form{box-shadow:none;border-radius:0;padding-top:4px}
 .weekscr details .meta,.weekscr details h3,.weekscr details .review,.weekscr details .note{margin-inline:12px}
 .ttl h1{font-size:34px;line-height:41px}
 .effr{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 44px}.effr > span:first-child{white-space:normal;line-height:1.2}
+
+/* ===== v4: точно по макету — размеры, отступы, заливка акцента ===== */
+:root{--accf:#E8590C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--acc:#FF8A3D;--accf:#FF8A3D;--acc-track:#2A1A10;--grn-track:#0E2A17}}
+:root[data-theme="dark"]{--acc:#FF8A3D;--accf:#FF8A3D;--acc-track:#2A1A10;--grn-track:#0E2A17}
+.capsule,.btn.primary,.cta{background:var(--accf)}
+.ring2-fg,.ring-fg,.segs button i{stroke:var(--accf)}
+.segs button i{background:var(--accf)}
+:root[data-view="train"] body{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+.navrow{margin-top:10px}
+.ttl{margin:0 0 16px}
+.ttl-b h1{font-size:34px;line-height:41px;font-weight:700}
+.segs{margin-bottom:16px}
+.segs button[aria-selected="true"]{outline:0}
+.segs button.on{background:var(--acc-track)}
+.xcard{gap:16px}
+.x-sub{margin-top:-10px}
+.tags{border:0;background:none;padding:0;margin-top:-10px;text-align:left;color:inherit;cursor:pointer}
+.tags span.hi{background:var(--acc-soft);color:var(--ink)}
+.tile-l i{font-style:normal}
+.setlist{margin-top:16px}
+.sl-row{padding:11px 16px}
+.sl-act{padding:8px 16px}
+.sl-act button{font-size:13px}
+.fx > .nx{width:100%;padding:16px 4px 4px}
+.fx .notebtn{margin-top:4px}
+.days.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+/* отдых */
+.rest2{gap:28px;padding:0 8px 16px}
+.rest2 > .navrow{justify-self:stretch;margin-top:10px}
+.nav-note{font-size:15px;color:var(--mute)}
+.rest2-t{margin:0}
+.ring2{width:min(72vw,280px)}
+
+/* итог */
+.finish{gap:18px}
+.finish .corr{gap:8px}
+.finish .corr h3{font-size:20px;line-height:24px;font-weight:700;margin:0 4px}
+.finish .corr .menu{border-radius:16px}
+.corr-item{align-items:center;padding:12px 16px}
+.corr-item b{font-size:15px;font-weight:600}
+.corr-item small{font-size:13px}
+.finish .row-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.finish .row-actions .btn{width:100%;min-height:50px;border-radius:25px;font-size:17px}
+.finish .row-actions .btn.primary{min-height:54px;border-radius:27px;font-weight:700}
+.finish .review .btn.primary{background:var(--fill);color:var(--ink);font-weight:600;min-height:50px}
+.finish .review .btn:not(.primary){background:none;min-height:36px;font-size:15px;font-weight:500}
+.finish .corr .btn:not(.primary){background:var(--fill);color:var(--ink)}
+.effmore{justify-self:start;font-size:15px}
+.effr{grid-template-columns:112px minmax(0,1fr) 48px}.effr > span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.segs button.on{background:color-mix(in srgb,var(--accf) 45%,var(--fill))}
+.finish .corr .row-actions .btn:not(.primary){background:none;color:var(--acc);min-height:36px;font-size:15px;font-weight:500}
+.effr > span:first-child{white-space:normal;overflow:visible;line-height:1.2}
 </style>
 <div id="root"><div class="empty">Загружаю дневник…</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -1205,6 +1259,7 @@ function beep(){
 
 /* ---------- Иконки ---------- */
 const I={
+  summ:"M12 4a8 8 0 1 0 .01 0M12 7v5l3 2", star:"M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z",
   spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
   up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
@@ -1219,9 +1274,10 @@ const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="tru
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
+const TAB_I={summ:1,star:1,dumbbell:1,bars:1};
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"?3.5:2.25} stroke-linecap=${n==="more"?"round":"square"} stroke-linejoin="miter" aria-hidden="true"><path d=${I[n]}/></svg>`;
+  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"?3.5:TAB_I[n]?2:2.25} stroke-linecap=${n==="more"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;
 
 /* Интерфейс. Раскладка по образцу Strong/Hevy, см. DESIGN.md */
@@ -1471,13 +1527,13 @@ function Corrections({s,toast}){
     ${!list.length&&!planned.length?html`<div class="st">Всё сделано по плану, переносить нечего.</div>`:null}
     ${fresh.length?html`<div class="menu">${fresh.map(m=>{ const k=modKey(m); return html`<label key=${k} class="mitem corr-item">
         <input type="checkbox" checked=${!off[k]} onChange=${ev=>setOff(Object.assign({},off,{[k]:!ev.target.checked}))}/>
-        <span><span class="corr-day"><${Plate} k=${m.day}/>${P[m.day].name}</span> ${modText(m)}${m.reason?html`<small>${m.reason}</small>`:null}</span>
+        <span><b>${P[m.day].name} · ${modText(m)}</b>${m.reason?html`<small>${m.reason}</small>`:null}</span>
       </label>`; })}</div>
       <div class="row-actions"><button class="btn primary" onClick=${apply}>Добавить в план</button>
         ${S.sample?html`<button class="btn" disabled=${busy} onClick=${auto}><${Icon} n="spark" size=${16}/> ${busy?"Подбираю…":ai?"Подобрать ещё раз":"Подобрать автоматически"}</button>`:null}
         ${ai?html`<button class="btn quiet" onClick=${()=>setAi(null)}>Простой вариант</button>`:null}</div>`:null}
     ${planned.length?html`<div class="st">Уже в плане (применится, когда откроешь эти тренировки):</div>
-      <div class="menu">${planned.map(m=>html`<div key=${m.id} class="mitem corr-item"><span><span class="corr-day"><${Plate} k=${m.day}/>${P[m.day].name}</span> ${modText(m)}</span>
+      <div class="menu">${planned.map(m=>html`<div key=${m.id} class="mitem corr-item"><span><b>${P[m.day].name} · ${modText(m)}</b></span>
         <button class="ibtn danger" aria-label="Убрать из плана" onClick=${()=>dropMod(m.day,m.id)}><${Icon} n="close" size=${16}/></button></div>`)}</div>`:null}
     ${msg?html`<div class="st">${msg}</div>`:null}
   </div>`;
@@ -1521,7 +1577,7 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-function DaySheet({s,date,day,setDate,setDay,setWeek,onClose}){
+function DaySheet({s,date,day,setDate,setDay,setWeek,ui,setUi,onClose}){
   const wk=s.week;
   return html`<${Sheet} title="Тренировка" onClose=${onClose}>
     <div class="grp">
@@ -1534,9 +1590,16 @@ function DaySheet({s,date,day,setDate,setDay,setWeek,onClose}){
       <div class="grp-row"><span>Неделя мезоцикла</span><div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>${wk} из 6</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div></div>
       <div class="grp-row"><span>Цель недели</span><span class="mute">${WEEKS[wk]}</span></div>
     </div>
+    ${setUi?html`<div class="grp">
+      <div class="grp-row"><span>Вид экрана</span></div>
+      <div class="days two" role="group" aria-label="Вид экрана тренировки">
+        <button aria-pressed=${String(ui!=="focus")} onClick=${()=>{ setUi("journal"); onClose(); }}>Журнал</button>
+        <button aria-pressed=${String(ui==="focus")} onClick=${()=>{ setUi("focus"); onClose(); }}>По одному подходу</button>
+      </div>
+    </div>`:null}
   <//>`;
 }
-function SessionSheets({sheet,setSheet,s,date,day,edit,remove,openAsk,openHistory,setDate,setDay,setWeek}){
+function SessionSheets({sheet,setSheet,s,date,day,edit,remove,openAsk,openHistory,setDate,setDay,setWeek,ui,setUi}){
   if(!sheet) return null;
   const close=()=>setSheet(null), go=(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o});
   return sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} openHistory=${openHistory} go=${go}/>`
@@ -1544,9 +1607,9 @@ function SessionSheets({sheet,setSheet,s,date,day,edit,remove,openAsk,openHistor
     :sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`
     :sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`
     :sheet.type==="muscles"?html`<${SessionMuscles} s=${s} onClose=${close}/>`
-    :sheet.type==="day"?html`<${DaySheet} s=${s} date=${date} day=${day} setDate=${setDate} setDay=${setDay} setWeek=${setWeek} onClose=${close}/>`:null;
+    :sheet.type==="day"?html`<${DaySheet} s=${s} date=${date} day=${day} setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi} onClose=${close}/>`:null;
 }
-function FinishPanel({s,edit,toast}){
+function FinishPanel({s,edit,toast,head}){
   const doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
   const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
@@ -1556,7 +1619,7 @@ function FinishPanel({s,edit,toast}){
         <${Rings} size=${84} stroke=${10} label=${"Подходы "+doneSets+" из "+totalSets+", упражнения "+doneEx+" из "+s.ex.length} rings=${[
           {p:totalSets?doneSets/totalSets:0,color:"var(--acc)",track:"var(--acc-track)"},
           {p:s.ex.length?doneEx/s.ex.length:0,color:"var(--grn)",track:"var(--grn-track)"}]}/>
-        <div><h2>Итог</h2><span class="mute">${s.done?"Тренировка завершена":"Тренировка ещё идёт"}</span></div>
+        <div><h2>${head?head.title:"Итог"}</h2><span class="mute">${head?head.sub:s.done?"Тренировка завершена":"Тренировка ещё идёт"}</span></div>
       </div>
       <div class="tiles4">
         <div><span>Время</span><b class="big">${s.dur||"–"}<small> мин</small></b></div>
@@ -1587,7 +1650,7 @@ function AppliedBanner({s,date,day,edit}){
     </div>`;
 }
 
-function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openHistory,go}){
+function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,openHistory,go}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   return html`<div>
@@ -1597,7 +1660,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openH
       <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button></span>
     </nav>
     <header class="ttl">
-      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату или неделю"><h1>${P[day].name}</h1><${Icon} n="down" size=${20}/></button>
+      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату или неделю"><h1>${P[day].name}</h1></button>
       <span class="ttl-s">Неделя ${wk} · ${WEEKS[wk]} · ${s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0)} из ${s.ex.reduce((a,e)=>a+rowsOf(s,e),0)} подх.</span>
     </header>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
@@ -1608,7 +1671,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openH
     </div>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast}/>
     <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
-      setDate=${setDate} setDay=${setDay} setWeek=${setWeek}/>
+      setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>
   </div>`;
 }
 function textLog(s){
@@ -1805,28 +1868,26 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["home","Сводка","rings"],["train","Тренировка","dumbbell"],["week","Неделя","bars"]];
+  const tabs=[["home","Сводка","summ"],["train","Тренировка","dumbbell"],["week","Неделя","bars"]];
   const go=v=>{ setView(v); window.scrollTo(0,0); };
+  const restFull=ui==="focus"&&view==="train"&&timer&&!timer.hidden;
+  useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
   return html`<${React.Fragment}>
-    ${(timer&&!(ui==="focus"&&view==="train"))||toast?html`<div class="topbar">
-      <${Timer} t=${ui==="focus"&&view==="train"?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
+    ${(timer&&!restFull)||toast?html`<div class="topbar">
+      <${Timer} t=${restFull?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
       <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
     </div>`:null}
     ${S.bad?html`<div class="save bad" role="status">${S.status}</div>`:null}
     <main ref=${mainRef}>
-      ${view==="train"?html`<div class="viewseg" role="group" aria-label="Вид экрана тренировки">
-        <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${16}/> Журнал</button>
-        <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${16}/> Фокус</button>
-      </div>`:null}
-      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi} openHistory=${setHist} go=${go}/>`
+      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} ui=${ui} setUi=${setUi} openHistory=${setHist} go=${go}/>`
         :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openHistory=${setHist}/>`
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
         :view==="hist"?html`<${HistoryView} go=${go}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
     </main>
-    <nav class="tabbar" role="tablist">
+    ${view==="train"?null:html`<nav class="tabbar" role="tablist">
       ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k||(k==="home"&&(view==="body"||view==="hist")))} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
-      <button class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="spark" size=${24}/><span>Тренер</span></button>
-    </nav>
+      <button class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><${Icon} n="star" size=${24}/><span>Тренер</span></button>
+    </nav>`}
     ${hist?html`<${ExerciseHistory} name=${hist} onClose=${()=>setHist(null)}/>`:null}
     ${ask?html`<${AskSheet} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk(null)}/>`:null}
   <//>`;
@@ -1860,6 +1921,7 @@ function Spark({values,w,h,big}){
 }
 const RU_DAYS=["Воскресенье","Понедельник","Вторник","Среда","Четверг","Пятница","Суббота"];
 const RU_MONTHS=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const dayMonth=d=>{ const t=new Date(d+"T00:00:00"); return t.getDate()+" "+RU_MONTHS[t.getMonth()]; };
 const longDate=d=>{ const t=new Date(d+"T00:00:00"); return RU_DAYS[t.getDay()]+", "+t.getDate()+" "+RU_MONTHS[t.getMonth()]; };
 const kgf=v=>fmt(Math.round(v*2)/2);
 
@@ -1969,7 +2031,7 @@ function lagTip(date){
     mod:day?{id:rid(),day,type:"add_sets",base:bi,n,from:inWeek.map(x=>x.date).sort().slice(-1)[0],reason:`не добрано ${fmt(best.gap)} подх. на «${MUS[best.m]}»`}:null};
 }
 function WeekScreen({date,toast}){
-  const [mode,setMode]=useState("now");
+  const [mode,setMode]=useState("now"), [all,setAll]=useState(false);
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
   const ref=d.toLocaleDateString("sv-SE"), w=weekData(ref), tip=mode==="now"?lagTip(date):null;
   // мезоцикл: среднее в неделю по неделям, где были тренировки
@@ -1980,11 +2042,12 @@ function WeekScreen({date,toast}){
     rows=MUS_ORDER.map(m=>({m,v:weeks.length?acc[m]/weeks.length:0,plan:w.plan[m]}));
   }
   const max=16;
-  const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.plan>0||r.v>0))]).filter(g=>g[1].length);
+  const zero=rows.filter(r=>r.plan>0&&!(r.v>0)).length;
+  const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.v>0||(all&&r.plan>0)))]).filter(g=>g[1].length);
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
   return html`<div class="weekscr">
     <header class="large">
-      <span class="eyebrow">${dmy(w.ws).slice(0,5)} – ${dmy(w.we).slice(0,5)}</span>
+      <span class="eyebrow">${dayMonth(w.ws)} – ${dayMonth(w.we)}</span>
       <h1>${mode==="meso"?"Мезоцикл":"Неделя "+w.wk}</h1>
     </header>
     <div class="seg3" role="group" aria-label="Период">
@@ -2000,6 +2063,7 @@ function WeekScreen({date,toast}){
           <b class="num">${fmt(Math.round(r.v*4)/4)}</b>
         </div>`; })}
       </div>`)}
+      ${zero?html`<button class="linkbtn effmore" onClick=${()=>setAll(!all)}>${all?"Скрыть мышцы без подходов":"Ещё без подходов: "+zero}</button>`:null}
       <div class="efflg"><span><i style=${{background:"var(--acc)"}}></i>ниже нормы</span><span><i style=${{background:"var(--grn)"}}></i>в норме</span></div>
     </section>
     ${tip?html`<section class="card tip">
@@ -2044,12 +2108,16 @@ const W_STEP=2.5;
 const nfmt=v=>{ const x=num(v); return x===null?"":String(Math.round(x*100)/100).replace(".",","); };
 const mmss=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
 
-function RestScreen({t,onShift,onStop}){
+function RestScreen({t,onShift,onStop,onBack,back,done}){
   const [,tick]=useState(0);
   useEffect(()=>{ const h=setInterval(()=>tick(x=>x+1),250); return ()=>clearInterval(h); },[t]);
   const total=Math.max(1,t.total||60), left=Math.max(0,Math.round((t.end-Date.now())/1000)), p=left/total;
   const R=124, C=2*Math.PI*R;
   return html`<section class="rest2" aria-label="Отдых">
+    <nav class="navrow" aria-label="Навигация">
+      <button class="navback" onClick=${onBack}><${Icon} n="left" size=${22}/>${back}</button>
+      <span class="nav-note">${done}</span>
+    </nav>
     <h2 class="rest2-t">${left===0?"Отдых окончен":"Отдых"}</h2>
     <div class="ring2">
       <svg viewBox="0 0 280 280" aria-hidden="true">
@@ -2068,12 +2136,12 @@ function RestScreen({t,onShift,onStop}){
   </section>`;
 }
 
-function Tile({label,unit,value,step,dec,onChange}){
+function Tile({label,hint,unit,value,step,dec,onChange}){
   const [editing,setEditing]=useState(false);
   const v=num(value);
   const set=x=>onChange(String(Math.max(0,Math.round(x*100)/100)).replace(".",dec?",":"."));
   return html`<div class="tile">
-    <span class="tile-l">${label}</span>
+    <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
       :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}><b class="big">${value===""?"–":nfmt(value)}</b><small>${unit}</small></button>`}
     <div class="tile-b">
@@ -2083,7 +2151,7 @@ function Tile({label,unit,value,step,dec,onChange}){
   </div>`;
 }
 
-function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi,openHistory,go}){
+function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setUi,openHistory,go}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [draft,setDraft]=useState(null), [showSum,setShowSum]=useState(false);
   useEffect(()=>{ setIdx(null); setDraft(null); setShowSum(false); },[day,date]);
@@ -2115,29 +2183,37 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi,o
     const nextSub=!last?(val.w?nfmt(val.w)+" кг × ":"")+val.r+" · как сейчас":nx?rowsOf(s,nx)+" × "+xinfo(s,nx).plan.lo+"–"+xinfo(s,nx).plan.hi:"";
     upd(x=>{ x.sets[j]=Object.assign({},x.sets[j],{w:val.w,r:val.r,q:val.q,ok:true}); });
     if(isPR) toast({text:`Рекорд в «${inf.name}»: 1ПМ ≈ ${kgf(e1rm(val.w,val.r))} кг`});
-    unlockSound(); setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next,nextSub});
+    unlockSound(); setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next,nextSub,done:"Подход "+(j+1)+" из "+rows+" записан"});
     setDraft(null);
     if(last) setIdx(nextIdx>=0?nextIdx:i);
   };
-  const resting=timer&&timer.end>Date.now()-60000;
+  const resting=timer&&!timer.hidden&&timer.end>Date.now()-60000;
   const doneSets=s.ex.reduce((a,x)=>a+Math.min(doneOf(x),rowsOf(s,x)),0);
   const summary=showSum||(s.done&&allDone);
 
+  const shift=d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}));
+  if(!summary&&resting) return html`<div class="fx"><${RestScreen} t=${timer} back=${P[day].name} done=${timer.done||""} onBack=${()=>setTimer(t=>t&&({...t,hidden:true}))} onShift=${shift} onStop=${()=>setTimer(null)}/></div>`;
+  if(summary) return html`<div class="fx">
+    <nav class="navrow" aria-label="Навигация">
+      <button class="navback" onClick=${()=>showSum?setShowSum(false):go("home")}><${Icon} n="left" size=${22}/>${showSum?"Тренировка":"Сводка"}</button>
+      <button class="navlink" onClick=${()=>go("home")}>Готово</button>
+    </nav>
+    <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)+" · неделя "+wk}}/>
+  </div>`;
+
   return html`<div class="fx">
     <nav class="navrow" aria-label="Навигация">
-      <button class="navback" onClick=${()=>summary&&showSum?setShowSum(false):go("home")}><${Icon} n="left" size=${22}/>${summary&&showSum?"Тренировка":"Сводка"}</button>
-      ${summary?null:html`<button class="navlink" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>`}
+      <button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Сводка</button>
+      <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>
     </nav>
     <header class="ttl">
-      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату или неделю"><h1>${P[day].name}</h1><${Icon} n="down" size=${20}/></button>
-      <span class="ttl-s">${summary?longDate(date)+" · неделя "+wk:e?"Упражнение "+(i+1)+" из "+s.ex.length+" · "+doneSets+" подх. сделано":"Нет упражнений"}</span>
+      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату, неделю или вид экрана"><h1>${P[day].name}</h1></button>
+      <span class="ttl-s">${e?"Упражнение "+(i+1)+" из "+s.ex.length+" · неделя "+wk:"Нет упражнений"}</span>
     </header>
-    ${summary?null:html`<div class="segs" role="tablist" aria-label="Упражнения">${s.ex.map((x,k)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)); return html`<button key=${x.uid} role="tab" aria-selected=${String(k===i)} aria-label=${xinfo(s,x).name+": "+d+" из "+r} onClick=${()=>goEx(k)}><i style=${{width:(r?d/r*100:0)+"%"}}></i></button>`; })}</div>`}
+    <div class="segs" role="tablist" aria-label="Упражнения">${s.ex.map((x,k)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)); return html`<button key=${x.uid} role="tab" class=${k===i?"on":""} aria-selected=${String(k===i)} aria-label=${xinfo(s,x).name+": "+d+" из "+r} onClick=${()=>goEx(k)}><i style=${{width:(r?d/r*100:0)+"%"}}></i></button>`; })}</div>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
 
-    ${summary?html`<${FinishPanel} s=${s} edit=${edit} toast=${toast}/>`
-    :resting?html`<${RestScreen} t=${timer} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))} onStop=${()=>setTimer(null)}/>`
-    :!e?html`<section class="xcard"><p class="st">В тренировке нет упражнений.</p><button class="capsule" onClick=${()=>setSheet({type:"add"})}>Добавить упражнение</button></section>`
+    ${!e?html`<section class="xcard"><p class="st">В тренировке нет упражнений.</p><button class="capsule" onClick=${()=>setSheet({type:"add"})}>Добавить упражнение</button></section>`
     :html`<${React.Fragment}>
       <section class="xcard">
         <div class="x-top">
@@ -2145,18 +2221,12 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi,o
           <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="more" size=${22}/></button>
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir,wk)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
-        <div class="tags">${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</div>
-        <div class="xacts">
-          <button onClick=${()=>setSheet({type:"swap",uid:e.uid})}>${inf.custom?"Переименовать":"Заменить"}</button>
-          <button onClick=${()=>setSheet({type:"mus",uid:e.uid})}>Нагрузка</button>
-          <button onClick=${()=>openHistory(inf.name)}>История</button>
-        </div>
+        <button class="tags" aria-label="Нагрузка на мышцы" onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
         ${!exDone?html`
           <div class="tiles">
-            <${Tile} label="Вес" unit="кг" step=${W_STEP} dec=${true} value=${val.w} onChange=${w=>setVal({w})}/>
+            <${Tile} label="Вес" hint=${isBarbell(inf.name)&&platesFor(val.w)?"по "+platesFor(val.w).map(fmt).join("+"):""} unit="кг" step=${W_STEP} dec=${true} value=${val.w} onChange=${w=>setVal({w})}/>
             <${Tile} label="Повторы" unit="раз" step=${1} value=${val.r} onChange=${r=>setVal({r})}/>
           </div>
-          ${isBarbell(inf.name)&&platesFor(val.w)?html`<div class="plates" aria-label="Блины на каждую сторону грифа 20 кг"><span>На сторону</span>${platesFor(val.w).map((p,k)=>html`<i key=${k} class=${"pl p"+String(p).replace(".","_")}>${fmt(p)}</i>`)}</div>`:null}
           <div class="qwrap">
             <span>Сколько ещё мог сделать</span>
             <div class="seg5" role="group" aria-label="Запас повторов">${["0","1","2","3","4+"].map(v=>html`<button key=${v} aria-pressed=${String(val.q===v)} class=${v==="0"?"q0":""} onClick=${()=>setVal({q:val.q===v?"":v})}>${v}</button>`)}</div>
@@ -2176,15 +2246,11 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi,o
         </div>
       </section>
 
-      <div class="nextrow">
-        <button class="nav-i" disabled=${i===0} onClick=${()=>goEx(i-1)} aria-label="Предыдущее упражнение"><${Icon} n="left" size=${18}/></button>
-        ${nInf?html`<button class="nx" onClick=${()=>goEx(nk)}><span>Дальше: ${nInf.name}</span><small>${rowsOf(s,s.ex[nk])} × ${nInf.plan.lo}–${nInf.plan.hi}</small></button>`:html`<span class="nx">Это последнее упражнение</span>`}
-        <button class="nav-i" disabled=${i>=s.ex.length-1} onClick=${()=>goEx(i+1)} aria-label="Следующее упражнение"><${Icon} n="right" size=${18}/></button>
-      </div>
+      ${nInf?html`<button class="nx" onClick=${()=>goEx(nk)}><span>Дальше: ${nInf.name}</span><small>${rowsOf(s,s.ex[nk])} × ${nInf.plan.lo}–${nInf.plan.hi}</small></button>`:null}
       <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
     <//>`}
     <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
-      setDate=${setDate} setDay=${setDay} setWeek=${setWeek}/>
+      setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>
   </div>`;
 }
 
