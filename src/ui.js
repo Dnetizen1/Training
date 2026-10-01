@@ -41,9 +41,17 @@ function MuscleBars({rows,zone,showEmpty}){
   </div>`;
 }
 const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,doneOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
+// Пояснение под знаком вопроса
+function Help({children,label}){
+  const [open,setOpen]=useState(false);
+  return html`<div class="help">
+    <button class="help-b" aria-expanded=${String(open)} aria-label=${label||"Пояснение"} onClick=${()=>setOpen(!open)}>?</button>
+    ${open?html`<div class="help-t">${children}</div>`:null}
+  </div>`;
+}
 function SessionMuscles({s,onClose}){
-  return html`<${Sheet} title=${"Мышцы за тренировку: "+P[s.day].name} onClose=${onClose}>
-    <div class="st">Эффективные подходы: нагрузка 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>
+  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}>
+    <${Help} label="Как считаются подходы">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.<//>
     <${MuscleBars} rows=${sessionRows(s)}/>
   <//>`;
 }
@@ -287,34 +295,61 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-function SessionSheets({sheet,setSheet,s,date,edit,remove,openAsk,openHistory}){
+function DaySheet({s,date,day,setDate,setDay,setWeek,onClose}){
+  const wk=s.week;
+  return html`<${Sheet} title="Тренировка" onClose=${onClose}>
+    <div class="grp">
+      <div class="grp-row"><span>День</span></div>
+      <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>{ setDay(k); onClose(); }}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
+    </div>
+    <div class="grp">
+      <label class="grp-row"><span>Дата</span><input type="date" value=${date} onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/></label>
+      ${date!==todayStr()?html`<button class="grp-row link" onClick=${()=>setDate(todayStr())}>Вернуться к сегодня</button>`:null}
+      <div class="grp-row"><span>Неделя мезоцикла</span><div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>${wk} из 6</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div></div>
+      <div class="grp-row"><span>Цель недели</span><span class="mute">${WEEKS[wk]}</span></div>
+    </div>
+  <//>`;
+}
+function SessionSheets({sheet,setSheet,s,date,day,edit,remove,openAsk,openHistory,setDate,setDay,setWeek}){
   if(!sheet) return null;
   const close=()=>setSheet(null), go=(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o});
   return sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} openHistory=${openHistory} go=${go}/>`
     :sheet.type==="swap"?html`<${SwapSheet} s=${s} uid=${sheet.uid} edit=${edit} onClose=${close} go=${go}/>`
     :sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`
     :sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`
-    :sheet.type==="muscles"?html`<${SessionMuscles} s=${s} onClose=${close}/>`:null;
+    :sheet.type==="muscles"?html`<${SessionMuscles} s=${s} onClose=${close}/>`
+    :sheet.type==="day"?html`<${DaySheet} s=${s} date=${date} day=${day} setDate=${setDate} setDay=${setDay} setWeek=${setWeek} onClose=${close}/>`:null;
 }
 function FinishPanel({s,edit,toast}){
-  const doneSets=s.ex.reduce((a,e)=>a+doneOf(e),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
+  const doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
+  const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
+  const avgQ=qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–";
   return html`<section class="finish">
-      <h2>Итог</h2>
-      <div class="stats">
-        <div><span>Подходы</span><b>${doneSets}<small>/${totalSets}</small></b></div>
-        <div><span>Упражнения</span><b>${doneEx}<small>/${s.ex.length}</small></b></div>
-        <div><span>Время</span><b>${s.dur||"–"}<small> мин</small></b></div>
+      <div class="sumhead">
+        <${Rings} size=${84} stroke=${10} label=${"Подходы "+doneSets+" из "+totalSets+", упражнения "+doneEx+" из "+s.ex.length} rings=${[
+          {p:totalSets?doneSets/totalSets:0,color:"var(--acc)",track:"var(--acc-track)"},
+          {p:s.ex.length?doneEx/s.ex.length:0,color:"var(--grn)",track:"var(--grn-track)"}]}/>
+        <div><h2>Итог</h2><span class="mute">${s.done?"Тренировка завершена":"Тренировка ещё идёт"}</span></div>
       </div>
-      <div class="form">
-        <label>Вес утром, кг<input type="text" inputmode="decimal" value=${s.bw||""} onChange=${ev=>edit(ss=>{ ss.bw=ev.target.value; })}/></label>
-        <label>Длительность, мин<input type="text" inputmode="numeric" value=${s.dur||""} onChange=${ev=>edit(ss=>{ ss.dur=ev.target.value; })}/></label>
-        <label class="full">Самочувствие, сон, боли<textarea rows="2" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea></label>
+      <div class="tiles4">
+        <div><span>Время</span><b class="big">${s.dur||"–"}<small> мин</small></b></div>
+        <div><span>Подходы</span><b class="big acc">${doneSets}/${totalSets}</b></div>
+        <div><span>Упражнения</span><b class="big grn">${doneEx}/${s.ex.length}</b></div>
+        <div><span>Средний запас</span><b class="big">${avgQ}</b></div>
       </div>
       ${s.done?html`<${Corrections} s=${s} toast=${toast}/>`:null}
       <${Review} label="Разобрать тренировку" stored=${s.summary} disabledMsg="Сначала впиши хотя бы один подход."
         build=${()=>hasData(s)?reviewPrompt(s):""} onSave=${t=>edit(ss=>{ ss.summary=t; })}/>
-      <div><button class="btn" onClick=${()=>copyText(textLog(s))}>Скопировать тренировку текстом</button></div>
+      <details class="grp more">
+        <summary class="grp-row">Самочувствие, вес и время</summary>
+        <div class="form">
+          <label>Вес утром, кг<input type="text" inputmode="decimal" value=${s.bw||""} onChange=${ev=>edit(ss=>{ ss.bw=ev.target.value; })}/></label>
+          <label>Длительность, мин<input type="text" inputmode="numeric" value=${s.dur||""} onChange=${ev=>edit(ss=>{ ss.dur=ev.target.value; })}/></label>
+          <label class="full">Самочувствие, сон, боли<textarea rows="2" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea></label>
+        </div>
+      </details>
+      <button class="btn wide" onClick=${()=>copyText(textLog(s))}>Скопировать тренировку текстом</button>
     </section>`;
 }
 function AppliedBanner({s,date,day,edit}){
@@ -326,23 +361,18 @@ function AppliedBanner({s,date,day,edit}){
     </div>`;
 }
 
-function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openHistory}){
+function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openHistory,go}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   return html`<div>
-    <header class="wk">
-      <div class="wk-top">
-        <div class="wk-name"><${Plate} k=${day}/><h1>${P[day].name}</h1></div>
-        <${MusBtn} onClick=${()=>setSheet({type:"muscles"})}/>
-        <button class=${"btn "+(s.done?"ok":"primary")} onClick=${finish}>${s.done?"Завершена":"Завершить"}</button>
-      </div>
-      <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
-      <div class="wk-meta">
-        <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
-        ${date!==todayStr()?html`<button class="btn quiet" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
-        <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
-        <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
-      </div>
+    <nav class="navrow" aria-label="Навигация">
+      <button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Сводка</button>
+      <span class="navright"><button class="navlink" onClick=${()=>setSheet({type:"muscles"})}>Мышцы</button>
+      <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button></span>
+    </nav>
+    <header class="ttl">
+      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату или неделю"><h1>${P[day].name}</h1><${Icon} n="down" size=${20}/></button>
+      <span class="ttl-s">Неделя ${wk} · ${WEEKS[wk]} · ${s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0)} из ${s.ex.reduce((a,e)=>a+rowsOf(s,e),0)} подх.</span>
     </header>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <div class="exlist">
@@ -351,7 +381,8 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openH
       <button class="btn wide addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
     </div>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast}/>
-    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}/>
+    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
+      setDate=${setDate} setDay=${setDay} setWeek=${setWeek}/>
   </div>`;
 }
 function textLog(s){
@@ -553,13 +584,13 @@ function App(){
       <${Timer} t=${ui==="focus"&&view==="train"?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
       <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
     </div>`:null}
-    <div class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</div>
+    ${S.bad?html`<div class="save bad" role="status">${S.status}</div>`:null}
     <main ref=${mainRef}>
       ${view==="train"?html`<div class="viewseg" role="group" aria-label="Вид экрана тренировки">
         <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${16}/> Журнал</button>
         <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${16}/> Фокус</button>
       </div>`:null}
-      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi} openHistory=${setHist}/>`
+      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi} openHistory=${setHist} go=${go}/>`
         :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openHistory=${setHist}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
