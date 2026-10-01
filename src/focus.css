@@ -1,0 +1,106 @@
+/* Вид «Фокус». Сознательно одна тема — тёмная «сцена»: в зале экран смотрят с вытянутой руки, между подходами.
+   Огромные цифры (Oswald), одна главная кнопка, акцент — цвет диска дня. Включается атрибутом data-ui="focus". */
+:root[data-ui="focus"]{
+  --bg:#141416; --surface:#1d1d20; --sunk:#26262a; --line:#333338; --rule:#2a2a2e;
+  --ink:#f3f3f4; --mute:#9d9da6; --inv:#141416; --band:#1a1a1d;
+  --p-red:#ff5a60; --p-blue:#6b96ff; --p-yellow:#f4cb4f; --p-green:#45cf80;
+  --ok:#45cf80; --ok-soft:#173322; --warn:#ff8a4c; --warn-soft:#3a2416;
+  --day-ink:#141416; --day-soft:#1f2a45; --lv-hi:#4a2c17; --lv-mid:#3d3618; --lv-lo:#26262a;
+  --num:"Oswald","Arial Narrow",sans-serif;
+  color-scheme:dark;
+}
+:root[data-ui="focus"][data-day="LA"]{--day-soft:#3d1d20}
+:root[data-ui="focus"][data-day="UB"]{--day-soft:#3a3218}
+:root[data-ui="focus"][data-day="LB"]{--day-soft:#15301f}
+[data-ui="focus"] body{background:var(--bg)}
+.uiswitch{margin-left:auto}
+
+.focus{display:grid;gap:14px;padding-top:6px}
+.fhead{display:flex;align-items:center;gap:10px;padding-top:18px}
+.fday{display:flex;align-items:center;gap:8px;flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;flex-wrap:wrap}
+.fday span{font:700 22px/1 var(--display);letter-spacing:-.02em}
+.fday small{width:100%;padding-left:28px;color:var(--mute);font:500 12px var(--mono)}
+.fday .plate{width:20px;height:20px}
+.fday .plate::after{inset:7px}
+.fpanel{display:grid;gap:10px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+
+/* прогресс тренировки: сегмент на упражнение, ширина по числу подходов */
+.fprog{display:flex;gap:3px}
+.fprog button{position:relative;height:10px;border:0;padding:0;border-radius:2px;background:var(--sunk);overflow:hidden;min-width:8px}
+.fprog button i{position:absolute;left:0;top:0;bottom:0;background:var(--ok)}
+.fprog button[aria-selected="true"]{outline:2px solid var(--day);outline-offset:1px}
+
+/* сцена упражнения */
+.stage{display:grid;gap:16px;background:var(--surface);border-radius:16px;padding:16px 14px 12px;transition:opacity .25s var(--ease)}
+.stage.dim{opacity:.55}
+.st-top{display:grid;grid-template-columns:36px minmax(0,1fr) 36px;gap:6px;align-items:start}
+.st-name{text-align:center;min-width:0}
+.st-name small{color:var(--mute);font-size:12.5px}
+.st-name h2{margin:4px 0 0;font:600 21px/1.2 var(--body);color:var(--day);overflow-wrap:anywhere}
+:root[data-ui="focus"][data-day="UB"] .st-name h2{color:var(--p-yellow)}
+.st-meta{display:grid;justify-items:center;gap:8px;text-align:center}
+.tgt{font:500 13px var(--mono);color:var(--mute)}
+.tgt b{color:var(--ink)}
+.big{font-family:var(--num);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.setno{text-align:center;color:var(--mute);font-size:15px}
+.setno .big{font-size:30px;color:var(--ink);vertical-align:-3px;margin-inline:2px}
+.stps{display:grid;gap:14px}
+.stp{display:grid;gap:4px}
+.stp-l{font-size:13px;color:var(--mute);text-align:center}
+.stp-row{display:grid;grid-template-columns:72px minmax(0,1fr) 72px;gap:8px;align-items:center}
+.stp-b{height:72px;border:0;border-radius:14px;background:var(--sunk);color:var(--ink);display:grid;place-items:center;transition:transform .1s var(--ease),background .15s var(--ease)}
+.stp-b:active{transform:scale(.95);background:var(--line)}
+.stp-v{border:0;background:none;display:flex;align-items:baseline;justify-content:center;gap:6px;min-width:0;padding:0}
+.stp-v .big{font-size:76px;line-height:1}
+.stp-v small{font-size:15px;color:var(--mute)}
+.stp-in{width:100%;height:72px;text-align:center;font:600 52px var(--num);background:var(--bg);border:2px solid var(--day);border-radius:14px;color:var(--ink)}
+.qrow{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.qrow span{font-size:13px;color:var(--mute);margin-right:4px}
+.qrow button{min-width:46px;height:40px;border:1px solid var(--line);background:transparent;border-radius:10px;font:600 15px var(--mono);color:var(--mute)}
+.qrow button.on{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+.qrow button.on.q0{background:var(--p-red);border-color:var(--p-red);color:#fff}
+.fwas{text-align:center;font:500 12.5px var(--mono);color:var(--mute)}
+.fbtn{min-height:52px;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:14px;padding:0 18px;font-size:16px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.fbtn.main{background:var(--day);border-color:var(--day);color:var(--day-ink)}
+.fbtn.wide{width:100%}
+.hero{width:100%;min-height:68px;font-size:19px;border-radius:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip-s{min-width:58px;height:46px;border:1px solid var(--line);background:transparent;border-radius:10px;display:grid;align-content:center;justify-items:center;gap:1px;padding:0 8px;color:var(--mute)}
+.chip-s small{font-size:10.5px}
+.chip-s span{font:600 13px var(--mono)}
+.chip-s.ok{background:var(--ok-soft);border-color:transparent;color:var(--ink)}
+.chip-s.ok small{color:var(--ok)}
+.chip-s.cur{border-color:var(--day);color:var(--ink)}
+.chip-s.add{min-width:46px}
+.st-nav{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:6px}
+
+/* кольцо отдыха */
+.rest{display:grid;justify-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 14px 14px}
+.ring{position:relative;width:min(62vw,230px);aspect-ratio:1;max-width:100%}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring-bg{stroke:var(--sunk)}
+.ring-fg{stroke:var(--day);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.rest.over .ring-fg{stroke:var(--ok)}
+.ring-c{position:absolute;inset:0;display:grid;place-content:center;justify-items:center}
+.ring-c .big{font-size:64px;line-height:1}
+.ring-c span{color:var(--mute);font-size:13px}
+.rest-next{display:grid;justify-items:center;gap:2px;text-align:center}
+.rest-next span{font-size:12px;color:var(--mute)}
+.rest-next b{font-weight:600}
+.rest-act{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px;width:100%}
+
+/* список упражнений */
+.flist{display:grid;gap:4px;background:var(--surface);border-radius:14px;padding:8px}
+.fl-row{display:flex;align-items:center;gap:4px;border-radius:10px}
+.fl-row.cur{background:var(--sunk)}
+.fl-main{flex:1;min-width:0;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;border:0;background:none;padding:10px 8px;text-align:left;font-size:15px}
+.fl-main small{color:var(--mute);font:500 12px var(--mono)}
+.fl-main span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fl-main b{font:600 13px var(--mono);color:var(--mute)}
+.fl-row.done .fl-main b{color:var(--ok)}
+.fend{display:grid;gap:4px}
+[data-ui="focus"] .exb:nth-child(odd){background:var(--band)}
+@media (max-width:370px){.stp-row{grid-template-columns:60px minmax(0,1fr) 60px}.stp-b{height:64px}.stp-v .big{font-size:64px}}
+.chips{gap:5px}.chip-s{min-width:52px}.chip-s.add{min-width:40px}
+@media (max-width:380px){.qrow{gap:4px}.qrow button{min-width:40px}.qrow span{width:100%;text-align:center;margin:0}}

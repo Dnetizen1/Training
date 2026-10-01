@@ -233,12 +233,10 @@ function Review({label,stored,build,onSave,disabledMsg}){
 }
 
 /* ---------- Экран тренировки ---------- */
-function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk}){
-  const s=getSession(date,day), wk=s.week;
+// Общее для обоих видов: тренировка, правки, удаление с «Вернуть», неделя мезоцикла, завершение
+function useSession(date,day,toast){
+  const s=getSession(date,day);
   const edit=fn=>editSession(date,day,fn);
-  const [sheet,setSheet]=useState(null);       // {type, uid, opts}
-  const [help,setHelp]=useState(false);
-  const counts=muscleCount(s,e=>rowsOf(s,e));
   const remove=i=>{
     const entry=clone(s.ex[i]), name=xinfo(s,entry).name;
     edit(ss=>{ ss.ex.splice(i,1); });
@@ -247,37 +245,20 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk}){
   const setWeek=d=>edit(ss=>{ ss.week=Math.min(6,Math.max(1,ss.week+d));
     ss.ex.forEach(e=>{ if(e.sets.some(x=>x.w||x.r||x.ok)) return; delete e.n; e.sets=Array.from({length:setsFor(xinfo(ss,e).plan.ns,ss.week)},blankSet); }); });
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
-  const close=()=>setSheet(null);
+  return {s,edit,remove,setWeek,finish};
+}
+function SessionSheets({sheet,setSheet,s,date,edit,remove,openAsk}){
+  if(!sheet) return null;
+  const close=()=>setSheet(null), go=(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o});
+  return sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} go=${go}/>`
+    :sheet.type==="swap"?html`<${SwapSheet} s=${s} uid=${sheet.uid} edit=${edit} onClose=${close} go=${go}/>`
+    :sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`
+    :sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`:null;
+}
+function FinishPanel({s,edit,toast}){
   const doneSets=s.ex.reduce((a,e)=>a+doneOf(e),0), totalSets=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
-  return html`<div>
-    <header class="wk">
-      <div class="wk-top">
-        <div class="wk-name"><${Plate} k=${day}/><h1>${P[day].name}</h1></div>
-        <${Elapsed} s=${s}/>
-        <button class=${"btn "+(s.done?"ok":"primary")} onClick=${finish}>${s.done?"Завершена":"Завершить"}</button>
-      </div>
-      <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
-      <div class="wk-meta">
-        <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
-        ${date!==todayStr()?html`<button class="btn quiet" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
-        <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
-        <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
-      </div>
-    </header>
-    <div class="mline" aria-label="Подходы по мышцам в этой тренировке">${MUS_ORDER.map(k=>{ const c=counts[k]; return c.d?html`<span key=${k}><b>${c.d}</b>${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind">+${fmt(c.f)} ${MUS[k]}</span>`:null; })}</div>
-    ${help?html`<div class="helpbox"><b>Запас (RIR)</b>: сколько повторов ты ещё мог бы сделать в этом подходе. 0 = отказ, больше ни одного. 2 = мог ещё два. Цель этой недели: <b>${WEEKS[wk]}</b>. Нажми на ячейку «Запас» в подходе, чтобы указать. Поле необязательное.<div><button class="btn quiet" onClick=${()=>setHelp(false)}>Понятно</button></div></div>`:null}
-    ${s.applied&&s.applied.length?html`<div class="applied">
-      <div><b>Учтено после тренировки ${dm(s.applied[0].from)}</b></div>
-      <ul>${s.applied.map((a,k)=>html`<li key=${k}>${a.text}${a.reason?html`<span class="mute"> · ${a.reason}</span>`:null}</li>`)}</ul>
-      ${!hasData(s)?html`<button class="btn quiet" onClick=${()=>edit(ss=>{ ss.ex=blankSession(date,day).ex; delete ss.applied; })}>Вернуть как в программе</button>`:null}
-    </div>`:null}
-    <div class="exlist">
-      ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} qHelp=${()=>setHelp(!help)} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
-      ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
-      <button class="btn wide addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
-    </div>
-    <section class="finish">
+  return html`<section class="finish">
       <h2>Итог</h2>
       <div class="stats">
         <div><span>Подходы</span><b>${doneSets}<small>/${totalSets}</small></b></div>
@@ -293,11 +274,48 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk}){
       <${Review} label="Разобрать тренировку" stored=${s.summary} disabledMsg="Сначала впиши хотя бы один подход."
         build=${()=>hasData(s)?reviewPrompt(s):""} onSave=${t=>edit(ss=>{ ss.summary=t; })}/>
       <button class="btn quiet" onClick=${()=>copyText(textLog(s))}>Скопировать тренировку текстом</button>
-    </section>
-    ${sheet&&sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} go=${(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o})}/>`:null}
-    ${sheet&&sheet.type==="swap"?html`<${SwapSheet} s=${s} uid=${sheet.uid} edit=${edit} onClose=${close} go=${(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o})}/>`:null}
-    ${sheet&&sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`:null}
-    ${sheet&&sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`:null}
+    </section>`;
+}
+function AppliedBanner({s,date,day,edit}){
+  if(!(s.applied&&s.applied.length)) return null;
+  return html`<div class="applied">
+      <div><b>Учтено после тренировки ${dm(s.applied[0].from)}</b></div>
+      <ul>${s.applied.map((a,k)=>html`<li key=${k}>${a.text}${a.reason?html`<span class="mute"> · ${a.reason}</span>`:null}</li>`)}</ul>
+      ${!hasData(s)?html`<button class="btn quiet" onClick=${()=>edit(ss=>{ ss.ex=blankSession(date,day).ex; delete ss.applied; })}>Вернуть как в программе</button>`:null}
+    </div>`;
+}
+
+function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
+  const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
+  const [sheet,setSheet]=useState(null);       // {type, uid, opts}
+  const [help,setHelp]=useState(false);
+  const counts=muscleCount(s,e=>rowsOf(s,e));
+  return html`<div>
+    <header class="wk">
+      <div class="wk-top">
+        <div class="wk-name"><${Plate} k=${day}/><h1>${P[day].name}</h1></div>
+        <${Elapsed} s=${s}/>
+        <button class=${"btn "+(s.done?"ok":"primary")} onClick=${finish}>${s.done?"Завершена":"Завершить"}</button>
+      </div>
+      <div class="days" role="group" aria-label="День программы">${ORDER.map(k=>html`<button key=${k} aria-pressed=${String(k===day)} onClick=${()=>setDay(k)}><${Plate} k=${k}/>${P[k].name}</button>`)}</div>
+      <div class="wk-meta">
+        <input type="date" value=${date} aria-label="Дата" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/>
+        ${date!==todayStr()?html`<button class="btn quiet" onClick=${()=>setDate(todayStr())}>Сегодня</button>`:null}
+        <div class="stepper"><button aria-label="Неделя назад" onClick=${()=>setWeek(-1)}>−</button><span>нед. ${wk}</span><button aria-label="Неделя вперёд" onClick=${()=>setWeek(1)}>+</button></div>
+        <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
+        <button class="btn quiet uiswitch" onClick=${()=>setUi("focus")}><${Icon} n="target" size=${16}/> Фокус-режим</button>
+      </div>
+    </header>
+    <div class="mline" aria-label="Подходы по мышцам в этой тренировке">${MUS_ORDER.map(k=>{ const c=counts[k]; return c.d?html`<span key=${k}><b>${c.d}</b>${MUS[k]}</span>`:c.f?html`<span key=${k} class="ind">+${fmt(c.f)} ${MUS[k]}</span>`:null; })}</div>
+    ${help?html`<div class="helpbox"><b>Запас (RIR)</b>: сколько повторов ты ещё мог бы сделать в этом подходе. 0 = отказ, больше ни одного. 2 = мог ещё два. Цель этой недели: <b>${WEEKS[wk]}</b>. Нажми на ячейку «Запас» в подходе, чтобы указать. Поле необязательное.<div><button class="btn quiet" onClick=${()=>setHelp(false)}>Понятно</button></div></div>`:null}
+    <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
+    <div class="exlist">
+      ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} qHelp=${()=>setHelp(!help)} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
+      ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
+      <button class="btn wide addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
+    </div>
+    <${FinishPanel} s=${s} edit=${edit} toast=${toast}/>
+    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} edit=${edit} remove=${remove} openAsk=${openAsk}/>
   </div>`;
 }
 function textLog(s){
@@ -488,6 +506,9 @@ function App(){
   const [timer,setTimer]=useState(null);
   const [toast,setToast]=useState(null);
   const [ask,setAsk]=useState(null);
+  const [ui,setUiRaw]=useState(()=>{ try{ return localStorage.getItem("trainlog.ui")||"journal"; }catch(e){ return "journal"; } });
+  const setUi=v=>{ setUiRaw(v); try{ localStorage.setItem("trainlog.ui",v); }catch(e){} window.scrollTo(0,0); };
+  useEffect(()=>{ document.documentElement.dataset.ui=ui; },[ui]);
   const day=picked||defaultDay(date);
   const mainRef=useRef(null);
   useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
@@ -498,13 +519,13 @@ function App(){
   const showToast=t=>setToast(Object.assign({id:rid()},t));
   const tabs=[["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"],["body","Замеры","ruler"]];
   return html`<${React.Fragment}>
-    ${timer||toast?html`<div class="topbar">
-      <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
+    ${(timer&&!(ui==="focus"&&view==="train"))||toast?html`<div class="topbar">
+      <${Timer} t=${ui==="focus"&&view==="train"?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
       <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
     </div>`:null}
     <div class=${"save"+(S.bad?" bad":"")} role="status">${S.status}</div>
     <main ref=${mainRef}>
-      ${view==="train"?html`<${TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} startTimer=${(sec,label)=>setTimer({end:Date.now()+sec*1000,label})} openAsk=${i=>setAsk({focus:i})}/>`
+      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>setTimer({end:Date.now()+sec*1000,label})} openAsk=${i=>setAsk({focus:i})} setUi=${setUi}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
         :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
     </main>
@@ -516,4 +537,4 @@ function App(){
   <//>`;
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(html`<${App}/>`);
+
