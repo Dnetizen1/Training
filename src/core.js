@@ -213,14 +213,14 @@ function deficits(s){
   });
   return out;
 }
-// Простой перенос: недобор идёт в ближайшую тренировку с упражнением, где эта мышца нагружена высоко.
+// Простой перенос: не сделанные подходы идут в ближайшую тренировку с упражнением, где эта мышца нагружена высоко.
 // Лимит на тренировку: +4 подхода и одно новое упражнение (только в день того же типа); остальное дальше по неделе или не переносится.
 const CAP_SETS=4, CAP_NEW=1;
 function suggestMods(s){
   const res=[], after=upcomingDays(s.day), load={}, added={};
   deficits(s).forEach(d=>{   // порядок программы: базовые раньше изоляции
     const top=+lvSorted(d.lv)[0]; if(isNaN(top)) return;
-    const why=`недобор ${d.missed} подх. «${d.name}» (${MUS[top]})`;
+    const why=`не сделано ${d.missed} подх. «${d.name}» (${MUS[top]})`;
     for(const day of after){
       const room=CAP_SETS-(load[day]||0); if(room<=0) continue;
       const bi=P[day].ex.findIndex((r,i)=>(LV[day][i][top]||0)>=7); if(bi<0) continue;
@@ -267,6 +267,37 @@ function addMods(mods){
   for(const day in byDay) putDoc(modsId(day),{kind:"mods",day,list:[...modsList(day),...byDay[day]]});
 }
 function dropMod(day,id){ const left=modsList(day).filter(m=>m.id!==id); putDoc(modsId(day),left.length?{kind:"mods",day,list:left}:undefined); }
+
+/* ---------- Рекорды, история упражнения, блины ---------- */
+// Расчётный 1ПМ по Эпли: вес × (1 + повторы/30). Для сравнения подходов с разным числом повторов.
+const e1rm=(w,r)=>{ w=num(w); r=num(r); return w&&r?w*(1+r/30):0; };
+// История упражнения по названию: [{date, day, sets:[{w,r,q}], best}] от старых к новым
+function exerciseHistory(name){
+  const out=[];
+  for(const s of sessions()){ if(!s.ex) continue;
+    for(const e of s.ex){ if(xinfo(s,e).name!==name) continue;
+      const sets=e.sets.filter(x=>num(x.r)!==null);
+      if(sets.length) out.push({date:s.date,day:s.day,sets,best:Math.max(0,...sets.map(x=>e1rm(x.w,x.r)))});
+    }
+  }
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+}
+// Лучший расчётный 1ПМ до даты (не включая). 0 — истории нет (первый раз рекорд не показываем).
+const bestBefore=(name,date)=>exerciseHistory(name).filter(h=>h.date<date).reduce((m,h)=>Math.max(m,h.best),0);
+// Рекорды тренировки: подходы, которые побили прошлый лучший результат упражнения
+function sessionPRs(s){
+  const out=[];
+  (s.ex||[]).forEach(e=>{ const name=xinfo(s,e).name, prev=bestBefore(name,s.date); if(!prev) return;
+    let top=null; e.sets.forEach(x=>{ const v=e1rm(x.w,x.r); if(v>prev&&(!top||v>top.v)) top={v,w:x.w,r:x.r}; });
+    if(top) out.push({name,w:top.w,r:top.r,v:top.v,prev,date:s.date});
+  });
+  return out;
+}
+// Блины на сторону для штанги (гриф 20 кг)
+const PLATES=[25,20,15,10,5,2.5,1.25];
+function platesFor(w,bar){ bar=bar||20; let side=(num(w)-bar)/2; if(!(side>0)) return null; const out=[];
+  for(const p of PLATES){ while(side>=p-1e-9){ out.push(p); side-=p; } } return side>0.01?null:out; }
+const isBarbell=name=>/штанг|присед|станов|румынск|bench|squat|deadlift|barbell/.test(normName(name))&&!/гантел|тренаж|смит|блок/.test(normName(name));
 
 /* ---------- Промпты для Клода ---------- */
 const PROFILE=`Профиль: мужчина 26 лет, 177 см, ~83 кг, ~20% жира, стаж ~6 месяцев, цель — гипертрофия. Принимает ААС под наблюдением врача, поэтому особое внимание сухожилиям (грудь, дистальный бицепс, надколенник, ахилл) и давлению. Препараты не обсуждай и не советуй.
@@ -443,7 +474,7 @@ const I={
   more:"M5 12h.01M12 12h.01M19 12h.01", plus:"M12 5v14M5 12h14", minus:"M5 12h14",
   dumbbell:"M3 12h2M19 12h2M7 7v10M17 7v10M5 9v6M19 9v6M7 12h10", bars:"M5 20V11M12 20V4M19 20v-6",
   clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
-  swap:"M7 7h12l-3-3M17 17H5l3 3", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01"
+  swap:"M7 7h12l-3-3M17 17H5l3 3", rings:"M12 3a9 9 0 1 0 .01 0M12 8a4 4 0 1 0 .01 0", history:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01"
 };
 const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;

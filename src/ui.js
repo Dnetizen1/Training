@@ -86,7 +86,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
   const lt=lastTime(inf.name,date);
   const up=lt&&lt.e.sets.length&&lt.e.sets.every(x=>num(x.r)!==null&&num(x.r)>=hi);
   const top=lvSorted(inf.lv);
-  const cj=curSet(s,e), done=rows>0&&cj<0;
+  const cj=curSet(s,e), done=rows>0&&cj<0, prevBest=bestBefore(inf.name,date);
   const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x){ if(x.n==null) x.n=rowsOf(ss,x); while(x.sets.length<x.n) x.sets.push(blankSet()); fn(x,ss); } });
   // «Подход сделан»: дозаполнить текущий подход (прошлый подход сегодня → прошлая тренировка) и запустить отдых
   const setDoneNow=ev=>{
@@ -113,7 +113,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
       <div class="row head" role="row"><span>Сет</span><span>Прошлый</span><span>кг</span><span>Повт</span><span>Запас</span></div>
       ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<${React.Fragment} key=${j}>
         <div class=${"row"+(setDone(x)?" done":"")+(j===cj?" cur":"")} role="row">
-          <span class="n">${j+1}</span>
+          <span class="n">${prevBest&&e1rm(x.w,x.r)>prevBest?html`<span class="pr" title="Рекорд: лучше прошлого результата" aria-label="Рекорд">${I_TROPHY}</span>`:j+1}</span>
           <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r+(lp.q?" ·"+lp.q:""):"–"}</span>
           <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].w=ev.target.value; })}/>
           <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].r=ev.target.value; if(!ev.target.value) y.sets[j].ok=false; })}/>
@@ -136,7 +136,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
 }
 
 /* ---------- Шторки действий с упражнением ---------- */
-function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk}){
+function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk,openHistory}){
   const i=s.ex.findIndex(e=>e.uid===uid); if(i<0) return null;
   const e=s.ex[i], inf=xinfo(s,e), lt=lastTime(inf.name,date);
   const item=(icon,label,fn,cls)=>html`<button class=${"mitem "+(cls||"")} onClick=${fn}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
@@ -145,6 +145,7 @@ function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk}){
     <div class="menu">
       ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
       ${item("target","Нагрузка на мышцы",()=>go("mus"))}
+      ${openHistory?item("history","История упражнения",()=>{ onClose(); openHistory(inf.name); }):null}
       ${lt?item("clock","Заполнить как в прошлый раз",()=>{ edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.sets=lt.e.sets.map(y=>({w:y.w,r:y.r,ok:false,q:""})); x.n=x.sets.length; } }); onClose(); }):null}
       ${i>0?item("up","Поднять выше",()=>move(-1)):null}
       ${i<s.ex.length-1?item("down","Опустить ниже",()=>move(1)):null}
@@ -286,10 +287,10 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-function SessionSheets({sheet,setSheet,s,date,edit,remove,openAsk}){
+function SessionSheets({sheet,setSheet,s,date,edit,remove,openAsk,openHistory}){
   if(!sheet) return null;
   const close=()=>setSheet(null), go=(t,o)=>setSheet({type:t,uid:sheet.uid,opts:o});
-  return sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} go=${go}/>`
+  return sheet.type==="menu"?html`<${ExerciseMenu} s=${s} uid=${sheet.uid} date=${date} edit=${edit} onClose=${close} onRemove=${remove} onAsk=${openAsk} openHistory=${openHistory} go=${go}/>`
     :sheet.type==="swap"?html`<${SwapSheet} s=${s} uid=${sheet.uid} edit=${edit} onClose=${close} go=${go}/>`
     :sheet.type==="mus"?html`<${MuscleSheet} key=${sheet.uid+(sheet.opts?sheet.opts.name:"")} s=${s} uid=${sheet.uid} opts=${sheet.opts} edit=${edit} onClose=${close}/>`
     :sheet.type==="add"?html`<${AddSheet} edit=${edit} onClose=${close}/>`
@@ -325,7 +326,7 @@ function AppliedBanner({s,date,day,edit}){
     </div>`;
 }
 
-function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
+function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi,openHistory}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   return html`<div>
@@ -350,7 +351,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,setUi}){
       <button class="btn wide addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
     </div>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast}/>
-    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} edit=${edit} remove=${remove} openAsk=${openAsk}/>
+    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}/>
   </div>`;
 }
 function textLog(s){
@@ -421,13 +422,13 @@ function HistoryView(){
 
 /* ---------- Замеры ---------- */
 const BF=[["w","Вес, кг"],["waist","Талия, см"],["arm","Рука, см"],["thigh","Бедро, см"],["bp","Давление"],["hr","Пульс покоя"]];
-function BodyView({toast}){
+function BodyView({toast,go}){
   const [f,setF]=useState({date:todayStr()});
   const rows=Object.entries(S.data).filter(([k,v])=>v&&v.kind==="body").map(([k,v])=>Object.assign({id:k},v)).sort((a,b)=>b.date.localeCompare(a.date));
   const submit=ev=>{ ev.preventDefault(); const d=f.date||todayStr(); const rec={kind:"body",date:d}; BF.forEach(([k])=>rec[k]=(f[k]||"").trim()); putDoc("b_"+d,rec); setF({date:todayStr()}); };
   const del=r=>{ const keep=clone(S.data[r.id]); putDoc(r.id,undefined); toast({text:"Замер за "+dmy(r.date)+" удалён",action:"Вернуть",run:()=>putDoc(r.id,keep)}); };
   return html`<div>
-    <header class="wk"><div class="wk-top"><div class="wk-name"><h1>Замеры</h1></div></div></header>
+    <header class="wk"><button class="back" onClick=${()=>go("home")}><${Icon} n="left" size=${20}/> Сводка</button><div class="wk-top"><div class="wk-name"><h1>Замеры</h1></div></div></header>
     <form class="form" onSubmit=${submit}>
       <label class="full">Дата<input type="date" value=${f.date} onChange=${ev=>setF(Object.assign({},f,{date:ev.target.value}))}/></label>
       ${BF.map(([k,l])=>html`<label key=${k}>${l}<input type="text" inputmode=${k==="bp"?"text":"decimal"} value=${f[k]||""} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))}/></label>`)}
@@ -523,7 +524,8 @@ function Toast({t,onClose}){
 
 function App(){
   useStore();
-  const [view,setView]=useState("train");
+  const [view,setView]=useState("home");
+  const [hist,setHist]=useState(null);
   const [date,setDateRaw]=useState(todayStr());
   const [auto,setAuto]=useState(true);
   const [picked,setPicked]=useState(null);
@@ -544,7 +546,8 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"],["body","Замеры","ruler"]];
+  const tabs=[["home","Сводка","rings"],["train","Тренировка","dumbbell"],["week","Неделя","bars"],["hist","История","clock"]];
+  const go=v=>{ setView(v); window.scrollTo(0,0); };
   return html`<${React.Fragment}>
     ${(timer&&!(ui==="focus"&&view==="train"))||toast?html`<div class="topbar">
       <${Timer} t=${ui==="focus"&&view==="train"?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
@@ -556,14 +559,16 @@ function App(){
         <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${16}/> Журнал</button>
         <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${16}/> Фокус</button>
       </div>`:null}
-      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi}/>`
+      ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} setUi=${setUi} openHistory=${setHist}/>`
+        :view==="home"?html`<${HomeView} date=${date} day=${day} go=${go} openHistory=${setHist}/>`
         :view==="week"?html`<${WeekView} date=${date}/>`
-        :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast}/>`}
+        :view==="hist"?html`<${HistoryView}/>`:html`<${BodyView} toast=${showToast} go=${go}/>`}
     </main>
     <nav class="tabbar" role="tablist">
-      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k)} onClick=${()=>{ setView(k); window.scrollTo(0,0); }}><${Icon} n=${ic} size=${22}/><span>${l}</span></button>`)}
+      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" aria-selected=${String(view===k||(k==="home"&&view==="body"))} onClick=${()=>go(k)}><${Icon} n=${ic} size=${24}/><span>${l}</span></button>`)}
       <button class="tb-ask" onClick=${()=>setAsk({focus:null})} aria-label="Спросить тренера"><span class="tb-ask-i"><${Icon} n="spark" size=${22}/></span><span>Тренер</span></button>
     </nav>
+    ${hist?html`<${ExerciseHistory} name=${hist} onClose=${()=>setHist(null)}/>`:null}
     ${ask?html`<${AskSheet} focus=${ask.focus} date=${date} day=${day} toast=${showToast} onClose=${()=>setAsk(null)}/>`:null}
   <//>`;
 }

@@ -42,7 +42,7 @@ function Stepper({label,value,unit,step,onChange,dec}){
   </div>`;
 }
 
-function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi}){
+function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi,openHistory}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [panel,setPanel]=useState(null), [draft,setDraft]=useState(null);
   useEffect(()=>{ setIdx(null); setDraft(null); },[day,date]);
@@ -72,7 +72,9 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
   };
   const logSet=ev=>{
     const nl=nextLabel();
+    const prevBest=bestBefore(inf.name,date), isPR=prevBest&&e1rm(val.w,val.r)>prevBest&&!e.sets.some(y=>e1rm(y.w,y.r)>=e1rm(val.w,val.r));
     upd(x=>{ x.sets[j]=Object.assign({},x.sets[j],{w:val.w,r:val.r,q:val.q,ok:true}); });
+    if(isPR) toast({text:`Рекорд в «${inf.name}»: 1ПМ ≈ ${kgf(e1rm(val.w,val.r))} кг`});
     anim(ev.currentTarget,{transform:["scale(.94)","scale(1)"]},{bounce:.45,duration:.45});
     unlockSound(); setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next:nl});
     setDraft(null);
@@ -111,6 +113,11 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
         </div>
         <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="more" size=${22}/></button>
       </div>
+      <div class="st-acts" role="group" aria-label="Действия с упражнением">
+        <button onClick=${()=>setSheet({type:"swap",uid:e.uid})}><${Icon} n="swap" size=${16}/>${inf.custom?"Переименовать":"Заменить"}</button>
+        <button onClick=${()=>setSheet({type:"mus",uid:e.uid})}><${Icon} n="target" size=${16}/>Нагрузка</button>
+        <button onClick=${()=>openHistory(inf.name)}><${Icon} n="history" size=${16}/>История</button>
+      </div>
       <div class="st-meta">
         <span class="tgt"><b>${inf.plan.lo}–${inf.plan.hi}</b> повт · RIR <b>${rirFor(inf.plan.rir,wk)}</b> · отдых ${restTxt(inf.plan.rest)}</span>
         <span class="lvline">${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}</span>
@@ -121,6 +128,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
       ${!exDone?html`
         <div class="stps">
           <${Stepper} label="Вес" unit="кг" step=${W_STEP} dec=${true} value=${val.w} onChange=${w=>setVal({w})}/>
+          ${isBarbell(inf.name)&&platesFor(val.w)?html`<div class="plates" aria-label="Блины на каждую сторону грифа 20 кг"><span>На сторону:</span>${platesFor(val.w).map((p,k)=>html`<i key=${k} class=${"pl p"+String(p).replace(".","_")}>${fmt(p)}</i>`)}</div>`:null}
           <${Stepper} label="Повторы" unit="раз" step=${1} value=${val.r} onChange=${r=>setVal({r})}/>
         </div>
         <div class="qrow" role="group" aria-label="Запас: сколько ещё мог сделать">
@@ -159,7 +167,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,setUi})
       ${panel!=="finish"&&!s.done?html`<button class="btn quiet" onClick=${()=>setPanel("finish")}>Итог и разбор</button>`:null}
     </div>
     ${panel==="finish"||s.done?html`<${FinishPanel} s=${s} edit=${edit} toast=${toast}/>`:null}
-    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} edit=${edit} remove=${remove} openAsk=${openAsk}/>
+    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}/>
   </div>`;
 }
 
