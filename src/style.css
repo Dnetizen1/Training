@@ -269,3 +269,30 @@ tfoot td{font-weight:700;border-top:1px solid var(--line);background:var(--sunk)
 .toast button{background:var(--day);border:0;color:var(--day-ink);font-weight:700;font-size:13px;padding:7px 10px;border-radius:var(--r);white-space:nowrap}
 @media (max-width:380px){.days button{font-size:12.5px;gap:4px}.days .plate{display:none}.bar{grid-template-columns:96px minmax(0,1fr) 56px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* нагрузка на мышцы 0–10 (как в «Твой тренер»): высокая — оранжевый, средняя — жёлтый */
+:root{--lv-hi:#fbd3b4;--lv-mid:#fbefb0;--lv-lo:var(--sunk)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--lv-hi:#4a2c17;--lv-mid:#3d3618;--lv-lo:var(--sunk)}}
+:root[data-theme="dark"]{--lv-hi:#4a2c17;--lv-mid:#3d3618;--lv-lo:var(--sunk)}
+.lv{display:grid;border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;background:var(--surface)}
+.lvrow{display:grid;grid-template-columns:minmax(0,1fr) 34px 30px 34px 74px;align-items:center;gap:4px;padding:4px 8px 4px 12px;border-top:1px solid var(--rule);font-size:14.5px}
+.lvrow:first-child{border-top:0}
+.lvrow.hi{background:var(--lv-hi)}
+.lvrow.mid{background:var(--lv-mid)}
+.lvrow.lo{background:var(--lv-lo)}
+.lvrow:not(.hi):not(.mid):not(.lo) .lvn{color:var(--mute)}
+.lvn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lvb{width:34px;height:32px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);color:var(--ink)}
+.lvb:disabled{opacity:.3}
+.lvv{font:700 16px var(--mono);text-align:center}
+.lvc{font-size:12px;color:var(--mute);text-align:right}
+.lvtotal{display:flex;justify-content:space-between;padding:9px 12px;border-top:1px solid var(--line);background:var(--sunk);font-size:14px}
+.lvtotal b{font-family:var(--mono)}
+.lvline{display:flex;flex-wrap:wrap;gap:4px;border:0;background:none;padding:0;text-align:left}
+.lvline span{font-size:12.5px;padding:2px 6px;border-radius:3px;background:var(--lv-lo);color:var(--ink)}
+.lvline span.hi{background:var(--lv-hi)}
+.lvline span.mid{background:var(--lv-mid)}
+.lvline b{font-family:var(--mono);font-weight:700}
+.lvline .more{color:var(--mute)}
+.sheet,.sheet-body{grid-template-columns:minmax(0,1fr)}
+@media (max-width:400px){.lvrow{grid-template-columns:minmax(0,1fr) 34px 28px 34px}.lvc{display:none}}

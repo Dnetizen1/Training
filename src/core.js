@@ -36,10 +36,18 @@ function xinfo(s,e){
   const row=e.base>=0&&P[s.day]?P[s.day].ex[e.base]:null;
   const plan=row?{ns:row[1],lo:row[2],hi:row[3],rir:row[4],rest:row[5],note:row[6]}:Object.assign({ns:3,lo:8,hi:12,rir:"1",rest:120,note:""},e.plan||{});
   const base=row?row[0]:(e.name||"Упражнение");
-  return {row,custom:!row,base,name:row?(e.alt||base):base,plan,mus:e.mus||(row?MAP[s.day][e.base]:null)||{}};
+  const lv=e.lv||(e.mus?lvFromOld(e.mus):null)||(row?LV[s.day][e.base]:null)||{};
+  return {row,custom:!row,base,name:row?(e.alt||base):base,plan,lv,mus:lvWeights(lv)};
 }
 const musKeys=m=>MUS_ORDER.filter(k=>m[k]);
-const musLists=m=>({prim:musKeys(m).filter(k=>m[k]===1).map(musName),sec:musKeys(m).filter(k=>m[k]<1).map(musName)});
+// нагрузка 0–10 → доля подхода в объёме: высокая (7–10) = 1, средняя (4–6) = 0,5, низкая (1–3) = 0,25
+const lvW=v=>v>=7?1:v>=4?.5:v>=1?.25:0;
+const lvCat=v=>v>=7?"высокая":v>=4?"средняя":v>=1?"низкая":"";
+function lvWeights(lv){ const m={}; for(const k in lv){ const w=lvW(+lv[k]); if(w) m[k]=w; } return m; }
+function lvFromOld(m){ const o={}; for(const k in m){ const v=+m[k]; if(v) o[k]=v>=1?9:v>=.5?5:Math.max(1,Math.round(v*10)); } return o; }
+// «Широчайшие 8, Середина спины 6, Бицепс 4» по убыванию
+const lvSorted=lv=>Object.keys(lv).filter(k=>+lv[k]>0&&MUS[k]).sort((a,b)=>lv[b]-lv[a]||MUS_ORDER.indexOf(+a)-MUS_ORDER.indexOf(+b));
+const lvText=lv=>lvSorted(lv).map(k=>MUS[k]+" "+lv[k]).join(", ");
 // setsAt(e) -> число подходов; результат по мышцам: d — прямые, f — дробные
 function muscleCount(s,setsAt){
   const r=MUS.map(()=>({d:0,f:0}));
@@ -155,15 +163,15 @@ function defaultDay(date){
 
 /* ---------- Промпты для Клода ---------- */
 const PROFILE=`Профиль: мужчина 26 лет, 177 см, ~83 кг, ~20% жира, стаж ~6 месяцев, цель — гипертрофия. Принимает ААС под наблюдением врача, поэтому особое внимание сухожилиям (грудь, дистальный бицепс, надколенник, ахилл) и давлению. Препараты не обсуждай и не советуй.
-Программа: верх/низ 4 дня (Верх A, Низ A, Верх B, Низ B), мезоцикл 6 недель: нед.1 RIR 3, нед.2 RIR 2, нед.3 RIR 1–2, нед.4–5 изоляция 0–1 RIR, нед.6 разгрузка (½ подходов, RIR 3–4). Жимы 1–3 RIR, без отказа и отбива; прибавка в базе не более ~5% в неделю. Двойная прогрессия: все подходы на верхней границе повторов при целевом RIR → вес +2,5–5% (изоляция +1–2 кг). Объём 10–16 дробных подходов на мышцу в неделю (прямой = 1, косвенный = 0,5).
+Программа: верх/низ 4 дня (Верх A, Низ A, Верх B, Низ B), мезоцикл 6 недель: нед.1 RIR 3, нед.2 RIR 2, нед.3 RIR 1–2, нед.4–5 изоляция 0–1 RIR, нед.6 разгрузка (½ подходов, RIR 3–4). Жимы 1–3 RIR, без отказа и отбива; прибавка в базе не более ~5% в неделю. Двойная прогрессия: все подходы на верхней границе повторов при целевом RIR → вес +2,5–5% (изоляция +1–2 кг). Объём 10–16 эффективных подходов на мышцу в неделю. Нагрузка на мышцу в упражнении задана по шкале 0–10; в объём идёт: 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25.
 Питание: лёгкий дефицит ~2400 ккал, белок ~180 г.`;
 function sessionBlock(s,numbered){
   const d=P[s.day]; let t=`${s.date} · ${d.name} · неделя ${s.week}`+(s.bw?` · вес утром ${s.bw} кг`:"")+(s.dur?` · ${s.dur} мин`:"")+"\n";
   s.ex.forEach((e,i)=>{
-    const inf=xinfo(s,e), {ns,lo,hi,rir}=inf.plan, {prim,sec}=musLists(inf.mus);
+    const inf=xinfo(s,e), {ns,lo,hi,rir}=inf.plan, mt=lvText(inf.lv);
     const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${x.ok?"":" (не отмечен)"}`).join(", ");
     t+=`${numbered?(i+1)+".":"-"} ${inf.name}${e.alt&&!inf.custom?` [замена для «${inf.base}»]`:""}${inf.custom?" [добавлено]":""} · план ${rowsOf(s,e)}×${lo}–${hi}, RIR ${rirFor(rir,s.week)}`+
-      `${prim.length||sec.length?` · мышцы: ${prim.join(", ")}${sec.length?" (косв.: "+sec.join(", ")+")":""}`:""} · факт: ${sets||"не выполнено"}${e.rir?` · реальный RIR: ${e.rir}`:""}${e.note?` · заметка: ${e.note}`:""}\n`;
+      `${mt?` · нагрузка на мышцы (0–10): ${mt}`:""} · факт: ${sets||"не выполнено"}${e.rir?` · реальный RIR: ${e.rir}`:""}${e.note?` · заметка: ${e.note}`:""}\n`;
   });
   if(s.note) t+=`Самочувствие/сон/боли: ${s.note}\n`;
   return t;
@@ -210,19 +218,19 @@ const errText=e=>ERR[e&&e.code]||"Не получилось получить о�
 async function copyText(t,ok){ try{ await navigator.clipboard.writeText(t); setStatus(ok||"Скопировано"); }catch(e){ setStatus("Копирование недоступно",true); } }
 
 async function detectMuscles(name){
-  const r=await S.sample.json(`Определи, какие мышцы работают в силовом упражнении «${name}».
-Выбирай ТОЛЬКО из списка: ${MUS.join(", ")}.
-primary — основные мышцы, ради которых делают упражнение (подход считается за 1), не больше 2.
-secondary — заметно работающие вспомогательные (подход за 0,5), не больше 3.
-Ответь только JSON вида {"primary":["Грудь"],"secondary":["Трицепс","Передняя дельта"]}`,{modelTier:"quick"});
-  return musFromNames(r&&r.primary,r&&r.secondary);
+  const r=await S.sample.json(`Оцени нагрузку на мышцы в силовом упражнении «${name}» по шкале от 0 до 10, как в справочниках упражнений (7–10 высокая, 4–6 средняя, 1–3 низкая, 0 не работает).
+Учитывай, что в тренажёрах вспомогательные мышцы работают слабее, чем со свободным весом.
+Используй ТОЛЬКО эти мышцы: ${MUS.join(", ")}. Указывай только мышцы с нагрузкой от 1.
+Ответь только JSON вида {"levels":{"Широчайшие":8,"Середина спины":5,"Бицепс":4}}`,{modelTier:"quick"});
+  return lvFromObj(r&&r.levels);
 }
-function musFromNames(p,s){
-  const idx=a=>(Array.isArray(a)?a:[]).map(n=>{ const t=String(n).trim(); return t==="Спина"?1:MUS.indexOf(t); }).filter(k=>k>=0);
-  const prim=idx(p), sec=idx(s).filter(k=>!prim.includes(k));
-  const m={}; sec.forEach(k=>m[k]=.5); prim.forEach(k=>m[k]=1); return m;
-}
-const cycle=v=>v===0?.5:v<1?1:0;
+const musIndex=n=>{ const t=String(n).trim(); return t==="Спина"?1:MUS.indexOf(t); };
+function lvFromObj(o){ const lv={}; if(o&&typeof o==="object") for(const n in o){ const k=musIndex(n), v=Math.round(Number(o[n])); if(k>=0&&v>=1) lv[k]=Math.min(10,v); } return lv; }
+// для инструментов чата: уровни, а если их нет, списки основных/вспомогательных
+function lvFromTool(inp){ const lv=lvFromObj(inp&&inp.muscle_levels); if(Object.keys(lv).length) return lv;
+  (Array.isArray(inp&&inp.secondary_muscles)?inp.secondary_muscles:[]).forEach(n=>{ const k=musIndex(n); if(k>=0) lv[k]=4; });
+  (Array.isArray(inp&&inp.primary_muscles)?inp.primary_muscles:[]).forEach(n=>{ const k=musIndex(n); if(k>=0) lv[k]=8; });
+  return lv; }
 
 /* ---------- Иконки ---------- */
 const I={

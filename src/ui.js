@@ -1,8 +1,20 @@
 /* Интерфейс. Раскладка по образцу Strong/Hevy, см. DESIGN.md */
 
 /* ---------- Общие части ---------- */
-function MusclePicker({value,onChange}){
-  return html`<div class="mus">${MUS_ORDER.map(k=>{ const v=value[k]||0; return html`<button key=${k} type="button" class=${v===1?"p":v?"s":""} onClick=${()=>{ const n=Object.assign({},value), c=cycle(v); if(c) n[k]=c; else delete n[k]; onChange(n); }}><span>${MUS[k]}</span><small>${v===1?"основная":v?"косвенно":""}</small></button>`; })}</div>`;
+// Нагрузка по 10-балльной шкале, как в «Твой тренер»: строка на мышцу, − значение +
+function LevelPicker({value,onChange}){
+  const set=(k,v)=>{ const n=Object.assign({},value); v=Math.max(0,Math.min(10,v)); if(v) n[k]=v; else delete n[k]; onChange(n); };
+  const used=MUS_ORDER.filter(k=>value[k]), rest=MUS_ORDER.filter(k=>!value[k]);
+  return html`<div class="lv">
+    ${[...used.sort((a,b)=>value[b]-value[a]),...rest].map(k=>{ const v=+value[k]||0, c=v>=7?"hi":v>=4?"mid":v?"lo":""; return html`<div key=${k} class=${"lvrow "+c}>
+      <span class="lvn">${MUS[k]}</span>
+      <button class="lvb" aria-label=${"Меньше: "+MUS[k]} disabled=${!v} onClick=${()=>set(k,v-1)}><${Icon} n="minus" size=${14}/></button>
+      <b class="lvv">${v||"–"}</b>
+      <button class="lvb" aria-label=${"Больше: "+MUS[k]} disabled=${v>=10} onClick=${()=>set(k,v?v+1:4)}><${Icon} n="plus" size=${14}/></button>
+      <span class="lvc">${lvCat(v)}</span>
+    </div>`; })}
+    <div class="lvtotal"><span>Общая нагрузка</span><b>${used.reduce((a,k)=>a+(+value[k]),0)}</b></div>
+  </div>`;
 }
 function Sheet({title,onClose,children,foot}){
   const ref=useRef(null);
@@ -31,7 +43,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer,qHelp}){
   const rows=rowsOf(s,e);
   const lt=lastTime(inf.name,date);
   const up=lt&&lt.e.sets.length&&lt.e.sets.every(x=>num(x.r)!==null&&num(x.r)>=hi);
-  const {prim,sec}=musLists(inf.mus);
+  const top=lvSorted(inf.lv);
   const done=rows>0&&e.sets.length>=rows&&e.sets.slice(0,rows).every(x=>x.ok);
   const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x){ if(x.n==null) x.n=rowsOf(ss,x); while(x.sets.length<x.n) x.sets.push(blankSet()); fn(x,ss); } });
   const tick=(j,el)=>{
@@ -47,7 +59,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer,qHelp}){
     </div>
     <div class="exb-meta">
       <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
-      ${prim.length||sec.length?html`<span>${prim.join(", ")}${sec.length?html`<span class="mute"> + ${sec.join(", ")}</span>`:null}</span>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать мышцы</button>`}
+      ${top.length?html`<button class="lvline" onClick=${()=>openSheet("mus",e.uid)} aria-label="Нагрузка на мышцы">${top.slice(0,4).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}${top.length>4?html`<span class="more">+${top.length-4}</span>`:null}</button>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать нагрузку на мышцы</button>`}
       ${inf.custom?html`<span class="mute">добавлено</span>`:e.alt?html`<span class="mute">вместо: ${inf.base}</span>`:null}
     </div>
     ${note?html`<div class="exb-note">${note}</div>`:null}
@@ -86,7 +98,7 @@ function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk}){
   return html`<${Sheet} title=${inf.name} onClose=${onClose}>
     <div class="menu">
       ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
-      ${item("target","Мышцы",()=>go("mus"))}
+      ${item("target","Нагрузка на мышцы",()=>go("mus"))}
       ${lt?item("clock","Заполнить как в прошлый раз",()=>{ edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.sets=lt.e.sets.map(y=>({w:y.w,r:y.r,ok:false,q:""})); x.n=x.sets.length; } }); onClose(); }):null}
       ${i>0?item("up","Поднять выше",()=>move(-1)):null}
       ${i<s.ex.length-1?item("down","Опустить ниже",()=>move(1)):null}
@@ -101,7 +113,7 @@ function SwapSheet({s,uid,edit,onClose,go}){
   const e=s.ex.find(x=>x.uid===uid); if(!e) return null;
   const inf=xinfo(s,e);
   const apply=nm=>{
-    edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(!x) return; if(inf.custom) x.name=nm; else if(nm) x.alt=nm; else { delete x.alt; delete x.mus; } });
+    edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(!x) return; if(inf.custom) x.name=nm; else if(nm) x.alt=nm; else { delete x.alt; delete x.mus; delete x.lv; } });
     if(nm) go("mus",{autodetect:auto&&!!S.sample,name:nm}); else onClose();
   };
   return html`<${Sheet} title=${inf.custom?"Переименовать":"Заменить: "+inf.name} onClose=${onClose}>
@@ -110,7 +122,7 @@ function SwapSheet({s,uid,edit,onClose,go}){
       ${e.alt?html`<button class="mitem" onClick=${()=>apply("")}><${Icon} n="clock" size=${18}/><span>Вернуть по программе: ${inf.base}</span></button>`:null}
     </div>`:null}
     <div class="own"><input type="text" value=${own} onChange=${ev=>setOwn(ev.target.value)} placeholder=${inf.custom?"Новое название":"Своё упражнение"} aria-label="Название упражнения"/><button class="btn primary" onClick=${()=>own.trim()&&apply(own.trim())}>Взять</button></div>
-    <label class="chk"><input type="checkbox" checked=${auto} disabled=${!S.sample} onChange=${ev=>setAuto(ev.target.checked)}/> Определить мышцы автоматически</label>
+    <label class="chk"><input type="checkbox" checked=${auto} disabled=${!S.sample} onChange=${ev=>setAuto(ev.target.checked)}/> Определить нагрузку на мышцы автоматически</label>
   <//>`;
 }
 function MuscleSheet({s,uid,edit,onClose,opts}){
@@ -120,15 +132,15 @@ function MuscleSheet({s,uid,edit,onClose,opts}){
   const run=async()=>{
     setBusy(true); setMsg("");
     try{ const m=await detectMuscles(name); if(!Object.keys(m).length) throw {};
-      edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=m; }); setMsg("Мышцы определены автоматически. Можно поправить вручную."); }
+      edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.lv=m; delete x.mus; } }); setMsg("Нагрузка определена автоматически. Можно поправить вручную."); }
     catch(err){ setMsg(err&&err.code==="not_granted"?ERR.not_granted+" Отметь вручную.":"Не получилось определить автоматически. Отметь вручную."); }
     setBusy(false);
   };
   useEffect(()=>{ if(opts&&opts.autodetect) run(); },[]);
   if(!e) return null;
-  return html`<${Sheet} title=${"Мышцы: "+name} onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${onClose}>Готово</button>`}>
-    <div class="st">Нажимай на мышцу: нет → косвенно (0,5 подхода) → основная (1 подход). Влияет на разбивку на вкладке «Неделя».</div>
-    <${MusclePicker} value=${xinfo(s,e).mus} onChange=${m=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=m; })}/>
+  return html`<${Sheet} title=${"Нагрузка: "+name} onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${onClose}>Готово</button>`}>
+    <div class="st">Нагрузка по шкале 0–10. В объём недели идёт так: высокая (7–10) = 1 подход, средняя (4–6) = 0,5, низкая (1–3) = 0,25.</div>
+    <${LevelPicker} value=${xinfo(s,e).lv} onChange=${m=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.lv=m; delete x.mus; } })}/>
     ${S.sample?html`<button class="btn" disabled=${busy} onClick=${run}><${Icon} n="spark" size=${16}/> ${busy?"Определяю…":"Определить автоматически"}</button>`:null}
     ${msg?html`<div class="st">${msg}</div>`:null}
   <//>`;
@@ -142,18 +154,18 @@ function AddSheet({edit,onClose}){
     const name=f.name.trim(); if(!name){ setMsg("Впиши название."); return; }
     const cl=(v,a,z,d)=>Math.min(z,Math.max(a,Math.round(num(v)??d)));
     const n=cl(f.n,1,10,3), lo=cl(f.lo,1,100,8), hi=Math.max(lo,cl(f.hi,1,100,12)), uid="c"+rid();
-    edit(ss=>{ ss.ex.push({uid,base:-1,name,n,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:mode==="manual"?mus:{},sets:Array.from({length:n},blankSet),note:""}); });
+    edit(ss=>{ ss.ex.push({uid,base:-1,name,n,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},lv:mode==="manual"?mus:{},sets:Array.from({length:n},blankSet),note:""}); });
     onClose();
-    if(mode==="auto"){ try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.mus=r; }); }catch(e){} }
+    if(mode==="auto"){ try{ const r=await detectMuscles(name); edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x) x.lv=r; }); }catch(e){} }
   };
   const inp=(k,label,im)=>html`<label class=${k==="name"?"full":""}>${label}<input type="text" inputmode=${im} value=${f[k]} onChange=${ev=>setF(Object.assign({},f,{[k]:ev.target.value}))} placeholder=${k==="name"?"Например, жим Свенда":""}/></label>`;
   return html`<${Sheet} title="Добавить упражнение" onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${add}>Добавить в тренировку</button>`}>
     <div class="adform">${inp("name","Название","text")}${inp("n","Подходы","numeric")}${inp("lo","Повт. от","numeric")}${inp("hi","Повт. до","numeric")}</div>
     <div class="seg" role="group" aria-label="Как указать мышцы">
-      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Мышцы автоматически</button>
+      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Нагрузка автоматически</button>
       <button aria-pressed=${String(mode==="manual")} onClick=${()=>setMode("manual")}>Вручную</button>
     </div>
-    ${mode==="manual"?html`<${MusclePicker} value=${mus} onChange=${setMus}/>`:html`<div class="st">Основные и косвенные мышцы определятся сами после добавления. Поправить можно через «⋯ → Мышцы».</div>`}
+    ${mode==="manual"?html`<${LevelPicker} value=${mus} onChange=${setMus}/>`:html`<div class="st">Нагрузка на мышцы (0–10) определится сама после добавления. Поправить можно через «⋯ → Нагрузка на мышцы».</div>`}
     ${msg?html`<div class="st bad">${msg}</div>`:null}
   <//>`;
 }
@@ -274,7 +286,7 @@ function WeekView({date}){
         <span class=${"goal"+(wk===6?" warn":"")}>${WEEKS[wk]}</span>
       </div>
     </header>
-    <div class="bars" aria-label="Дробные подходы по мышцам: план и факт">
+    <div class="bars" aria-label="Эффективные подходы по мышцам: план и факт">
       ${MUS_ORDER.map(k=>html`<div class="bar" key=${k}>
         <span class="bl">${MUS[k]}</span>
         <div class="track" title=${"план "+fmt(totF[k])+", факт "+fmt(fact[k])}>
@@ -287,14 +299,14 @@ function WeekView({date}){
       <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span><span><i class="zone"></i>10–16, рабочий диапазон</span></div>
     </div>
     <div class="tbl"><table>
-      <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Дроб.</th><th>Факт</th></tr></thead>
+      <thead><tr><th>Мышца</th>${cols.map(c=>html`<th key=${c.k}><${Plate} k=${c.k}/>${P[c.k].name}${c.real?" •":""}</th>`)}<th>Всего</th><th>Эфф.</th><th>Факт</th></tr></thead>
       <tbody>${MUS_ORDER.map(k=>html`<tr key=${k}><td>${MUS[k]}</td>
         ${pd.map((d,j)=>d[k].d?html`<td key=${j} class="dir">${d[k].d}</td>`:d[k].f?html`<td key=${j} class="mute">+${fmt(d[k].f)}</td>`:html`<td key=${j} class="mute">–</td>`)}
         <td class="dir">${totD[k]||"–"}</td><td>${fmt(totF[k])}</td>
         <td class=${!hasFact?"":fact[k]>=totF[k]-0.01?"ok":"low"}>${hasFact?fmt(fact[k]):"–"}</td></tr>`)}</tbody>
       <tfoot><tr><td>Подходов за тренировку</td>${perDay.map((n,j)=>html`<td key=${j}>${n}</td>`)}<td>${perDay.reduce((a,b)=>a+b,0)}</td><td></td><td></td></tr></tfoot>
     </table></div>
-    <p class="note">Столбцы дней: прямые подходы на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и считается по ней, с заменами и добавленными упражнениями. «+1,5» значит только косвенную нагрузку. Дробные: прямой подход = 1, косвенный = 0,5. Факт: подходы с галочкой или с записанными повторами.</p>
+    <p class="note">Столбцы дней: подходы с высокой нагрузкой (7–10) на мышцу. «•» значит, что тренировка этого дня на этой неделе уже начата и считается по ней, с заменами и добавленными упражнениями. «+1,5» значит, что мышца работает только со средней или низкой нагрузкой. «Эфф.»: эффективные подходы: высокая нагрузка = 1, средняя (4–6) = 0,5, низкая (1–3) = 0,25. «Факт»: то же по сделанным подходам.</p>
     <h3>Разбор недели</h3>
     <${Review} label="Разобрать неделю" stored=${wdoc&&wdoc.summary} disabledMsg="На этой неделе ещё нет записанных тренировок."
       build=${()=>inWeek.some(hasData)?weekPrompt(MUS_ORDER.map(k=>({m:MUS[k],plan:totF[k],fact:fact[k]})),ws,we,inWeek.filter(hasData).sort((a,b)=>a.date.localeCompare(b.date))):""}
@@ -355,21 +367,21 @@ ${PROFILE}
 ТЕКУЩАЯ ТРЕНИРОВКА (упражнения пронумерованы):
 ${sessionBlock(cur,true)}
 ${prev.length?"ПОСЛЕДНИЕ ТРЕНИРОВКИ:\n"+prev.map(x=>sessionBlock(x)).join("\n"):""}
-${S.tools?`У тебя есть инструменты replace_exercise и add_exercise, они меняют текущую тренировку пользователя. Вызывай их ТОЛЬКО если пользователь прямо просит заменить или добавить упражнение. Мышцы выбирай только из списка: ${MUS.join(", ")}. После изменения кратко скажи, что сделал.`:"Менять тренировку сам ты не можешь: если предлагаешь замену, назови упражнение, и пользователь заменит его через «⋯ → Заменить упражнение»."}`; };
+${S.tools?`У тебя есть инструменты replace_exercise и add_exercise, они меняют текущую тренировку пользователя. Вызывай их ТОЛЬКО если пользователь прямо просит заменить или добавить упражнение. Нагрузку на мышцы передавай в muscle_levels по шкале 1–10 (в тренажёрах вспомогательные мышцы ниже), мышцы только из списка: ${MUS.join(", ")}. После изменения кратко скажи, что сделал.`:"Менять тренировку сам ты не можешь: если предлагаешь замену, назови упражнение, и пользователь заменит его через «⋯ → Заменить упражнение»."}`; };
   const tools=()=>S.tools?[
     {name:"replace_exercise",description:"Заменяет упражнение в текущей тренировке на другое. Возвращает текст с результатом.",
-     inputSchema:{type:"object",properties:{exercise_number:{type:"integer",description:"Номер упражнения в текущей тренировке, начиная с 1"},new_name:{type:"string"},primary_muscles:{type:"array",items:{type:"string",enum:MUS}},secondary_muscles:{type:"array",items:{type:"string",enum:MUS}}},required:["exercise_number","new_name"]},
+     inputSchema:{type:"object",properties:{exercise_number:{type:"integer",description:"Номер упражнения в текущей тренировке, начиная с 1"},new_name:{type:"string"},muscle_levels:{type:"object",description:"Нагрузка на мышцы по шкале 1–10, ключи только из списка мышц",additionalProperties:{type:"integer"}},primary_muscles:{type:"array",items:{type:"string",enum:MUS}},secondary_muscles:{type:"array",items:{type:"string",enum:MUS}}},required:["exercise_number","new_name"]},
      execute:inp=>{ const cur=getSession(date,day), i=Math.round(Number(inp.exercise_number))-1, name=String(inp.new_name||"").trim();
        if(!(i>=0&&i<cur.ex.length)) throw new Error("Нет упражнения с таким номером"); if(!name) throw new Error("Пустое название");
-       const before=clone(cur.ex[i]), old=xinfo(cur,before).name, m=musFromNames(inp.primary_muscles,inp.secondary_muscles);
-       editSession(date,day,ss=>{ const x=ss.ex.find(y=>y.uid===before.uid); if(!x) return; if(x.base>=0) x.alt=name; else x.name=name; if(Object.keys(m).length) x.mus=m; });
+       const before=clone(cur.ex[i]), old=xinfo(cur,before).name, m=lvFromTool(inp);
+       editSession(date,day,ss=>{ const x=ss.ex.find(y=>y.uid===before.uid); if(!x) return; if(x.base>=0) x.alt=name; else x.name=name; if(Object.keys(m).length){ x.lv=m; delete x.mus; } });
        toast({text:`Заменено: «${old}» → «${name}»`,action:"Вернуть",run:()=>editSession(date,day,ss=>{ const k=ss.ex.findIndex(y=>y.uid===before.uid); if(k>=0) ss.ex[k]=before; })});
        return `Готово: «${old}» заменено на «${name}».`; }},
     {name:"add_exercise",description:"Добавляет упражнение в конец текущей тренировки. Возвращает текст с результатом.",
-     inputSchema:{type:"object",properties:{name:{type:"string"},sets:{type:"integer"},reps_min:{type:"integer"},reps_max:{type:"integer"},primary_muscles:{type:"array",items:{type:"string",enum:MUS}},secondary_muscles:{type:"array",items:{type:"string",enum:MUS}}},required:["name","sets","reps_min","reps_max"]},
+     inputSchema:{type:"object",properties:{name:{type:"string"},sets:{type:"integer"},reps_min:{type:"integer"},reps_max:{type:"integer"},muscle_levels:{type:"object",description:"Нагрузка на мышцы по шкале 1–10, ключи только из списка мышц",additionalProperties:{type:"integer"}},primary_muscles:{type:"array",items:{type:"string",enum:MUS}},secondary_muscles:{type:"array",items:{type:"string",enum:MUS}}},required:["name","sets","reps_min","reps_max"]},
      execute:inp=>{ const name=String(inp.name||"").trim(); if(!name) throw new Error("Пустое название");
        const n=Math.min(10,Math.max(1,Math.round(Number(inp.sets)||3))), lo=Math.max(1,Math.round(Number(inp.reps_min)||8)), hi=Math.max(lo,Math.round(Number(inp.reps_max)||12)), uid="c"+rid();
-       editSession(date,day,ss=>{ ss.ex.push({uid,base:-1,name,n,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},mus:musFromNames(inp.primary_muscles,inp.secondary_muscles),sets:Array.from({length:n},blankSet),note:""}); });
+       editSession(date,day,ss=>{ ss.ex.push({uid,base:-1,name,n,plan:{ns:n,lo,hi,rir:"1",rest:120,note:""},lv:lvFromTool(inp),sets:Array.from({length:n},blankSet),note:""}); });
        toast({text:`Добавлено: «${name}»`,action:"Убрать",run:()=>editSession(date,day,ss=>{ ss.ex=ss.ex.filter(y=>y.uid!==uid); })});
        return `Готово: добавлено «${name}», ${n}×${lo}–${hi}.`; }}
   ]:undefined;
