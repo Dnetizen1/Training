@@ -50,13 +50,18 @@ function AppBar({left,title,sub,onTitle,right,label}){
     <div class="ab-side r">${right}</div>
   </div>`;
 }
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${18}/></button>`;
+// Тренер — круглая «аватарка» с фиолетовым облачком, как кнопка чата в референсе
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
+  <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFF"/><stop offset="1" stop-color="#7B55F5"/></linearGradient></defs>
+  <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="url(#cg)"/>
+  <circle cx="8.5" cy="9" r="1.4" fill="#5B3BD0"/><circle cx="13" cy="9" r="1.4" fill="#5B3BD0"/><circle cx="17.5" cy="9" r="1.4" fill="#5B3BD0"/></svg></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
   :html`<h2 class="sec2"><span>${title}</span>${children}</h2>`;
-// Полоса «значение / норма»: сверх нормы — розовая, как перебор в референсе
-const Meter=({v,max,over})=>html`<span class="meter"><i style=${{width:Math.min(100,max?v/max*100:0)+"%",background:over&&v>max+0.01?"var(--pink)":"var(--accf)"}}></i></span>`;
+// Полоса «значение / норма». Сверх нормы — как в референсе: полоса полная, а розовый отрезок в начале показывает долю перебора
+const Meter=({v,max,color})=>{ const p=max?v/max:0, ex=p>1.001?Math.min(1,p-1):0;
+  return html`<span class="meter"><i style=${{width:Math.min(100,p*100)+"%",background:color||"var(--accf)"}}></i>${ex?html`<i class="ex" style=${{width:Math.max(4,ex*100)+"%"}}></i>`:null}</span>`; };
 const shiftDate=(d,n)=>{ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n); return t.toLocaleDateString("sv-SE"); };
 const navDate=d=>{ const t=todayStr(), w=d===t?"Сегодня":d===shiftDate(t,-1)?"Вчера":d===shiftDate(t,1)?"Завтра":RU_DAYS[new Date(d+"T00:00:00").getDay()]; return w+", "+dayMonth(d); };
 // Линейный график на тёмной карточке: сетка, подписи осей, точка на последнем значении
@@ -97,7 +102,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
   const main=lifts.slice().sort((a,b)=>b.h.length-a.h.length||b.h[b.h.length-1].date.localeCompare(a.h[a.h.length-1].date))[0];
   const body=Object.values(S.data).filter(v=>v&&v.kind==="body"&&num(v.w)!==null).sort((a,b)=>a.date.localeCompare(b.date));
   const mus=w.used.slice().sort((a,b)=>w.plan[b]-w.plan[a]).slice(0,5);
-  const R=48, C=2*Math.PI*R, rp=rows?doneSets/rows:0;
+  const R=54.5, C=2*Math.PI*R, rp=rows?doneSets/rows:0;
   const bw=body.length?num(body[body.length-1].w):null, bw0=body.length?num(body[0].w):null, waist=body.slice().reverse().find(x=>num(x.waist)!==null);
   const avg=main?main.h.reduce((a,x)=>a+x.best,0)/main.h.length:0;
   return html`<div class="home">
@@ -113,21 +118,21 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
           <div class="kpi">
             <div class="kcol"><b>${rows}</b><span>план</span></div>
             <button class="kring" onClick=${()=>go("train")} aria-label=${"Сделано подходов: "+doneSets+" из "+rows+". Открыть тренировку"}>
-              <svg viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r=${R} class="kr-bg"/>
-                ${rp>0?html`<circle cx="56" cy="56" r=${R} class="kr-fg" style=${{strokeDasharray:C,strokeDashoffset:C*(1-rp)}} transform="rotate(-90 56 56)"/>`:null}</svg>
+              <svg viewBox="0 0 118 118" aria-hidden="true"><circle cx="59" cy="59" r=${R} class="kr-bg"/>
+                ${rp>0?html`<circle cx="59" cy="59" r=${R} class="kr-fg" style=${{strokeDasharray:C,strokeDashoffset:C*(1-rp)}} transform="rotate(-90 59 59)"/>`:null}</svg>
               <span><b>${doneSets}</b><small>подходов</small></span>
             </button>
             <div class="kcol"><b>${Math.max(0,rows-doneSets)}</b><span>осталось</span></div>
           </div>
           <div class="tri">
             ${[["Тренировки",w.done,4,""],["Подходы",w.dSets,w.pSets,""],["Мышцы",w.full.length,w.used.length,""]].map(([l,v,m])=>html`<div key=${l} class="tri-c">
-              <span>${l}</span><${Meter} v=${v} max=${m}/><b>${fmt(v)} / ${fmt(m)}</b></div>`)}
+              <span>${l}</span><${Meter} v=${v} max=${m}/><b>${fmt(v)} <em>/ ${fmt(m)}</em></b></div>`)}
           </div>
         </div>
         <div class="page plist2">
           ${mus.length?mus.map(m=>html`<div key=${m} class="pl2">
-            <div class="pl2-h"><span>${MUS[m]}</span><b>${fmt(Math.round(w.fact[m]*4)/4)} / ${fmt(Math.round(w.plan[m]*4)/4)}</b></div>
-            <${Meter} v=${w.fact[m]} max=${w.plan[m]} over=${true}/></div>`):html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`}
+            <div class="pl2-h"><span>${MUS[m]}</span><b>${fmt(Math.round(w.fact[m]*4)/4)} <em>/ ${fmt(Math.round(w.plan[m]*4)/4)} подх.</em></b></div>
+            <${Meter} v=${w.fact[m]} max=${w.plan[m]} color="var(--blue)"/></div>`):html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`}
         </div>
       </div>
       <div class="dots" aria-hidden="true"><i class=${page===0?"on":""}></i><i class=${page===1?"on":""}></i></div>
@@ -156,7 +161,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
         <span class="lmain"><b>${r.name}</b><small>${dm(r.date)} · ${r.w?fmt(num(r.w))+" кг × ":""}${r.r} · 1ПМ ≈ ${kgf(r.v)} кг</small></span>
         <${Icon} n="right" size=${16}/></button>`)}</div>`:null}
 
-    <${SecHead} title="Тело"/>
+    <${SecHead} title="Цели"/>
     <button class="gcard" onClick=${openBody}>
       <span class="gc-h"><span>Вес</span><${Icon} n="right" size=${16}/></span>
       <b class="gc-v">${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
@@ -166,6 +171,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
         <span><small>Талия</small><b>${waist?fmt(num(waist.waist))+" см":"–"}</b></span>
       </span>`:html`<span class="gc-r"><span>Мерь утром, натощак, в одинаковых условиях</span></span>`}
     </button>
+    <div class="rows mt8"><button class="rowc" onClick=${openBody}><${Icon} n="ruler" size=${22}/><span class="lmain"><b>Замеры тела</b></span><${Icon} n="right" size=${20}/></button></div>
   </div>`;
 }
 
@@ -201,13 +207,14 @@ function WeekScreen({date,toast}){
   const [hideTip,setHideTip]=useState(false);
   const days=weekDays(ref);
   return html`<div class="weekscr">
-    <section class="hero">
+    <section class="hero hero-top">
       <div class="appbar left">
         <h1>Неделя</h1>
         <label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
           <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>
       </div>
     </section>
+    <div class="blacksheet">
     <div class="statline"><b>Подходы: ${w.dSets} / ${w.pSets}</b><span>${dayMonth(w.ws)} – ${dayMonth(w.we)}</span></div>
     <div class="ccard">
       <span class="cc-s">По дням, сделано подходов</span>
@@ -236,6 +243,7 @@ function WeekScreen({date,toast}){
       <summary class="grp-row"><span><${Icon} n="list" size=${16}/>Подробно по дням</span><${Icon} n="right" size=${16}/></summary>
       <${WeekView} date=${ref} embedded=${true}/>
     </details>
+    </div>
   </div>`;
 }
 const I_SPARK=html`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>`;

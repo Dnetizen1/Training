@@ -296,18 +296,36 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Шапка тренировки — как экран приёма пищи в референсе: назад · день и дата · действие; ниже «N из M подходов» с полосой
-function TrainHero({s,date,day,go,onDay,onMuscles,right,children}){
+// Шапка тренировки — как экран приёма пищи в референсе: фиолетовая навигация, под ней карточка-сводка, скруглённая снизу.
+// «Фото приёма пищи» → заметка к тренировке; «Белки / Жиры / Углеводы» → подходы / упражнения / время; «Общий вес» → средний запас.
+function TrainHero({s,date,day,go,edit,onDay,onMuscles,right}){
+  const [note,setNote]=useState(false);
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
-  return html`<section class="hero">
-    <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
-    <div class="th-sum">
+  const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
+  const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
+  return html`<${React.Fragment}>
+    <section class="hero hero-nav">
+      <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
+    </section>
+    <section class="sumcard">
       <div class="th-h"><b>${done} подх.</b><span>из ${total} подходов</span></div>
       <${Meter} v=${done} max=${total}/>
-      ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${14}/></button>`:null}
-    </div>
-    ${children}
-  </section>`;
+      <div class="sc-grid">
+        <button class=${"sc-note"+(s.note?" has":"")} onClick=${()=>setNote(true)}>${s.note||html`Заметка<br/>к тренировке`}</button>
+        <div class="sc-cells">
+          <div class="sc-cell"><span class="c1">Подходы</span><b>${done} / ${total}</b></div>
+          <div class="sc-cell"><span class="c2">Упражнения</span><b>${doneEx} / ${s.ex.length}</b></div>
+          <div class="sc-cell"><span class="c3">Время</span><b><${Elapsed} s=${s}/></b></div>
+          <small>Средний запас: ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</small>
+        </div>
+      </div>
+      ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
+    </section>
+    ${note?html`<${Sheet} title="Заметка к тренировке" onClose=${()=>setNote(false)}>
+      <textarea class="notesheet" rows="5" autoFocus placeholder="Самочувствие, сон, боли…" value=${s.note||""} onChange=${ev=>edit(ss=>{ ss.note=ev.target.value; })}></textarea>
+      <button class="capsule" onClick=${()=>setNote(false)}>Готово</button>
+    <//>`:null}
+  <//>`;
 }
 function ViewSwitch({ui,setUi}){
   return html`<div class="vswitch" role="group" aria-label="Вид экрана тренировки">
@@ -382,7 +400,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   return html`<div>
-    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
+    <${TrainHero} s=${s} date=${date} day=${day} go=${go} edit=${edit} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
