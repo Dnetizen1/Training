@@ -12,11 +12,9 @@ function RestScreen({t,onShift,onStop,onBack,back,done}){
   const total=Math.max(1,t.total||60), left=Math.max(0,Math.round((t.end-Date.now())/1000)), p=left/total;
   const R=124, C=2*Math.PI*R;
   return html`<section class="rest2" aria-label="Отдых">
-    <nav class="navrow" aria-label="Навигация">
-      <button class="navback" onClick=${onBack}><${Icon} n="left" size=${22}/>${back}</button>
-      <span class="nav-note">${done}</span>
-    </nav>
-    <h2 class="rest2-t">${left===0?"Отдых окончен":"Отдых"}</h2>
+    <section class="hero">
+      <${AppBar} left=${html`<${AbIcon} n="left" label=${"Назад: "+back} onClick=${onBack}/>`} title=${left===0?"Отдых окончен":"Отдых"} sub=${back+(done?" · "+done:"")}/>
+    </section>
     <div class="ring2">
       <svg viewBox="0 0 280 280" aria-hidden="true">
         <circle cx="140" cy="140" r=${R} class="ring2-bg"/>
@@ -92,24 +90,18 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
   const shift=d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}));
   if(!summary&&resting) return html`<div class="fx"><${RestScreen} t=${timer} back=${P[day].name} done=${timer.done||""} onBack=${()=>setTimer(t=>t&&({...t,hidden:true}))} onShift=${shift} onStop=${()=>setTimer(null)}/></div>`;
   if(summary) return html`<div class="fx">
-    <nav class="navrow" aria-label="Навигация">
-      <button class="navback" onClick=${()=>showSum?setShowSum(false):go("home")}><${Icon} n="left" size=${22}/>${showSum?"Тренировка":"Прогресс"}</button>
-      <button class="navlink" onClick=${()=>go("home")}>Готово</button>
-    </nav>
+    <section class="hero">
+      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name+" · "+navDate(date)} right=${html`<button class="ab-link" onClick=${()=>go("home")}>Готово</button>`}/>
+    </section>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)}}/>
   </div>`;
 
   return html`<div class="fx">
-    <nav class="navrow" aria-label="Навигация">
-      <button class="navback" onClick=${()=>go("home")}><${Icon} n="left" size=${22}/>Прогресс</button>
-      <button class="navlink" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>
-    </nav>
-    <header class="ttl">
-      <button class="ttl-b" onClick=${()=>setSheet({type:"day"})} aria-label="Сменить день, дату, неделю или вид экрана"><h1>${P[day].name}</h1><span class="ttl-chev"><${Icon} n="down" size=${16}/></span></button>
-      <span class="ttl-s">${e?dm(date)+" · упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}</span>
-    </header>
+    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
+      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
+    <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
     <div class="segs" role="tablist" aria-label="Упражнения">${s.ex.map((x,k)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)); return html`<button key=${x.uid} role="tab" class=${k===i?"on":""} aria-selected=${String(k===i)} aria-label=${xinfo(s,x).name+": "+d+" из "+r} onClick=${()=>goEx(k)}><i style=${{width:(r?d/r*100:0)+"%"}}></i></button>`; })}</div>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
 
@@ -118,7 +110,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
       <section class="xcard">
         <div class="x-top">
           <h2>${inf.name}</h2>
-          <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="more" size=${22}/></button>
+          <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="vmore" size=${22}/></button>
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
         <button class="tags" aria-label="Нагрузка на мышцы" onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
