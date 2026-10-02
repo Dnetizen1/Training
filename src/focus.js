@@ -84,6 +84,13 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
     if(last) setIdx(nextIdx>=0?nextIdx:i);
   };
   const resting=timer&&!timer.hidden&&timer.end>Date.now()-60000;
+  // после отдыха не возвращаться к верху страницы: прокрутить так, чтобы сверху был переключатель вида, а под ним — упражнение
+  const wasResting=useRef(false);
+  useEffect(()=>{ if(wasResting.current&&!resting) requestAnimationFrame(()=>{ const el=document.querySelector(".fx > .vswitch"); if(!el) return;
+      const y=Math.max(0,el.getBoundingClientRect().top+window.scrollY-12), fx=el.parentNode;
+      fx.style.minHeight=(y+window.innerHeight-el.parentNode.getBoundingClientRect().top-window.scrollY-100)+"px";   // запас, чтобы короткое упражнение тоже доехало до верха
+      window.scrollTo(0,y); });
+    wasResting.current=!!resting; });
   const doneSets=s.ex.reduce((a,x)=>a+Math.min(doneOf(x),rowsOf(s,x)),0);
   const summary=showSum||(s.done&&allDone);
 
