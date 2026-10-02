@@ -757,3 +757,7 @@ main{display:flow-root}
 .tiles4 .durtile{padding:0}
 .finish .review .row-actions .btn{background:var(--accf);color:var(--acc-ink);font-weight:700;justify-content:center}
 .finish .review .row-actions .btn svg{color:currentColor}
+
+.lastw{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:14px;color:var(--mute);margin-top:-6px}
+.lastw b{font-weight:500;color:var(--ink2)}
+.lastw b.cur{font-weight:700;color:var(--ink)}

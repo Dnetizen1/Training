@@ -122,6 +122,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
         <button class="tags" aria-label="Нагрузка на мышцы" onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
+        ${lt?html`<div class="lastw" aria-label=${"Прошлый раз, "+dm(lt.date)}><span>Прошлый раз · ${dm(lt.date)}</span>${lt.e.sets.filter(x=>num(x.r)!==null).map((x,k)=>html`<b key=${k} class=${k===j?"cur":""}>${x.w?nfmt(x.w)+" × ":""}${x.r}</b>`)}</div>`:null}
         ${!exDone?html`
           <div class="tiles">
             <${Tile} label="Вес" hint=${isBarbell(inf.name)&&platesFor(val.w)?"по "+platesFor(val.w).map(fmt).join("+"):""} unit="кг" step=${W_STEP} dec=${true} value=${val.w} onChange=${w=>setVal({w})}/>
