@@ -734,6 +734,10 @@ main{display:flow-root}
 .finish .review .row-actions .btn{background:var(--accf);color:var(--acc-ink);font-weight:700;justify-content:center}
 .finish .review .row-actions .btn svg{color:currentColor}
 
+.lastw{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:14px;color:var(--mute);margin-top:-6px}
+.lastw b{font-weight:500;color:var(--ink2)}
+.lastw b.cur{font-weight:700;color:var(--ink)}
+
 /* ===== v8 «violet»: по референсу дневника питания (DESIGN.md, разделы 1–4) ===== */
 body{margin-block:0;background:var(--bg);color:var(--ink);font-size:15px;letter-spacing:0;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 :root[data-view="train"] body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
@@ -1036,3 +1040,4 @@ tfoot td{background:var(--fill2)}
 .finish .corr h3,.finish h3,.corr h3{font-size:17px;line-height:22px;font-weight:600;margin:4px 2px 4px}
 .corr-item b{font-size:14px}.corr-item small{font-size:12px}
 .sumhead h2{font-size:20px;line-height:26px}
+.lastw{font-size:12px}.lastw b.cur{color:var(--acc)}

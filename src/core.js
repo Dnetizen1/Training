@@ -294,7 +294,7 @@ function sessionPRs(s){
   return out;
 }
 // Блины на сторону для штанги (гриф 20 кг)
-const PLATES=[25,20,15,10,5,2.5,1.25];
+const PLATES=[20,15,10,5,2.5,1.25];   // блины в зале (25 нет)
 function platesFor(w,bar){ bar=bar||20; let side=(num(w)-bar)/2; if(!(side>0)) return null; const out=[];
   for(const p of PLATES){ while(side>=p-1e-9){ out.push(p); side-=p; } } return side>0.01?null:out; }
 const isBarbell=name=>/штанг|присед|станов|румынск|bench|squat|deadlift|barbell/.test(normName(name))&&!/гантел|тренаж|смит|блок/.test(normName(name));

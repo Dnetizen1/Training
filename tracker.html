@@ -1,4 +1,6 @@
 <title>Дневник тренировок</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Тренировки">
 <style>
 /* Тёмно-фиолетовый дизайн по референсу дневника питания (см. DESIGN.md).
    Слои ниже (v2–v7) — прежний дизайн в духе Apple Health; поверх них в конце файла раздел v8 «violet». */
@@ -736,6 +738,10 @@ main{display:flow-root}
 .finish .review .row-actions .btn{background:var(--accf);color:var(--acc-ink);font-weight:700;justify-content:center}
 .finish .review .row-actions .btn svg{color:currentColor}
 
+.lastw{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:14px;color:var(--mute);margin-top:-6px}
+.lastw b{font-weight:500;color:var(--ink2)}
+.lastw b.cur{font-weight:700;color:var(--ink)}
+
 /* ===== v8 «violet»: по референсу дневника питания (DESIGN.md, разделы 1–4) ===== */
 body{margin-block:0;background:var(--bg);color:var(--ink);font-size:15px;letter-spacing:0;padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 :root[data-view="train"] body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
@@ -1038,6 +1044,7 @@ tfoot td{background:var(--fill2)}
 .finish .corr h3,.finish h3,.corr h3{font-size:17px;line-height:22px;font-weight:600;margin:4px 2px 4px}
 .corr-item b{font-size:14px}.corr-item small{font-size:12px}
 .sumhead h2{font-size:20px;line-height:26px}
+.lastw{font-size:12px}.lastw b.cur{color:var(--acc)}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -1465,7 +1472,7 @@ function sessionPRs(s){
   return out;
 }
 // Блины на сторону для штанги (гриф 20 кг)
-const PLATES=[25,20,15,10,5,2.5,1.25];
+const PLATES=[20,15,10,5,2.5,1.25];   // блины в зале (25 нет)
 function platesFor(w,bar){ bar=bar||20; let side=(num(w)-bar)/2; if(!(side>0)) return null; const out=[];
   for(const p of PLATES){ while(side>=p-1e-9){ out.push(p); side-=p; } } return side>0.01?null:out; }
 const isBarbell=name=>/штанг|присед|станов|румынск|bench|squat|deadlift|barbell/.test(normName(name))&&!/гантел|тренаж|смит|блок/.test(normName(name));
@@ -2704,6 +2711,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
         <button class="tags" aria-label="Нагрузка на мышцы" onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
+        ${lt?html`<div class="lastw" aria-label=${"Прошлый раз, "+dm(lt.date)}><span>Прошлый раз · ${dm(lt.date)}</span>${lt.e.sets.filter(x=>num(x.r)!==null).map((x,k)=>html`<b key=${k} class=${k===j?"cur":""}>${x.w?nfmt(x.w)+" × ":""}${x.r}</b>`)}</div>`:null}
         ${!exDone?html`
           <div class="tiles">
             <${Tile} label="Вес" hint=${isBarbell(inf.name)&&platesFor(val.w)?"по "+platesFor(val.w).map(fmt).join("+"):""} unit="кг" step=${W_STEP} dec=${true} value=${val.w} onChange=${w=>setVal({w})}/>
