@@ -1108,3 +1108,12 @@ tfoot td{background:var(--fill2)}
 .dots{margin-top:11px}
 .home > .hero{padding-bottom:16px}
 .over-tabs .sheet-head .ibtn{visibility:hidden}
+/* поле даты: на iPhone у системного поля своя минимальная ширина — убираем её, чтобы не вылезало за карточку */
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left}
+.form label{min-width:0;overflow:hidden}
+/* нижняя панель как в оригинале: 64pt под иконки + 34pt снизу (зона полоски «Домой»), всего 98pt */
+.tabbar{padding:6px 14px max(40px,calc(6px + env(safe-area-inset-bottom,0px)))}
+body,:root[data-view="train"] body{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
+.sheet-wrap.over-tabs{bottom:max(98px,calc(64px + env(safe-area-inset-bottom,0px)))}
+.form input[type=date]{height:44px;padding:0 12px;border-radius:10px;font-size:17px}

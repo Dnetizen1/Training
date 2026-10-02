@@ -65,8 +65,11 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
     def={w:cur.w||(prev&&prev.w)||(lp&&lp.w)||"", r:cur.r||(lp&&lp.r)||String(inf.plan.lo), q:cur.q||""};
   }
   const key=e?e.uid+"#"+j:"";
-  const val=draft&&draft.key===key?draft:Object.assign({key},def);
-  const setVal=patch=>setDraft(Object.assign({},val,patch,{key}));
+  // черновик текущего подхода хранится и в тренировке (s.draft), чтобы введённое не терялось при уходе с экрана;
+  // подходом он не считается, пока не нажата «Подход сделан»
+  const saved=s.draft&&s.draft.key===key?s.draft:null;
+  const val=draft&&draft.key===key?draft:saved?Object.assign({},def,saved):Object.assign({key},def);
+  const setVal=patch=>{ const d=Object.assign({},val,patch,{key}); setDraft(d); edit(ss=>{ ss.draft={key,w:d.w,r:d.r,q:d.q}; }); };
   const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x){ if(x.n==null) x.n=rowsOf(ss,x); while(x.sets.length<x.n) x.sets.push(blankSet()); fn(x); } });
   const nextIdx=s.ex.findIndex((x,k)=>k>i&&curSet(s,x)>=0);
   const nk=nextIdx>=0?nextIdx:(i<s.ex.length-1?i+1:-1);
@@ -78,6 +81,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
     const next=!last?inf.name+" · подход "+(j+2):nx?xinfo(s,nx).name:"Тренировка закончена";
     const nextSub=!last?(val.w?nfmt(val.w)+" кг × ":"")+val.r+" · как сейчас":nx?rowsOf(s,nx)+" × "+xinfo(s,nx).plan.lo+"–"+xinfo(s,nx).plan.hi:"";
     upd(x=>{ x.sets[j]=Object.assign({},x.sets[j],{w:val.w,r:val.r,q:val.q,ok:true}); });
+    edit(ss=>{ delete ss.draft; });
     if(isPR) toast({text:`Рекорд в «${inf.name}»: 1ПМ ≈ ${kgf(e1rm(val.w,val.r))} кг`});
     unlockSound(); setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next,nextSub,done:"Подход "+(j+1)+" из "+rows+" записан"});
     setDraft(null);
