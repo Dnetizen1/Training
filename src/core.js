@@ -33,10 +33,10 @@ function md(src){
 /* ---------- Модель упражнения ---------- */
 // base>=0 — упражнение программы; base=-1 — добавлено вручную
 function xinfo(s,e){
-  const row=e.base>=0&&P[s.day]?P[s.day].ex[e.base]:null;
+  const pr=progOf(s), row=e.base>=0&&pr.P[s.day]?pr.P[s.day].ex[e.base]:null;
   const plan=row?{ns:row[1],lo:row[2],hi:row[3],rir:row[4],rest:row[5],note:row[6]}:Object.assign({ns:3,lo:8,hi:12,rir:"1",rest:120,note:""},e.plan||{});
   const base=row?row[0]:(e.name||"Упражнение");
-  const lv=e.lv||(e.mus?lvFromOld(e.mus):null)||(row?LV[s.day][e.base]:null)||{};
+  const lv=e.lv||(e.mus?lvFromOld(e.mus):null)||(row?pr.LV[s.day][e.base]:null)||{};
   return {row,custom:!row,base,name:row?(e.alt||base):base,plan,lv,mus:lvWeights(lv)};
 }
 const musKeys=m=>MUS_ORDER.filter(k=>m[k]);
@@ -64,12 +64,17 @@ const hasData=s=>s.ex&&s.ex.some(e=>e.sets.some(x=>x.w||x.r||x.ok));
 const defSession=k=>({day:k,ex:P[k].ex.map((_,i)=>({base:i,uid:"p"+i,sets:[]}))});
 function blankSession(date,day){
   const wk=weekFromDate(date);
-  return {kind:"session",lvVer:LV_VER,date,day,week:wk,bw:"",note:"",done:false,
+  return {kind:"session",lvVer:LV_VER,pv:PV,date,day,week:wk,bw:"",note:"",done:false,
     ex:P[day].ex.map((e,i)=>({base:i,uid:"p"+i,sets:Array.from({length:setsFor(e[1],wk)},blankSet),note:""}))};
 }
 function normDoc(v){
+  if(v&&v.kind==="session"&&Array.isArray(v.ex)&&!v.pv){   // записано до смены программы
+    if(hasData(v)||!P[v.day]) v.pv=1;                          // с подходами — оставить старые упражнения
+    else { v.pv=PV; v.ex=blankSession(v.date,v.day).ex; delete v.applied; }   // пустую — по новой программе
+  }
   if(v&&v.kind==="session"&&Array.isArray(v.ex)) v.ex.forEach((e,i)=>{
-    if(e.base===undefined) e.base=(P[v.day]&&i<P[v.day].ex.length)?i:-1;
+    const pp=progOf(v).P;
+    if(e.base===undefined) e.base=(pp[v.day]&&i<pp[v.day].ex.length)?i:-1;
     if(!e.uid) e.uid=e.base>=0?"p"+e.base:"c"+i;
     if(!Array.isArray(e.sets)) e.sets=[];
   });
@@ -206,10 +211,10 @@ function migrateLv(){
 /* Что не доделано относительно программы и куда это перенести */
 const upcomingDays=day=>[1,2,3].map(k=>ORDER[(ORDER.indexOf(day)+k)%4]);
 function deficits(s){
-  const out=[];
-  P[s.day].ex.forEach((row,bi)=>{
+  const out=[], pr=progOf(s);
+  pr.P[s.day].ex.forEach((row,bi)=>{
     const e=s.ex.find(x=>x.base===bi), plan=setsFor(row[1],s.week), done=e?doneOf(e):0;
-    if(done<plan) out.push({bi,name:e?xinfo(s,e).name:row[0],missed:plan-done,lv:e?xinfo(s,e).lv:LV[s.day][bi],removed:!e});
+    if(done<plan) out.push({bi,name:e?xinfo(s,e).name:row[0],missed:plan-done,lv:e?xinfo(s,e).lv:pr.LV[s.day][bi],removed:!e});
   });
   return out;
 }
@@ -230,7 +235,7 @@ function suggestMods(s){
     }
     const day=after.find(k=>(added[k]||0)<CAP_NEW&&(load[k]||0)<CAP_SETS&&k[0]===s.day[0]);   // новое упражнение — только в день того же типа
     if(!day) return;
-    const row=P[s.day].ex[d.bi], n=Math.min(2,d.missed,CAP_SETS-(load[day]||0));
+    const row=progOf(s).P[s.day].ex[d.bi], n=Math.min(2,d.missed,CAP_SETS-(load[day]||0));
     res.push({id:rid(),day,type:"add",name:d.name,n,lo:row[2],hi:row[3],lv:d.lv,from:s.date,reason:why});
     load[day]=(load[day]||0)+n; added[day]=(added[day]||0)+1;
   });

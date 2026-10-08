@@ -361,7 +361,7 @@ function AppliedBanner({s,date,day,edit}){
   return html`<div class="applied">
       <div><b>Учтено после тренировки ${dm(s.applied[0].from)}</b></div>
       <ul>${s.applied.map((a,k)=>html`<li key=${k}>${a.text}${a.reason?html`<span class="mute"> · ${a.reason}</span>`:null}</li>`)}</ul>
-      ${!hasData(s)?html`<button class="btn quiet" onClick=${()=>edit(ss=>{ ss.ex=blankSession(date,day).ex; delete ss.applied; })}>Вернуть как в программе</button>`:null}
+      ${!hasData(s)?html`<button class="btn quiet" onClick=${()=>edit(ss=>{ ss.ex=blankSession(date,day).ex; ss.pv=PV; delete ss.applied; })}>Вернуть как в программе</button>`:null}
     </div>`;
 }
 
