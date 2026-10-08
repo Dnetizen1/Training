@@ -1795,6 +1795,37 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 :is(.vswitch,.hseg,.seg,.days,.seg5) > button[aria-pressed="true"] svg{color:var(--acc)}
 .days{margin:0 12px 12px}
 @media (prefers-reduced-motion:reduce){:is(.vswitch,.hseg,.seg,.days,.seg5)::before{transition:none}}
+
+/* ===== v: возвращаем белый, единый заголовок, «Мышцы за тренировку», шторки ===== */
+/* карточка дня: название и счёт белые, цвет дня остаётся в кольцах */
+.thero .th-day,.thero .th-cnt b{color:var(--ink)}
+.thero .th-cnt b em,.thero .th-cnt small{color:var(--mute)}
+.thero .th-day svg{color:var(--mute)}
+
+/* заголовок страницы: меньше и ровно по центру ряда с кнопками, чтобы не спорить с крупной цифрой карточки */
+.pg-h{align-items:center;min-height:62px;padding-top:18px}
+.hero:has(> .pg-h){padding-top:0}
+.pg-h h1{font:700 28px/34px var(--disp);letter-spacing:-.02em}
+.pg-h small{margin-bottom:0}
+
+/* «Мышцы за тренировку» — стеклянная строка-кнопка */
+.thero .th-mus{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:0 14px;border:0;border-radius:22px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12);color:var(--ink);font:500 15px var(--font);text-align:left}
+.thero .th-mus span{flex:1}
+.thero .th-mus svg:first-child{color:var(--acc)}
+.thero .th-mus svg:last-child{color:var(--mute)}
+
+/* шторки: ровная шапка и стеклянная поверхность в общем стиле */
+.sheet-wrap:not(.over-tabs){background:rgba(0,0,0,.4)}
+.sheet-wrap:not(.over-tabs) .sheet{position:relative;isolation:isolate;padding-inline:0;border-radius:32px 32px 0 0;
+  background:rgba(34,34,37,.72);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:0 -10px 40px rgba(0,0,0,.4)}
+.sheet-wrap:not(.over-tabs) .sheet::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+  box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge)}
+.sheet-head{position:relative;display:flex;align-items:center;min-height:64px;padding:16px 10px 0 10px}
+.sheet-head::before{top:8px}
+.sheet-head b{flex:1;padding:0 0 0 44px;text-align:center;font-size:19px;line-height:24px}
+.sheet-head .ibtn{margin:0}
+.sh-lead{left:10px;top:16px;bottom:0;width:44px;height:auto}
+.sheet-body{padding:8px 20px 24px}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2851,7 +2882,7 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
         <span class="th-cnt"><b>${done}<em>/${total}</em></b><small>подходов</small></span>
       </div>
       ${s.ex.length?html`<${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick}/>`:null}
-      ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
+      ${onMuscles?html`<button class="th-mus" onClick=${onMuscles}><${Icon} n="bars" size=${18}/><span>Мышцы за тренировку</span><${Icon} n="right" size=${16}/></button>`:null}
     </section>
   <//>`;
 }

@@ -349,7 +349,7 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
         <span class="th-cnt"><b>${done}<em>/${total}</em></b><small>подходов</small></span>
       </div>
       ${s.ex.length?html`<${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick}/>`:null}
-      ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
+      ${onMuscles?html`<button class="th-mus" onClick=${onMuscles}><${Icon} n="bars" size=${18}/><span>Мышцы за тренировку</span><${Icon} n="right" size=${16}/></button>`:null}
     </section>
   <//>`;
 }
