@@ -1,4 +1,5 @@
 <title>Дневник тренировок</title>
+<meta name="theme-color" content="#18181A">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Тренировки">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -310,7 +311,7 @@ tfoot td{font-weight:700;background:var(--fill2)}
 .timer .t{font:700 22px/1 var(--round);min-width:64px;text-align:center}
 .timer .l{flex:1;font-size:14px;opacity:.85;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .timer button{display:grid;place-items:center;background:rgba(0,0,0,.14);border:0;color:inherit;border-radius:15px;height:30px;padding:0 10px;font:600 14px var(--round)}
-.timer.done{background:var(--ok);color:#fff}
+.timer.done{background:#1F7F49;color:#fff}
 .toast{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);color:var(--inv);padding:10px 16px;font-size:15px}
 .toast button{background:transparent;border:0;color:var(--acc);font-weight:600;font-size:15px;padding:6px 0;white-space:nowrap}
 
@@ -1124,14 +1125,15 @@ body,:root[data-view="train"] body{padding-bottom:calc(130px + env(safe-area-ins
   --font:"Onest",-apple-system,BlinkMacSystemFont,system-ui,sans-serif; --disp:"Unbounded","Onest",system-ui,sans-serif; --round:var(--font);
   --bg:#18181A; --panel:#18181A; --card:#222225; --fill:#2C2C30; --fill2:#29292D; --inner:#29292D; --track:#3A3A3F; --pillbg:#2C2C30;
   --chip:#2C2C30; --chip-ink:#F4F4F2; --chip2:#2C2C30; --sep:#2E2E33; --tab:#2C2C30;
-  --ink:#F4F4F2; --ink2:#CFCFD2; --mute:#9A9A9F; --mute2:#808086; --lbl:#9A9A9F; --arrow:#6C6C72; --grid:#3A3A3F;
+  --ink:#F4F4F2; --ink2:#CFCFD2; --mute:#9A9A9F; --mute2:#96969B; --lbl:#9A9A9F; --arrow:#6C6C72; --grid:#3A3A3F;
   /* блины по цветам IWF: 20 синий, 15 жёлтый, 10 зелёный, 5 белый, 2,5 и 25 красный */
-  --p-red:#E03A3E; --p-blue:#2F6FDE; --p-yellow:#F2C230; --p-green:#2FA562; --p-white:#E6E6E3;
+  --p-red:#D4363A; --p-blue:#2F6FDE; --p-yellow:#F2C230; --p-green:#2FA562; --p-white:#E6E6E3;
   --acc:#8FB2F2; --accf:#2F6FDE; --fab:#E03A3E; --acc-soft:#1F2A40; --acc-track:#3A3A3F;
   --sel:#F4F4F2; --sel-ink:#18181A;                 /* выбранное: белая таблетка, тёмный текст */
   --pink:#E03A3E; --blue:#8FB2F2; --teal:#2FA562; --red:#F0575B;
   --ok:#2FA562; --ok-soft:#173225; --warn:#F2C230; --warn-soft:#3A3217;
   --lv-hi:#3A2224; --lv-mid:#1F2A40; --lv-lo:#2C2C30;
+  --grn:var(--p-green); --grn-track:var(--ok-soft); --tile:var(--fill); --roundb:var(--track); --sheet:var(--bg);
   --c-pink:#E03A3E; --c-yellow:#F2C230; --c-green:#2FA562;
 }
 html{background:var(--bg)}
@@ -1152,20 +1154,22 @@ h1,h2,.appbar h1,.ab-t b,.sumhead h2,.big,.gc-v,.kring b,.kcol b,.tiles4 b,.durt
 .dots i{background:var(--track)}.dots i.on{background:var(--ink)}
 
 /* сводка тренировки: счёт крупно, гриф с блинами */
-.sumcard{margin:0;padding:4px 0 0;background:none;border-radius:0;gap:6px}
+.sumcard{margin:0;padding:4px 0 0;background:none;border-radius:0;gap:4px}
 .th-h{justify-content:flex-start;gap:12px}
 .th-h b{font-size:40px;line-height:44px;font-weight:800}
 .th-h b em{font-style:normal;font-weight:500;color:var(--arrow)}
-.th-h span{font-size:15px}
-.th-sub{font-size:15px;color:var(--mute)}
-.bbell{position:relative;display:flex;align-items:center;gap:4px;height:96px;margin:12px 0 2px;padding-left:2px;overflow:hidden}
+.th-h b em{color:var(--mute2)}
+.th-h span{font-size:14px}
+.th-sub{font-size:14px;color:var(--mute)}
+.bbell{position:relative;display:flex;align-items:center;gap:4px;width:max-content;max-width:100%;height:96px;margin:16px 0 0;padding-right:32px;overflow:hidden}
 .bbell::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;border-radius:3px;background:var(--track)}
-.bb-sleeve,.bb-collar,.bb-p{position:relative;flex:none;border-radius:6px}
+.bb-sleeve,.bb-collar,.bb-p{position:relative;flex:none;border-radius:3px}
 .bb-sleeve{width:8px;height:30px;border-radius:3px;background:var(--arrow)}
 .bb-collar{width:10px;height:18px;border-radius:3px;background:var(--arrow)}
-.bb-p{background:linear-gradient(to top,var(--c) var(--p),var(--bg) var(--p));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--c) 45%,var(--bg));transition:background .3s var(--ease)}
-.bb-p.cur{box-shadow:inset 0 0 0 2px var(--c)}
-.th-mus{margin-top:6px;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+@property --p{syntax:"<percentage>";inherits:false;initial-value:0%}
+.bb-p{background:linear-gradient(to top,var(--c) var(--p),var(--bg) var(--p));box-shadow:inset 0 0 0 2px var(--c);transition:--p .3s var(--ease)}
+.bb-p.cur{box-shadow:inset 0 0 0 2px var(--c),0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.linkbtn.th-mus{margin-top:0;padding:12px 0;color:var(--ink2)}
 
 /* выбор вида и все переключатели: белая таблетка */
 .vswitch button{border-radius:21px;background:var(--fill);color:var(--mute);font-weight:600}
@@ -1183,15 +1187,16 @@ h1,h2,.appbar h1,.ab-t b,.sumhead h2,.big,.gc-v,.kring b,.kcol b,.tiles4 b,.durt
 
 /* карточки r20 */
 .exb,.xcard,.ccard,.gcard,.banner,.dtile,.rowc,.mitem,.setlist,.nextcard,.tiles4 div,.durtile,.notetile,.bodytiles button,.bars,.tbl,.sum,.card,.grp,.lv,.form,.hist-chart{border-radius:20px}
-.exb{padding:16px 16px 10px}
-.exb-title,.x-top h2{font-family:var(--disp);font-size:16px;line-height:21px;font-weight:700}
-.sec2{font-size:19px;font-weight:700}
+.exb{padding:16px 16px 12px}
+.exb-title,.x-top h2{font-family:var(--font);font-size:18px;line-height:24px;font-weight:600}
+.sec2{font-size:20px;font-weight:700}
+.sec2 .tbadge,.sec2 .elapsed{font-family:var(--font);font-weight:600;font-size:16px;height:32px;line-height:32px;border-radius:16px;background:var(--fill)}
 
 /* нагрузка на мышцы — точкой цвета блина: 7–10 красный, 4–6 синий, 1–3 жёлтый */
-.lvline span,.tags span{display:inline-flex;align-items:center;gap:6px;height:24px;line-height:24px;padding:0 10px 0 7px;border-radius:12px;background:var(--fill);color:var(--ink2);font-size:13px}
-.lvline span::before,.tags span::before{content:"";flex:none;width:9px;height:9px;border-radius:5px;background:var(--p-yellow)}
+.lvline span,.tags span{display:inline-flex;align-items:center;gap:6px;height:24px;line-height:24px;padding:0 12px 0 8px;border-radius:12px;background:var(--fill);color:var(--ink2);font-size:13px}
+.lvline span::before,.tags span::before{content:"";flex:none;width:8px;height:8px;border-radius:4px;background:var(--p-yellow)}
 .lvline span.hi::before,.tags span.hi::before{background:var(--p-red)}
-.lvline span.mid::before{background:var(--p-blue)}
+.lvline span.mid::before,.tags span.mid::before{background:#5B8DEB}
 .lvline span.hi,.lvline span.mid,.tags span.hi{background:var(--fill);color:var(--ink)}
 .lvline span.more::before{display:none}
 .lvrow.hi{background:var(--lv-hi)}.lvrow.mid{background:var(--lv-mid)}
@@ -1200,13 +1205,15 @@ h1,h2,.appbar h1,.ab-t b,.sumhead h2,.big,.gc-v,.kring b,.kcol b,.tiles4 b,.durt
 .row{border-top-color:var(--sep)}
 .row input[type=text],.q{border-radius:12px}
 .row.done input[type=text]{background:var(--acc-soft)}
-.row.done .n{color:var(--p-red)}
+.row.done .n{color:var(--acc);font-weight:700}
+.row.done input[type=text]{background:#24334F}
+.row input::placeholder{color:#96969B;opacity:1}
+.row input[type=text]:focus{border-color:var(--acc);border-width:2px;background:var(--card)}
 .q.q0{background:var(--p-red);color:#fff}.q.q1{background:var(--lv-hi)}.q.q2{background:var(--acc-soft)}
 .hint.up{background:var(--ok-soft)}
 
 /* «Прогресс»: дни — блинами своего цвета */
-.dt-img{right:14px;bottom:auto;top:46px;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,var(--card) 0 12%,var(--c) 13% 62%,color-mix(in srgb,var(--c) 70%,#000) 63% 69%,var(--c) 70%)}
-.dt-img svg{transform:none;opacity:0}
+.dt-img{right:16px;bottom:auto;top:48px;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,var(--card) 0 12%,var(--c) 13% 62%,color-mix(in srgb,var(--c) 70%,#000) 63% 69%,var(--c) 70%)}
 .kr-fg,.ring2-fg{stroke:var(--accf)}
 .db-t i,.track .factb{background:var(--accf)}
 .gc-cells small{color:var(--acc)}
@@ -1227,10 +1234,13 @@ body,:root[data-view="train"] body{padding-bottom:calc(110px + max(16px,env(safe
 /* шторки, чат, таймер */
 .sheet{background:var(--bg)}
 .sheet-head::before{background:var(--track)}
-.sheet-head b{font-size:18px}
+.sheet-head b{font-size:20px}
+.sheet-wrap{background:rgba(24,24,26,.82)}
+.pillsel{border-radius:21px}
+.qa-s,.qa-b,.qa-d{border-radius:16px}
 .msg.user{background:var(--accf)}
 .timer{background:var(--accf);border-radius:20px}
-.timer.done{background:var(--ok);color:#fff}
+.timer.done{background:#1F7F49;color:#fff}
 .toast{border-radius:20px}
 .toast button,.sl-act button,.xacts button{color:var(--acc)}
 .sl-row b.ok,.lastw b.cur{color:var(--acc)}
@@ -1240,7 +1250,27 @@ body,:root[data-view="train"] body{padding-bottom:calc(110px + max(16px,env(safe
 
 /* заставка: зал, без свечения */
 .splash{background:var(--bg);color:var(--ink);font-size:28px;font-weight:800}
-@media (prefers-reduced-motion:reduce){.bb-p,.kr-fg,.tb-fab > span{transition:none}}
+
+/* нажатие и фокус: на телефоне hover нет, поэтому отклик — лёгкое сжатие; выбранная таблетка плавно меняет и фон, и текст */
+:is(.tabbar button,.vswitch button,.days button,.seg button,.seg5 button,.qpick-b button,.ab-i,.ab-coach,.ab-link,.lvline,.tags,.capsule,.btn){transition:transform .15s var(--ease),background-color .2s,color .2s}
+:is(.tabbar button:not(.tb-fab),.vswitch button,.days button,.seg button,.seg5 button,.qpick-b button,.ab-i,.ab-coach,.ab-link,.lvline,.tags):active{transform:scale(.96)}
+.tb-fab > span{transition:transform .25s var(--ease)}
+.tb-fab:active > span{transform:scale(.92)}
+.tb-fab.open:active > span{transform:rotate(45deg) scale(.92)}
+.tb-fab:focus-visible{outline:0}
+.tb-fab:focus-visible > span{outline:2px solid var(--acc);outline-offset:2px}
+:is(.days,.seg,.seg5) button:focus-visible{outline-offset:-3px}
+:is(.days,.seg,.seg5,.vswitch,.qpick-b) :is(button[aria-pressed="true"],button.on):focus-visible{outline-color:var(--accf)}
+.segs button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.notetile:focus-within{box-shadow:0 0 0 2px var(--acc)}
+.qpick-b button.q0.on{background:var(--p-red);color:#fff}
+.linkbtn:disabled,:is(.capsule,.days button,.seg5 button,.vswitch button):disabled{opacity:.45;cursor:default}
+/* цели касания не меньше 44pt */
+.ab-coach,.ab-i{width:44px;height:44px;border-radius:22px}
+.ab-link{height:44px;border-radius:22px}
+.dn-a,.exb-head .ibtn{width:44px;height:44px}
+/* «Неделя»: лист больше не наезжает на шапку — шапка без панели, наезд из v8 закрывал заголовок */
+.blacksheet{margin-top:0;border-radius:0}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2057,7 +2087,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
     </div>
     <div class="exb-meta">
       <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
-      ${top.length?html`<button class="lvline" onClick=${()=>openSheet("mus",e.uid)} aria-label="Нагрузка на мышцы">${top.slice(0,4).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}${top.length>4?html`<span class="more">+${top.length-4}</span>`:null}</button>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать нагрузку на мышцы</button>`}
+      ${top.length?html`<button class="lvline" onClick=${()=>openSheet("mus",e.uid)} aria-label=${"Нагрузка на мышцы: "+top.map(k=>MUS[k]+" "+inf.lv[k]).join(", ")}>${top.slice(0,4).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}${top.length>4?html`<span class="more">+${top.length-4}</span>`:null}</button>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать нагрузку на мышцы</button>`}
     </div>
     ${note?html`<div class="exb-note">${note}</div>`:null}
     ${up?html`<div class="hint up"><${Icon} n="arrowUp" size=${16}/><span>В прошлый раз все подходы на верхней границе (${hi}). Добавь вес.</span></div>`:null}
@@ -2245,8 +2275,7 @@ function useSession(date,day,toast){
 const PLATE_C=["var(--p-blue)","var(--p-yellow)","var(--p-green)","var(--p-white)","var(--p-red)"];
 function Barbell({s}){
   const n=s.ex.length, cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
-  const full=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
-  return html`<div class="bbell" role="img" aria-label=${"Упражнения: сделано "+full+" из "+n}>
+  return html`<div class="bbell" role="img" aria-label=${cur<0?"Все упражнения сделаны":"Гриф: сейчас упражнение "+(cur+1)+" из "+n}>
     <i class="bb-sleeve"></i>
     ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), p=r?Math.min(1,doneOf(e)/r):0;
       return html`<i key=${e.uid||i} class=${"bb-p"+(i===cur?" cur":"")} style=${{"--c":PLATE_C[i%5],"--p":Math.round(p*100)+"%",height:Math.max(30,92-i*(n>7?6:9))+"px",width:Math.max(9,22-i*2)+"px"}}></i>`; })}
@@ -2263,7 +2292,7 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right}){
       <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
     </section>
     <section class="sumcard">
-      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов · <${Elapsed} s=${s}/></span></div>
+      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов</span></div>
       <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
       ${s.ex.length?html`<${Barbell} s=${s}/>`:null}
       ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
@@ -2344,7 +2373,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   return html`<div>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
+      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
@@ -2675,7 +2704,7 @@ function AppBar({left,title,sub,onTitle,right,label}){
     <div class="ab-side r">${right}</div>
   </div>`;
 }
-// Тренер — круглая «аватарка» с фиолетовым облачком, как кнопка чата в референсе
+// Тренер — круглая кнопка с облачком чата
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
   <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" style=${{fill:"var(--ink)"}}/>
   <circle cx="8.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="13" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="17.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/></svg></button>`;
@@ -2700,7 +2729,7 @@ function LineChart({pts,w,h}){
   return html`<svg class="lchart" viewBox=${"0 0 "+w+" "+h} role="img" aria-label=${"График: последнее значение "+fmt(Math.round(vs[last]))}>
     ${ys.map((v,k)=>html`<g key=${k}><line x1=${L} x2=${w-R} y1=${Y(v)} y2=${Y(v)} stroke="var(--grid)" stroke-width=".6"/><text x=${L-6} y=${Y(v)+3} text-anchor="end">${fmt(Math.round(v))}</text></g>`)}
     ${pts.map((p,i)=>i%every===0||i===last?html`<text key=${i} x=${X(i)} y=${h-6} text-anchor="middle">${p.x}</text>`:null)}
-    ${pts.length>1?html`<polyline points=${pts.map((p,i)=>X(i)+","+Y(p.v)).join(" ")} fill="none" stroke="#05AA8E" stroke-width="1.6" stroke-linejoin="round"/>`:null}
+    ${pts.length>1?html`<polyline points=${pts.map((p,i)=>X(i)+","+Y(p.v)).join(" ")} fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linejoin="round"/>`:null}
     <text x=${X(last)} y=${Y(vs[last])-9} text-anchor="middle" class="lc-v">${fmt(Math.round(vs[last]*10)/10)}</text>
     <circle cx=${X(last)} cy=${Y(vs[last])} r="4" fill="var(--teal)"/>
   </svg>`;
@@ -2768,7 +2797,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
       return html`<button key=${d.k} class="dtile" onClick=${()=>openSession(d.real?d.real.date:date,d.k)}>
         <span class="dt-h"><span>${P[d.k].name}</span>${badge?html`<em class="tbadge">${badge}</em>`:null}</span>
         <b>${d.done}</b><small>из ${d.rows} подходов</small>
-        <span class="dt-img" style=${{"--c":PC[d.k]}} aria-hidden="true"><${Icon} n="dumbbell" size=${26}/></span>
+        <span class="dt-img" style=${{"--c":PC[d.k]}} aria-hidden="true"></span>
       </button>`; })}</div>
     <button class="capsule home-cta" onClick=${()=>go("train")}>${s.done?"Посмотреть итог":started?"Продолжить тренировку":"Начать тренировку"} · ${P[day].name}</button>
 
@@ -3019,7 +3048,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
           <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="vmore" size=${22}/></button>
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
-        <button class="tags" aria-label="Нагрузка на мышцы" onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
+        <button class="tags" aria-label=${"Нагрузка на мышцы: "+lvSorted(inf.lv).slice(0,3).map(k=>MUS[k]+" "+inf.lv[k]).join(", ")} onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
         ${lt?html`<div class="lastw" aria-label=${"Прошлый раз, "+dm(lt.date)}><span>Прошлый раз · ${dm(lt.date)}</span>${lt.e.sets.filter(x=>num(x.r)!==null).map((x,k)=>html`<b key=${k} class=${k===j?"cur":""}>${x.w?nfmt(x.w)+" × ":""}${x.r}</b>`)}</div>`:null}
         ${!exDone?html`
           <div class="tiles">

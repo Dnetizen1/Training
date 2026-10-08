@@ -50,7 +50,7 @@ function AppBar({left,title,sub,onTitle,right,label}){
     <div class="ab-side r">${right}</div>
   </div>`;
 }
-// Тренер — круглая «аватарка» с фиолетовым облачком, как кнопка чата в референсе
+// Тренер — круглая кнопка с облачком чата
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
   <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" style=${{fill:"var(--ink)"}}/>
   <circle cx="8.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="13" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="17.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/></svg></button>`;
@@ -75,7 +75,7 @@ function LineChart({pts,w,h}){
   return html`<svg class="lchart" viewBox=${"0 0 "+w+" "+h} role="img" aria-label=${"График: последнее значение "+fmt(Math.round(vs[last]))}>
     ${ys.map((v,k)=>html`<g key=${k}><line x1=${L} x2=${w-R} y1=${Y(v)} y2=${Y(v)} stroke="var(--grid)" stroke-width=".6"/><text x=${L-6} y=${Y(v)+3} text-anchor="end">${fmt(Math.round(v))}</text></g>`)}
     ${pts.map((p,i)=>i%every===0||i===last?html`<text key=${i} x=${X(i)} y=${h-6} text-anchor="middle">${p.x}</text>`:null)}
-    ${pts.length>1?html`<polyline points=${pts.map((p,i)=>X(i)+","+Y(p.v)).join(" ")} fill="none" stroke="#05AA8E" stroke-width="1.6" stroke-linejoin="round"/>`:null}
+    ${pts.length>1?html`<polyline points=${pts.map((p,i)=>X(i)+","+Y(p.v)).join(" ")} fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linejoin="round"/>`:null}
     <text x=${X(last)} y=${Y(vs[last])-9} text-anchor="middle" class="lc-v">${fmt(Math.round(vs[last]*10)/10)}</text>
     <circle cx=${X(last)} cy=${Y(vs[last])} r="4" fill="var(--teal)"/>
   </svg>`;
@@ -143,7 +143,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
       return html`<button key=${d.k} class="dtile" onClick=${()=>openSession(d.real?d.real.date:date,d.k)}>
         <span class="dt-h"><span>${P[d.k].name}</span>${badge?html`<em class="tbadge">${badge}</em>`:null}</span>
         <b>${d.done}</b><small>из ${d.rows} подходов</small>
-        <span class="dt-img" style=${{"--c":PC[d.k]}} aria-hidden="true"><${Icon} n="dumbbell" size=${26}/></span>
+        <span class="dt-img" style=${{"--c":PC[d.k]}} aria-hidden="true"></span>
       </button>`; })}</div>
     <button class="capsule home-cta" onClick=${()=>go("train")}>${s.done?"Посмотреть итог":started?"Продолжить тренировку":"Начать тренировку"} · ${P[day].name}</button>
 

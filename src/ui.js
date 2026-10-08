@@ -113,7 +113,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
     </div>
     <div class="exb-meta">
       <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
-      ${top.length?html`<button class="lvline" onClick=${()=>openSheet("mus",e.uid)} aria-label="Нагрузка на мышцы">${top.slice(0,4).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}${top.length>4?html`<span class="more">+${top.length-4}</span>`:null}</button>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать нагрузку на мышцы</button>`}
+      ${top.length?html`<button class="lvline" onClick=${()=>openSheet("mus",e.uid)} aria-label=${"Нагрузка на мышцы: "+top.map(k=>MUS[k]+" "+inf.lv[k]).join(", ")}>${top.slice(0,4).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} <b>${inf.lv[k]}</b></span>`)}${top.length>4?html`<span class="more">+${top.length-4}</span>`:null}</button>`:html`<button class="linkbtn" onClick=${()=>openSheet("mus",e.uid)}>Указать нагрузку на мышцы</button>`}
     </div>
     ${note?html`<div class="exb-note">${note}</div>`:null}
     ${up?html`<div class="hint up"><${Icon} n="arrowUp" size=${16}/><span>В прошлый раз все подходы на верхней границе (${hi}). Добавь вес.</span></div>`:null}
@@ -301,8 +301,7 @@ function useSession(date,day,toast){
 const PLATE_C=["var(--p-blue)","var(--p-yellow)","var(--p-green)","var(--p-white)","var(--p-red)"];
 function Barbell({s}){
   const n=s.ex.length, cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
-  const full=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
-  return html`<div class="bbell" role="img" aria-label=${"Упражнения: сделано "+full+" из "+n}>
+  return html`<div class="bbell" role="img" aria-label=${cur<0?"Все упражнения сделаны":"Гриф: сейчас упражнение "+(cur+1)+" из "+n}>
     <i class="bb-sleeve"></i>
     ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), p=r?Math.min(1,doneOf(e)/r):0;
       return html`<i key=${e.uid||i} class=${"bb-p"+(i===cur?" cur":"")} style=${{"--c":PLATE_C[i%5],"--p":Math.round(p*100)+"%",height:Math.max(30,92-i*(n>7?6:9))+"px",width:Math.max(9,22-i*2)+"px"}}></i>`; })}
@@ -319,7 +318,7 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right}){
       <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
     </section>
     <section class="sumcard">
-      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов · <${Elapsed} s=${s}/></span></div>
+      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов</span></div>
       <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
       ${s.ex.length?html`<${Barbell} s=${s}/>`:null}
       ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
@@ -400,7 +399,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   return html`<div>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
+      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
