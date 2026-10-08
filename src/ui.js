@@ -107,8 +107,8 @@ const Elapsed=({s})=>{
 
 // Тип подхода: обычный, миоповторы или дропсет (мио и дроп считаются за два подхода в объёме по мышцам)
 function SetType({value,onChange}){
-  return html`<div class="sttype" role="group" aria-label="Тип подхода">
-    ${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}
+  return html`<div class="sttype">
+    <div class="seg3g" role="group" aria-label="Тип подхода">${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}</div>
     <small>${SET_T[value]?"Считается за 2 подхода":"Мио и дропсет считаются за 2 подхода"}</small></div>`;
 }
 /* ---------- Упражнение: журнал подходов ---------- */
@@ -619,7 +619,7 @@ function AskSheet({focus,onClose,date,day,toast}){
   const ctl=useRef(null), box=useRef(null);
   const s=getSession(date,day);
   useEffect(()=>{ if(focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); },[]);
-  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b) b.scrollTop=b.scrollHeight; },[turns,live]);
+  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b&&(turns.length||live)) b.scrollTop=b.scrollHeight; },[turns,live]);
   const context=()=>{ const cur=getSession(date,day), prev=recent(date,3);
     return `Ты персональный тренер по гипертрофии внутри приложения-дневника тренировок. Отвечай по-русски, коротко и по делу (до 150 слов, если не просят подробнее), списками где уместно. Не называй себя ИИ или Claude, ты просто тренер в приложении. При боли в сухожилии советуй убрать упражнение и показаться спортивному врачу.
 ${PROFILE}
@@ -656,11 +656,11 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
     setLive(""); ctl.current=null;
   };
   const chips=["Тренажёр занят, чем заменить?","Какой вес ставить сегодня?","Дискомфорт в суставе, что делать?","Как правильно делать первое упражнение?","Добавь упражнение на отстающую мышцу"];
-  const foot=html`<textarea rows="2" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
+  const foot=html`<textarea rows="5" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
     ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
       :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
       :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}>Скопировать</button>`}`;
-  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot}>
+  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask">
     <div class="chat" ref=${box}>
       ${!S.sample?html`<div class="st">Помощник недоступен на этой странице. Напиши вопрос и скопируй запрос, чтобы вставить его в чат.</div>`:null}
       ${!turns.length&&!live?html`<div class="st">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}</div>

@@ -1990,6 +1990,42 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .mtile .mt-r i.mt-badge{position:absolute;top:-6px;right:-8px;left:auto;bottom:auto;z-index:2;min-width:20px;height:20px;padding:0 5px;font-size:11px;border-radius:10px;background:var(--warn);color:#000;box-shadow:0 0 0 2px var(--card)}
 .mtile:has(.mt-badge) .mt-t{padding-right:0}
 .tile-v .big.empty{display:inline-block;transform:translateY(-6px)}
+
+/* «Фокус»: пустой вес — тире той же высоты, единица остаётся, кнопки ± на одной линии */
+.tile-v .big.empty{display:inline;transform:none;color:var(--mute2);font-weight:500}
+
+/* тип подхода — стеклянный сегмент со скользящей подсветкой, как «Сколько ещё мог сделать» */
+.sttype{display:grid;gap:6px}
+.seg3g{--n:3;--i:0;position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:3px;border-radius:999px;
+  background:var(--lg-tint);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);box-shadow:0 4px 14px rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.3)}
+.seg3g::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge),inset 0 0 10px rgba(255,255,255,.08)}
+.seg3g::before{content:"";position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/3);border-radius:999px;background:var(--lg-tint-strong);box-shadow:inset 0 0 0 .5px var(--lg-edge);transform:translateX(calc(var(--i)*100%));transition:transform .45s var(--lg-spring)}
+.seg3g:has(> :nth-child(2)[aria-pressed="true"]){--i:1}
+.seg3g:has(> :nth-child(3)[aria-pressed="true"]){--i:2}
+.sttype .seg3g > button{position:relative;z-index:1;min-height:34px;padding:0;border-radius:999px;background:none!important;box-shadow:none!important;color:var(--mute);font:600 14px var(--font);transition:color .2s}
+.sttype .seg3g > button[aria-pressed="true"]{color:var(--ink)}
+.sttype small{text-align:center}
+@media (prefers-reduced-motion:reduce){.seg3g::before{transition:none}}
+
+/* «Спросить тренера» — плавающая стеклянная панель как быстрое добавление, поле ввода высокое */
+.sheet-wrap.over-tabs.ask .sheet{max-height:calc(100% - 40px)}
+.ask .sheet-foot{padding:4px 14px 10px;align-items:stretch;flex-direction:column}
+.ask .sheet-foot textarea{min-height:132px;border-radius:20px}
+.ask .sheet-foot .btn{width:100%}
+.ask .sheet-body{padding:4px 14px 16px}
+
+/* ===== крупные блоки — «стекло»: светлая полупрозрачная заливка, блик по верхнему краю, мягкая тень.
+   Размытие фона не включаем: под карточками чёрный фон, blur там ничего не даёт, а стоит дорого. В шторках не применяем — стекло на стекле (apple-fluid §12). */
+:root{--card-glass:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.045));--card-rim:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 .5px rgba(255,255,255,.08),0 8px 24px rgba(0,0,0,.35)}
+:is(.exb,.xcard,.setlist,.thero,.wkcard,.mtile,.wkstats,.tiles4 div,.durtile,.notetile,.card,.hday,.hx,.hxlist,.plist3,.sum,.corr-card,.weekscr details.grp.more,.home .grp,.tip,.nextcard,.hist-chart):not(.sheet *){
+  background:var(--card-glass);box-shadow:var(--card-rim)}
+.exlist > .xrow{background:var(--card-glass)}
+.exlist > .xrow:first-child,.exlist > .exb + .xrow{box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.mtile.ok:not(.sheet *){background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 22%,transparent),color-mix(in srgb,var(--acc) 12%,transparent))}
+@media (prefers-reduced-transparency:reduce){:is(.exb,.xcard,.setlist,.thero,.wkcard,.mtile,.wkstats,.tiles4 div,.card,.hday,.hx,.exlist > .xrow){background:var(--card)!important}}
+.sheet-wrap.over-tabs.ask .sheet{max-height:calc(100% - 70px)}
+.ask .sheet-foot{flex:none;gap:8px}
+.ask .sheet-body{padding-top:12px}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2804,8 +2840,8 @@ const Elapsed=({s})=>{
 
 // Тип подхода: обычный, миоповторы или дропсет (мио и дроп считаются за два подхода в объёме по мышцам)
 function SetType({value,onChange}){
-  return html`<div class="sttype" role="group" aria-label="Тип подхода">
-    ${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}
+  return html`<div class="sttype">
+    <div class="seg3g" role="group" aria-label="Тип подхода">${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}</div>
     <small>${SET_T[value]?"Считается за 2 подхода":"Мио и дропсет считаются за 2 подхода"}</small></div>`;
 }
 /* ---------- Упражнение: журнал подходов ---------- */
@@ -3316,7 +3352,7 @@ function AskSheet({focus,onClose,date,day,toast}){
   const ctl=useRef(null), box=useRef(null);
   const s=getSession(date,day);
   useEffect(()=>{ if(focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); },[]);
-  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b) b.scrollTop=b.scrollHeight; },[turns,live]);
+  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b&&(turns.length||live)) b.scrollTop=b.scrollHeight; },[turns,live]);
   const context=()=>{ const cur=getSession(date,day), prev=recent(date,3);
     return `Ты персональный тренер по гипертрофии внутри приложения-дневника тренировок. Отвечай по-русски, коротко и по делу (до 150 слов, если не просят подробнее), списками где уместно. Не называй себя ИИ или Claude, ты просто тренер в приложении. При боли в сухожилии советуй убрать упражнение и показаться спортивному врачу.
 ${PROFILE}
@@ -3353,11 +3389,11 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
     setLive(""); ctl.current=null;
   };
   const chips=["Тренажёр занят, чем заменить?","Какой вес ставить сегодня?","Дискомфорт в суставе, что делать?","Как правильно делать первое упражнение?","Добавь упражнение на отстающую мышцу"];
-  const foot=html`<textarea rows="2" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
+  const foot=html`<textarea rows="5" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
     ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
       :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
       :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}>Скопировать</button>`}`;
-  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot}>
+  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask">
     <div class="chat" ref=${box}>
       ${!S.sample?html`<div class="st">Помощник недоступен на этой странице. Напиши вопрос и скопируй запрос, чтобы вставить его в чат.</div>`:null}
       ${!turns.length&&!live?html`<div class="st">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}</div>
@@ -3763,7 +3799,7 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
   return html`<div class="tile">
     <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
-      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big empty">—</b>`:html`<b class="big">${nfmt(value)}</b><small>${unit}</small>`}</button>`}
+      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}><b class=${"big"+(value===""?" empty":"")}>${value===""?"—":nfmt(value)}</b><small>${unit}</small></button>`}
     <div class="tile-b">
       <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
       <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>

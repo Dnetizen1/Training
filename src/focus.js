@@ -12,7 +12,7 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
   return html`<div class="tile">
     <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
-      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big empty">—</b>`:html`<b class="big">${nfmt(value)}</b><small>${unit}</small>`}</button>`}
+      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}><b class=${"big"+(value===""?" empty":"")}>${value===""?"—":nfmt(value)}</b><small>${unit}</small></button>`}
     <div class="tile-b">
       <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
       <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>
