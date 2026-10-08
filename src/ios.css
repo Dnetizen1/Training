@@ -1644,3 +1644,21 @@ body,:root[data-view="train"] body{padding-bottom:calc(100px + max(30px,env(safe
 .mt-r b.n5{font-size:13px;letter-spacing:-.05em}
 .mtile.ok{background:var(--acc-soft)}
 .mtile.ok .mt-t > span{color:var(--ink)}
+
+/* шторка: тело всегда листается (без «подвала» строка авто съедала всю высоту) */
+.sheet{display:flex;flex-direction:column}
+.sheet-head,.sheet-foot{flex:none}
+.sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;align-content:start}
+
+/* нижняя панель: Liquid Glass — плавающая стеклянная капсула (чистый CSS, без SVG-фильтров, работает и в Safari) */
+.tabbar{left:16px;right:16px;bottom:max(14px,env(safe-area-inset-bottom,0px));max-width:420px;margin-inline:auto;padding:6px;gap:2px;border-radius:34px;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05)) , rgba(28,28,30,.38);
+  -webkit-backdrop-filter:blur(22px) saturate(190%) brightness(1.08);backdrop-filter:blur(22px) saturate(190%) brightness(1.08);
+  border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(255,255,255,.08),inset 0 0 0 .5px rgba(255,255,255,.18),0 12px 32px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3)}
+.tabbar button{position:relative;height:52px;border-radius:26px;color:rgba(255,255,255,.62);transition:background-color .25s var(--ease),color .2s,transform .15s var(--ease)}
+.tabbar button[aria-selected="true"]{color:var(--acc);background:rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 0 0 .5px rgba(255,255,255,.16),0 2px 8px rgba(0,0,0,.25)}
+.tabbar .tb-fab[aria-selected]{background:none;box-shadow:none}
+.tb-fab > span{width:46px;height:46px;border-radius:23px;background:var(--acc);color:#000;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 14px color-mix(in srgb,var(--acc) 40%,transparent)}
+.sheet-wrap.over-tabs{bottom:calc(72px + max(14px,env(safe-area-inset-bottom,0px)) + 8px)}
+body,:root[data-view="train"] body{padding-bottom:calc(110px + max(14px,env(safe-area-inset-bottom,0px)))}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.tabbar{background:rgba(44,44,46,.96)}}
