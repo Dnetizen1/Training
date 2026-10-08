@@ -1696,3 +1696,9 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .mt-r,.mt-r .rings{width:50px;height:50px}
 .mtile{gap:7px}
 .mt-t > span{font-size:13.5px;overflow-wrap:normal;hyphens:none}
+
+/* «Сегодня»: название дня первым, слева сверху, крупно — как счёт подходов */
+.th-row{align-items:flex-start}
+.th-day{margin:0;font:700 48px/44px var(--disp);letter-spacing:-.02em}
+.th-cnt{padding:0;margin-top:4px}
+.th-cnt b{font-size:48px;line-height:44px}

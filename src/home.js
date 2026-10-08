@@ -45,11 +45,10 @@ function weekData(date){
 function AppBar({left,title,sub,onTitle,right,label}){
   const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
   return html`<header class="pg-h">
-    <div><small>${sub||todayLabel()}</small><h1>${t}</h1></div>
+    <div>${sub?html`<small>${sub}</small>`:null}<h1>${t}</h1></div>
     <span class="pg-act">${left}${right}</span>
   </header>`;
 }
-const todayLabel=()=>{ const t=todayStr(); return RU_DAYS[new Date(t+"T00:00:00").getDay()]+", "+dayMonth(t); };
 // Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
@@ -118,12 +117,12 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
   const goToday=()=>{ if(!onToday) setDate(today); go("train"); };
   return html`<div class="home">
     <header class="pg-h">
-      <div><small>${RU_DAYS[new Date(today+"T00:00:00").getDay()]}, ${dayMonth(today)}</small><h1>Прогресс</h1></div>
+      <div><h1>Прогресс</h1></div>
       <span class="pg-act"><${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/><${CoachBtn} onClick=${openAsk}/></span>
     </header>
     <section class="thero" style=${{"--c":PC[tday]}}>
       <div class="th-row">
-        <div><small class="th-cap"><i></i>Сегодня</small><button class="th-day" onClick=${goToday}>${P[tday].name}</button></div>
+        <button class="th-day" onClick=${goToday} aria-label=${"Сегодня: "+P[tday].name}>${P[tday].name}</button>
         ${ts.ex.length?html`<span class="th-cnt"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
       </div>
       ${ts.ex.length?html`<${Barbell} s=${ts} day=${tday} cur=${cur} onPick=${goToday}/>`:null}

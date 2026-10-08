@@ -334,7 +334,7 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
   const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
   return html`<${React.Fragment}>
     <section class="hero hero-nav">
-      <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
+      <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${date===todayStr()?null:navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
     </section>
     <section class="sumcard">
       <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов</span></div>

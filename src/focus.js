@@ -65,7 +65,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
   if(summary) return html`<div class="fx">
     <section class="hero">
-      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name+" · "+navDate(date)} right=${html`<button class="ab-link" onClick=${()=>go("home")}>Готово</button>`}/>
+      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name} right=${html`<button class="ab-link" onClick=${()=>go("home")}>Готово</button>`}/>
     </section>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)}}/>
