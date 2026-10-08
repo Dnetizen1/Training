@@ -401,15 +401,24 @@ function AppliedBanner({s,date,day,edit}){
 function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,openHistory,go}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
+  const [open,setOpen]=useState({});           // какие свёрнутые упражнения раскрыты
+  const cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
+  const reveal=k=>{ const e=s.ex[k]; if(e) setOpen(o=>({...o,[e.uid]:true})); setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
   return html`<div>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      onPick=${k=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); }}
+      onPick=${reveal}
       right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
     <div class="exlist">
-      ${s.ex.map((e,i)=>html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`)}
+      ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), d=Math.min(r,doneOf(e)), inf=xinfo(s,e);
+        // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную
+        if(i===cur||open[e.uid]||(d>0&&d<r)||!r) return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`;
+        const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
+        const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
+        return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i>✓</i><span>${inf.name}</span><small>${sum}</small></button>`
+          :html`<button key=${e.uid} id=${"ex-"+i} class="xrow next" onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${r} × ${inf.plan.lo}–${inf.plan.hi}</small></button>`; })}
       ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
       <button class="capsule addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
     </div>
@@ -468,43 +477,67 @@ function WeekView({date,embedded}){
 /* ---------- История ---------- */
 const WD=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
 const shortDay=k=>P[k].name.split(" ").map(w=>w[0]).join("");
-function DateStrip({list,openSession}){
-  const ref=useRef(null);
-  const byDate={}; list.forEach(x=>{ if(!byDate[x.date]) byDate[x.date]=x; });
-  const end=new Date(weekEnd(todayStr())+"T00:00:00"), start=new Date(end);
-  end.setDate(end.getDate()+120); start.setDate(start.getDate()-365-120);
-  const first=list.length?new Date(list[list.length-1].date+"T00:00:00"):start;
-  if(first<start) start.setTime(first.getTime());
-  start.setDate(start.getDate()-((start.getDay()+6)%7));
-  const days=[]; for(const d=new Date(start); d<=end; d.setDate(d.getDate()+1)) days.push(d.toLocaleDateString("sv-SE"));
-  useEffect(()=>{ const el=ref.current; if(!el) return; const t=el.querySelector(".ds-day.today"); el.scrollLeft=t?t.offsetLeft-el.clientWidth+t.offsetWidth*3:el.scrollWidth; },[]);
-  const today=todayStr();
-  return html`<div class="dstrip" ref=${ref} role="list" aria-label="Календарь тренировок">${days.map(d=>{
-    const x=byDate[d], t=new Date(d+"T00:00:00"), mon=t.getDate()===1||d===days[0];
-    return html`<button key=${d} role="listitem" class=${"ds-day"+(x?" on":"")+(d===today?" today":"")+(t.getDay()===1?" wk":"")} 
-      onClick=${()=>openSession(d,x?x.day:null)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")}>
-      <small class="ds-m">${mon?RU_MONTHS[t.getMonth()].slice(0,3):""}</small>
-      <small>${WD[t.getDay()]}</small>
-      <b style=${x?{background:PC[x.day],color:PC_INK[x.day]}:null}>${t.getDate()}</b>
-      <small class="ds-k">${x?shortDay(x.day):""}</small>
-    </button>`; })}</div>`;
+const RU_MON1=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+// мини-тренд: цвет по направлению (вверх зелёный, вниз жёлтый, ровно серый)
+function MiniTrend({vals,dir}){
+  if(vals.length<2) return html`<svg width="72" height="28" aria-hidden="true"></svg>`;
+  const lo=Math.min(...vals), hi=Math.max(...vals), sp=hi-lo||1;
+  return html`<svg width="72" height="28" viewBox="0 0 72 28" aria-hidden="true"><polyline class=${"mt-"+dir} fill="none" stroke-width="2" stroke-linejoin="round"
+    points=${vals.map((v,i)=>(2+i*68/(vals.length-1))+","+(24-(v-lo)/sp*20)).join(" ")}/></svg>`;
 }
-function HistoryView({openSession,openAsk}){
+const bestSet=sets=>sets.reduce((b,x)=>!b||e1rm(x.w,x.r)>e1rm(b.w,b.r)?x:b,null);
+const setTxt=x=>!x?"":x.w?fmt(num(x.w))+" × "+x.r:x.r+" повт.";
+// История: два вида — календарь месяца (день → состав тренировки) и список упражнений с трендом
+function HistoryView({openSession,openAsk,openHistory}){
   const list=sessions().filter(hasData).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
-  return html`<div>
+  const today=todayStr();
+  const [mode,setModeRaw]=useState(()=>{ try{ return localStorage.getItem("trainlog.hist")||"cal"; }catch(e){ return "cal"; } });
+  const setMode=m=>{ setModeRaw(m); try{ localStorage.setItem("trainlog.hist",m); }catch(e){} };
+  const [month,setMonth]=useState(today.slice(0,7)), [sel,setSel]=useState(today), [q,setQ]=useState("");
+  const byDate={}; list.forEach(x=>{ if(!byDate[x.date]) byDate[x.date]=x; });
+  const shiftMonth=n=>{ const [y,m]=month.split("-").map(Number), d=new Date(y,m-1+n,1); setMonth(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")); };
+  const [y,mo]=month.split("-").map(Number), first=new Date(y,mo-1,1), lead=(first.getDay()+6)%7, n=new Date(y,mo,0).getDate();
+  const cells=[]; for(let k=-lead;k<n;k++){ const d=new Date(y,mo-1,k+1); cells.push(d.toLocaleDateString("sv-SE")); }
+  while(cells.length%7) { const d=new Date(cells[cells.length-1]+"T00:00:00"); d.setDate(d.getDate()+1); cells.push(d.toLocaleDateString("sv-SE")); }
+  const inMonth=list.filter(x=>x.date.slice(0,7)===month), mSets=inMonth.reduce((a,s)=>a+s.ex.reduce((b,e)=>b+doneOf(e),0),0);
+  const ss=byDate[sel];
+  // упражнения: всё, что когда-либо записано, свежие сверху
+  const names=[...new Set(list.flatMap(s=>s.ex.filter(e=>e.sets.some(setDone)).map(e=>xinfo(s,e).name)))];
+  const exs=names.filter(nm=>!q||nm.toLowerCase().includes(q.toLowerCase())).map(nm=>{ const h=exerciseHistory(nm); if(!h.length) return null;
+    const last=h[h.length-1], tail=h.slice(-6), g=Math.round((tail[tail.length-1].best-tail[0].best)*2)/2;
+    return {nm,last,tail:tail.map(x=>x.best),g,dir:tail.length<2||Math.abs(g)<0.5?"fl":g>0?"up":"dn"}; }).filter(Boolean).sort((a,b)=>b.last.date.localeCompare(a.last.date));
+  return html`<div class="histv">
     <section class="hero">
       <${AppBar} left=${html`<${CoachBtn} onClick=${openAsk}/>`} title="История"/>
-      <${DateStrip} list=${list} openSession=${openSession}/>
-      <div class="dlegend">${ORDER.map(k=>html`<span key=${k}><${Plate} k=${k}/>${P[k].name}</span>`)}</div>
+      <div class="hseg" role="group" aria-label="Вид истории">
+        <button aria-pressed=${String(mode==="cal")} onClick=${()=>setMode("cal")}>Календарь</button>
+        <button aria-pressed=${String(mode==="ex")} onClick=${()=>setMode("ex")}>Упражнения</button>
+      </div>
     </section>
-    <${SecHead} title="Тренировки"><em class="tbadge">${list.length}</em><//>
-    ${!list.length?html`<div class="empty">Пока нет записей. Заполни первую тренировку, и она появится здесь.</div>`:html`<div class="rows">${list.map(s=>{
-      const cnt=s.ex.reduce((a,e)=>a+doneOf(e),0);
-      return html`<button key=${s.id} class="rowc" onClick=${()=>openSession(s.date,s.day)}>
-        <span class="rc-i" style=${{"--c":PC[s.day]}}><${Icon} n="dumbbell" size=${16}/></span>
-        <span class="lmain"><b>${P[s.day].name}</b><small>${longDate(s.date)} · ${s.ex.length} упр. · ${cnt} подх.${s.dur?" · "+s.dur+" мин":""}</small></span>
-        <${Icon} n="right" size=${16}/></button>`;
-    })}</div>`}
+    ${mode==="cal"?html`
+      <div class="cal-h"><div><h2>${RU_MON1[mo-1]}${y!==+today.slice(0,4)?" "+y:""}</h2><small>${inMonth.length} трен. · ${mSets} подх.</small></div>
+        <span class="wk-nav"><button class="dn-a" aria-label="Прошлый месяц" onClick=${()=>shiftMonth(-1)}><${Icon} n="left" size=${18}/></button>
+        <button class="dn-a" aria-label="Следующий месяц" disabled=${month>=today.slice(0,7)} onClick=${()=>shiftMonth(1)}><${Icon} n="right" size=${18}/></button></span></div>
+      <div class="cal">${["пн","вт","ср","чт","пт","сб","вс"].map(d=>html`<span key=${d}>${d}</span>`)}
+        ${cells.map(d=>{ const x=byDate[d], out=d.slice(0,7)!==month;
+          return html`<button key=${d} class=${"cd"+(out?" out":"")+(d===today?" now":"")+(d===sel?" sel":"")} style=${x?{background:PC[x.day],color:PC_INK[x.day]}:null}
+            onClick=${()=>setSel(d)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")} aria-pressed=${String(d===sel)}>${+d.slice(8)}</button>`; })}</div>
+      <div class="dlegend">${ORDER.map(k=>html`<span key=${k}><${Plate} k=${k}/>${P[k].name}</span>`)}</div>
+      ${ss?html`<section class="hday">
+        <div class="hd-h"><b>${P[ss.day].name} · ${WDS[new Date(sel+"T00:00:00").getDay()]} ${+sel.slice(8)}</b>
+          <span>${ss.ex.reduce((a,e)=>a+doneOf(e),0)}/${ss.ex.reduce((a,e)=>a+rowsOf(ss,e),0)}${ss.dur?" · "+ss.dur+" мин":""}</span></div>
+        ${ss.ex.filter(e=>e.sets.some(setDone)).slice(0,5).map(e=>{ const sets=e.sets.filter(setDone), b=bestSet(sets.filter(x=>num(x.r)!==null));
+          return html`<div key=${e.uid} class="hd-r"><span>${xinfo(ss,e).name}</span><b>${b?setTxt(b):sets.length+" подх."}</b></div>`; })}
+        <button class="capsule sm" onClick=${()=>openSession(ss.date,ss.day)}>Открыть тренировку</button>
+      </section>`:html`<section class="hday empty-day"><span>${dm(sel)} — тренировки нет</span>
+        ${sel<=today?html`<button class="linkbtn" onClick=${()=>openSession(sel,null)}>Записать тренировку за этот день</button>`:null}</section>`}`
+    :html`
+      <label class="hsearch"><${Icon} n="search" size=${18}/><span class="sr">Найти упражнение</span>
+        <input id="hist-q" type="search" placeholder="Найти упражнение" value=${q} onInput=${ev=>setQ(ev.target.value)}/></label>
+      <p class="hx-note">Лучший подход в последний раз · тренд расчётного 1ПМ за 6 тренировок</p>
+      ${!exs.length?html`<div class="empty">${q?"Ничего не нашлось.":"Пока нет записей."}</div>`:html`<div class="hxlist">${exs.map(x=>html`<button key=${x.nm} class="hx" onClick=${()=>openHistory(x.nm)}>
+        <b>${x.nm}</b><small>${setTxt(bestSet(x.last.sets))} · ${dm(x.last.date)}</small><${MiniTrend} vals=${x.tail} dir=${x.dir}/>
+        <em class=${"mt-"+x.dir}>${x.dir==="fl"?"ровно":(x.g>0?"+":"−")+fmt(Math.abs(x.g))+" кг"}</em></button>`)}</div>`}`}
   </div>`;
 }
 
@@ -589,20 +622,25 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
 }
 
 /* ---------- Быстрое добавление (кнопка «+» в центре панели) ---------- */
+// «+»: сверху главное — сегодняшняя тренировка, ниже другие дни, отдых в один тап, затем вес, замеры, тренер
 function QuickAdd({onClose,openSession,openAsk,openBody,startTimer}){
   const run=f=>()=>{ onClose(); f(); };
   useEffect(()=>{ document.documentElement.dataset.quick="1"; return ()=>{ delete document.documentElement.dataset.quick; }; },[]);
+  const today=todayStr(), k0=defaultDay(today), s0=getSession(today,k0);
+  const done=s0.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s0,e)),0), rows=s0.ex.reduce((a,e)=>a+rowsOf(s0,e),0);
+  const body=Object.values(S.data).filter(v=>v&&v.kind==="body").sort((a,b)=>a.date.localeCompare(b.date));
+  const lastW=body.slice().reverse().find(x=>num(x.w)!==null), lastM=body.slice().reverse().find(x=>num(x.waist)!==null||num(x.arm)!==null);
+  const ago=d=>{ const n=Math.round((new Date(today)-new Date(d))/864e5); return n<=0?"сегодня":n===1?"вчера":n+" дн. назад"; };
   return html`<${Sheet} title="Быстрое добавление" onClose=${onClose} cls="over-tabs">
-    <div class="qa">
-      <div class="qa-col">
-        <button class="qa-s" onClick=${run(openBody)}><${Icon} n="scale" size=${16}/>Вес</button>
-        <button class="qa-s" onClick=${run(openBody)}><${Icon} n="ruler" size=${16}/>Замеры</button>
-      </div>
-      <button class="qa-b" onClick=${run(openAsk)}><${Icon} n="chat" size=${22}/>Тренер</button>
-      <button class="qa-b" onClick=${run(()=>startTimer(120,"таймер"))}><${Icon} n="timer" size=${22}/>Отдых 2:00</button>
+    <button class="qa-main" style=${{"--c":PC[k0]}} onClick=${run(()=>openSession(today,k0))}>
+      <span><b>${P[k0].name}</b><small>${s0.done?"итог":hasData(s0)?"продолжить · "+done+" из "+rows:"начать · "+rows+" подходов"}</small></span><${Icon} n="right" size=${22}/></button>
+    <div class="qa-other">${ORDER.filter(k=>k!==k0).map(k=>html`<button key=${k} onClick=${run(()=>openSession(today,k))}><i style=${{"--c":PC[k]}}></i>${P[k].name}</button>`)}</div>
+    <div class="qa-rest"><span>Отдых</span>${[[90,"1:30"],[120,"2:00"],[180,"3:00"]].map(([sec,l])=>html`<button key=${sec} onClick=${run(()=>startTimer(sec,"таймер"))}>${l}</button>`)}</div>
+    <div class="qa-rows">
+      <button onClick=${run(openBody)}><${Icon} n="scale" size=${20}/><span>Вес</span><small>${lastW?fmt(num(lastW.w))+" кг · "+ago(lastW.date):"ещё нет"}</small></button>
+      <button onClick=${run(openBody)}><${Icon} n="ruler" size=${20}/><span>Замеры</span><small>${lastM?ago(lastM.date):"ещё нет"}</small></button>
+      <button onClick=${run(openAsk)}><${Icon} n="chat" size=${20}/><span>Спросить тренера</span></button>
     </div>
-    <div class="qa-days">${ORDER.map(k=>html`<button key=${k} class="qa-d" onClick=${run(()=>openSession(todayStr(),k))}>
-      <span class="qa-di" style=${{"--c":PC[k]}}><${Icon} n="dumbbell" size=${16}/></span>${P[k].name}</button>`)}</div>
   <//>`;
 }
 
@@ -667,7 +705,7 @@ function App(){
       ${view==="train"?html`<${ui==="focus"?FocusView:TrainView} date=${date} setDate=${setDate} day=${day} setDay=${setPicked} toast=${showToast} timer=${timer} setTimer=${setTimer} startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }} openAsk=${i=>setAsk({focus:i})} ui=${ui} setUi=${setUi} openHistory=${setHist} go=${go}/>`
         :view==="home"?html`<${HomeView} date=${date} setDate=${setDate} toast=${showToast} day=${day} go=${go} openSession=${openSession} openHistory=${setHist} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}/>`
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
-        :html`<${HistoryView} openSession=${openSession} openAsk=${()=>setAsk({focus:null})}/>`}
+        :html`<${HistoryView} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openHistory=${setHist}/>`}
     </main>
     <nav class="tabbar" role="tablist">
       ${tabs.map(([k,l,ic])=>k==="add"?html`<button key=${k} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть":l} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>`
