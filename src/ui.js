@@ -52,13 +52,16 @@ function Help({children,label}){
   </div>`;
 }
 function SessionMuscles({s,onClose}){
-  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}>
-    <${MuscleBars} rows=${sessionRows(s)} helpLabel="Как считаются подходы" help="Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано."/>
+  const [h,setH]=useState(false);
+  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}
+      lead=${html`<button class="help-b" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}>?</button>`}>
+    ${h?html`<div class="help-t">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>`:null}
+    <${MuscleBars} rows=${sessionRows(s)}/>
   <//>`;
 }
 const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
 
-function Sheet({title,onClose,children,foot,cls}){
+function Sheet({title,onClose,children,foot,cls,lead}){
   const ref=useRef(null), drag=useRef(null), float=!!cls&&cls.includes("over-tabs");
   useEffect(()=>{ anim(ref.current,{transform:["translateY(-40px)","translateY(0)"],opacity:[.4,1]},{bounce:.12,duration:.45});
     const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
@@ -72,7 +75,7 @@ function Sheet({title,onClose,children,foot,cls}){
     else { el.style.transition="transform .35s var(--lg-spring,cubic-bezier(.3,1.4,.5,1))"; el.style.transform=""; } };
   return ReactDOM.createPortal(html`<div class=${"sheet-wrap"+(cls?" "+cls:"")} onClick=${ev=>{ if(ev.target===ev.currentTarget) onClose(); }}>
     <div class=${"sheet"+(float?" float":"")} role="dialog" aria-label=${title} ref=${ref} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
-      <div class="sheet-head"><b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
+      <div class="sheet-head">${lead?html`<span class="sh-lead">${lead}</span>`:null}<b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
       ${foot?html`<div class="sheet-foot">${foot}</div>`:null}
       <div class="sheet-body">${children}</div>
     </div></div>`,document.body);
@@ -662,7 +665,7 @@ function QuickAdd({onClose,openSession,openAsk,openBody,startTimer}){
     <div class="qa-rows">
       <button onClick=${run(openBody)}><${Icon} n="scale" size=${20}/><span>Вес</span><small>${lastW?fmt(num(lastW.w))+" кг · "+ago(lastW.date):"ещё нет"}</small></button>
       <button onClick=${run(openBody)}><${Icon} n="ruler" size=${20}/><span>Замеры</span><small>${lastM?ago(lastM.date):"ещё нет"}</small></button>
-      <button onClick=${run(openAsk)}><${Icon} n="coach" size=${20}/><span>Спросить тренера</span></button>
+      <button onClick=${run(openAsk)}><${Icon} n="spark" size=${22}/><span>Спросить тренера</span></button>
     </div>
   <//>`;
 }

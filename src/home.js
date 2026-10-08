@@ -50,7 +50,7 @@ function AppBar({left,title,sub,onTitle,right,label}){
   </header>`;
 }
 // Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="coach" size=${22}/></button>`;
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`

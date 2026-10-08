@@ -1763,3 +1763,30 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .dn-a{border-radius:50%}
 .dn-a:disabled{opacity:.4;box-shadow:none}
 .ab-link{color:var(--acc)}
+
+/* «?» слева в шапке шторки — симметрично кнопке закрытия */
+.sh-lead{position:absolute;left:6px;top:24px;width:44px;height:44px;display:grid;place-items:center}
+.sheet-head .help-b{width:36px;height:36px;border-radius:18px}
+
+/* быстрое добавление чуть шире полоски вкладок */
+.sheet-wrap.over-tabs .sheet{width:min(calc(100% - 40px),350px)}
+
+/* переключатели — Liquid Glass со скользящей подсветкой выбранного пункта (без JS, на :has) */
+:is(.vswitch,.hseg,.seg,.days,.seg5){--n:2;--i:0;position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:0;padding:3px;border-radius:999px;border:0;
+  background:var(--lg-tint);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
+  box-shadow:0 4px 14px rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.3)}
+.days{--n:4}.days.two{--n:2}.seg5{--n:5}
+:is(.vswitch,.hseg,.seg,.days,.seg5)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:3;
+  box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge),inset 0 0 10px rgba(255,255,255,.08)}
+:is(.vswitch,.hseg,.seg,.days,.seg5)::before{content:"";position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n));border-radius:999px;
+  background:var(--lg-tint-strong);box-shadow:inset 0 0 0 .5px var(--lg-edge);transform:translateX(calc(var(--i)*100%));transition:transform .45s var(--lg-spring)}
+:is(.vswitch,.hseg,.seg,.days,.seg5):not(:has([aria-pressed="true"]))::before{opacity:0}
+:is(.vswitch,.hseg,.seg,.days,.seg5):has(> :nth-child(2)[aria-pressed="true"]){--i:1}
+:is(.vswitch,.hseg,.seg,.days,.seg5):has(> :nth-child(3)[aria-pressed="true"]){--i:2}
+:is(.vswitch,.hseg,.seg,.days,.seg5):has(> :nth-child(4)[aria-pressed="true"]){--i:3}
+:is(.vswitch,.hseg,.seg,.days,.seg5):has(> :nth-child(5)[aria-pressed="true"]){--i:4}
+:is(.vswitch,.hseg,.seg,.days,.seg5) > button{position:relative;z-index:1;background:none!important;box-shadow:none!important;border-radius:999px;color:var(--mute);transition:color .2s}
+:is(.vswitch,.hseg,.seg,.days,.seg5) > button[aria-pressed="true"]{color:var(--ink);font-weight:600}
+:is(.vswitch,.hseg,.seg,.days,.seg5) > button[aria-pressed="true"] svg{color:var(--acc)}
+.days{margin:0 12px 12px}
+@media (prefers-reduced-motion:reduce){:is(.vswitch,.hseg,.seg,.days,.seg5)::before{transition:none}}
