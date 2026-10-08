@@ -73,8 +73,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
   return html`<div class="fx" style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      cur=${i} onPick=${goEx}
-      right=${html`<${AbLink} icon="flag" label="Завершить" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}/>`}/>
+      cur=${i} onPick=${goEx}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
@@ -116,6 +115,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
       ${nInf?html`<button class="nx" onClick=${()=>goEx(nk)}><span>Дальше: ${nInf.name}</span><small>${rowsOf(s,s.ex[nk])} × ${nInf.plan.lo}–${nInf.plan.hi}</small></button>`:null}
       <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
+      <button class="glassbtn finish-btn" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); window.scrollTo(0,0); }}><${Icon} n="flag" size=${18}/>Завершить тренировку</button>
     <//>`}
     <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
       setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>

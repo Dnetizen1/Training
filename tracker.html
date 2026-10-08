@@ -1863,6 +1863,30 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px + env(safe-area-inset-bottom,0px));z-index:11;pointer-events:none;
   background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.85) 70%)}
 @media (prefers-reduced-transparency:reduce){:is(.tabbar,.sheet,.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a,.vswitch,.hseg,.seg,.days,.seg5){-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:#2C2C2E!important}}
+
+/* вторичная кнопка-капсула в стекле: «Завершить тренировку», «Вернуться к тренировке» */
+.glassbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:54px;border:0;border-radius:27px;position:relative;isolation:isolate;
+  background:var(--lg-tint);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);color:var(--ink);font:600 17px var(--font);
+  box-shadow:0 4px 14px rgba(0,0,0,.25);transition:transform .1s ease-out,background-color .2s}
+.glassbtn::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge)}
+.glassbtn svg{color:var(--acc)}
+.glassbtn:active{transform:scale(.97);background:var(--lg-tint-strong)}
+.exlist .finish-btn{margin-top:-4px}
+.fx .finish-btn{margin-top:18px}
+.done-ex{margin-top:20px}
+.done-ex[open] > summary svg:last-child{transform:rotate(90deg)}
+.done-ex > summary svg:last-child{transition:transform .2s var(--ease)}
+.done-ex .exlist{padding:0 12px 12px;margin-top:4px}
+.done-ex + .finish-btn{margin-top:14px}
+.xrow.now i{background:var(--c);color:#000}
+
+/* проход по apple-design: один акцент, цифры белые, без стекла на стекле */
+.wkcard .dn-a,.cal-h .dn-a{background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;color:var(--mute)}
+.wkcard .dn-a::after,.cal-h .dn-a::after{content:none}
+.tiles4 .acc,.tiles4 .grn,.tiles4 b{color:var(--ink)}
+.done-ex > summary,.done-ex > summary span{color:var(--ink);display:flex;align-items:center;gap:8px}
+.done-ex > summary svg{color:var(--mute)}
+.x-top .ibtn,.exb-head .ibtn{color:var(--mute)}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -3005,30 +3029,43 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   const [open,setOpen]=useState({});           // какие свёрнутые упражнения раскрыты
+  const [shut,setShut]=useState({});           // какие открытые (текущее, начатое) свёрнуты вручную
   const cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
-  const reveal=k=>{ const e=s.ex[k]; if(e) setOpen(o=>({...o,[e.uid]:true})); setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
-  return html`<div style=${{"--c":PC[day]}}>
-    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      onPick=${reveal}
-      right=${html`<${AbLink} icon="flag" label=${s.done?"Итог":"Завершить"} onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}/>`}/>
-    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
-    <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
-    <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
-    <div class="exlist">
+  const reveal=k=>{ const e=s.ex[k]; if(e){ setOpen(o=>({...o,[e.uid]:true})); setShut(o=>({...o,[e.uid]:false})); } setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
+  const top=()=>window.scrollTo({top:0,behavior:calm()?"auto":"smooth"});
+  const list=html`<div class="exlist">
       ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), d=Math.min(r,doneOf(e)), inf=xinfo(s,e);
-        // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную
-        if(i===cur||open[e.uid]||(d>0&&d<r)||!r){ const fold=open[e.uid]&&i!==cur&&!(d>0&&d<r)&&r>0?()=>setOpen(o=>({...o,[e.uid]:false})):null;
+        // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную; любое открытое можно свернуть
+        if(!shut[e.uid]&&(i===cur||open[e.uid]||(d>0&&d<r)||!r)){ const fold=r>0?()=>{ setShut(o=>({...o,[e.uid]:true})); setOpen(o=>({...o,[e.uid]:false})); }:null;
           return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} onCollapse=${fold} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`; }
         const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
         const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
         return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i><${Icon} n="check" size=${15}/></i><span>${inf.name}</span><small>${sum}</small></button>`
-          :html`<button key=${e.uid} id=${"ex-"+i} class="xrow next" onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${r} × ${inf.plan.lo}–${inf.plan.hi}</small></button>`; })}
+          :html`<button key=${e.uid} id=${"ex-"+i} class=${"xrow next"+(i===cur?" now":"")} onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${d?d+" из "+r:r+" × "+inf.plan.lo+"–"+inf.plan.hi}</small></button>`; })}
       ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
       <button class="capsule addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
-    </div>
-    <${FinishPanel} s=${s} edit=${edit} toast=${toast}/>
-    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
-      setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>
+      ${!s.done?html`<button class="glassbtn finish-btn" onClick=${()=>{ finish(); top(); }}><${Icon} n="flag" size=${18}/>Завершить тренировку</button>`:null}
+    </div>`;
+  const sheets=html`<${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
+      setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>`;
+  // тренировка завершена: сверху итог и разбор, упражнения свёрнуты ниже
+  if(s.done) return html`<div style=${{"--c":PC[day]}}>
+    <${AppBar} title="Тренировка" sub=${date===todayStr()?null:navDate(date)}/>
+    <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:"Тренировка завершена"}}/>
+    <details class="grp more done-ex">
+      <summary class="grp-row"><span><${Icon} n="list" size=${16}/>Упражнения · ${s.ex.length}</span><${Icon} n="right" size=${16}/></summary>
+      ${list}
+    </details>
+    <button class="glassbtn finish-btn" onClick=${()=>finish()}><${Icon} n="left" size=${18}/>Вернуться к тренировке</button>
+    ${sheets}
+  </div>`;
+  return html`<div style=${{"--c":PC[day]}}>
+    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})} onPick=${reveal}/>
+    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
+    <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
+    <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
+    ${list}
+    ${sheets}
   </div>`;
 }
 function textLog(s){
@@ -3303,7 +3340,7 @@ function App(){
     place(indInit.current); indInit.current=true;
     const ro=window.ResizeObserver?new ResizeObserver(()=>place(false)):null; if(ro) ro.observe(nav);
     return ()=>{ if(ro) ro.disconnect(); }; },[view]);
-  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
+  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; document.documentElement.dataset.hdr="c"; },[day]);
   useEffect(()=>{ anim(mainRef.current,{opacity:[0,1]},{type:"tween",duration:.2,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };
@@ -3664,8 +3701,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
   return html`<div class="fx" style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      cur=${i} onPick=${goEx}
-      right=${html`<${AbLink} icon="flag" label="Завершить" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}/>`}/>
+      cur=${i} onPick=${goEx}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
@@ -3707,6 +3743,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
       ${nInf?html`<button class="nx" onClick=${()=>goEx(nk)}><span>Дальше: ${nInf.name}</span><small>${rowsOf(s,s.ex[nk])} × ${nInf.plan.lo}–${nInf.plan.hi}</small></button>`:null}
       <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
+      <button class="glassbtn finish-btn" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); window.scrollTo(0,0); }}><${Icon} n="flag" size=${18}/>Завершить тренировку</button>
     <//>`}
     <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
       setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>
