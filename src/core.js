@@ -485,6 +485,7 @@ const I={
   clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
   swap:"M7 7h12l-3-3M17 17H5l3 3", rings:"M12 3a9 9 0 1 0 .01 0M12 8a4 4 0 1 0 .01 0", history:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01",
   book:"M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6zM6 3.5v17M9.5 8h5.5M9.5 11.5h5.5", chart:"M4 4v16h16M7.5 15l3.5-4 3 2.5 4.5-6",
+  coach:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM12 8l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z",
   chat:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM8.5 11.3h.01M12 11.3h.01M15.5 11.3h.01",
   sliders:"M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4", cal:"M5 6h14v14H5zM5 10h14M9 4v4M15 4v4", flag:"M6 21V4M6 4.5h11l-2.5 4 2.5 4H6",
   vmore:"M12 5h.01M12 12h.01M12 19h.01", user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0", timer:"M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4.5M9.5 2.5h5",
@@ -496,7 +497,7 @@ const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="tru
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
-const TAB_I={summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
+const TAB_I={coach:1,summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
   : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"||n==="vmore"?3.5:TAB_I[n]?1.8:2.25} stroke-linecap=${n==="more"||n==="vmore"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;

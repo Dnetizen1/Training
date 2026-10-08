@@ -1714,6 +1714,23 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .th-cnt b em{font-size:24px}
 .th-cnt small{font-size:13px;line-height:1}
 .thero{gap:10px}
+
+/* карточка дня (Прогресс и Тренировка): оттенок и акценты — цвет текущей тренировки */
+.thero{background:color-mix(in srgb,var(--c) 13%,var(--card))}
+.thero .th-day{display:inline-flex;align-items:center;gap:6px;color:var(--c)}
+.thero .th-day svg{flex:none;color:var(--mute);margin-top:6px}
+.thero .th-cnt b{color:var(--c)}
+.thero .th-cnt b em{color:color-mix(in srgb,var(--c) 55%,var(--mute))}
+.row.cur input[type=text]{border-color:color-mix(in srgb,var(--c,var(--acc)) 70%,transparent)}
+.thero .linkbtn.th-mus{justify-self:start}
+
+/* поле «Спросить тренера» — на своём фоне */
+.sheet-foot{padding:8px 12px 12px}
+.sheet-foot textarea{background:#2C2C2E;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:12px 16px;color:var(--ink)}
+.sheet-foot textarea:focus{outline:0;border-color:var(--acc);background:#303033}
+.thero .th-day{white-space:nowrap}
+.thero.tr .th-cnt small{display:none}
+.sheet-foot textarea{resize:none}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2401,6 +2418,7 @@ const I={
   clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
   swap:"M7 7h12l-3-3M17 17H5l3 3", rings:"M12 3a9 9 0 1 0 .01 0M12 8a4 4 0 1 0 .01 0", history:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01",
   book:"M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6zM6 3.5v17M9.5 8h5.5M9.5 11.5h5.5", chart:"M4 4v16h16M7.5 15l3.5-4 3 2.5 4.5-6",
+  coach:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM12 8l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z",
   chat:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM8.5 11.3h.01M12 11.3h.01M15.5 11.3h.01",
   sliders:"M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4", cal:"M5 6h14v14H5zM5 10h14M9 4v4M15 4v4", flag:"M6 21V4M6 4.5h11l-2.5 4 2.5 4H6",
   vmore:"M12 5h.01M12 12h.01M12 19h.01", user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0", timer:"M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4.5M9.5 2.5h5",
@@ -2412,7 +2430,7 @@ const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="tru
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
-const TAB_I={summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
+const TAB_I={coach:1,summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
   : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"||n==="vmore"?3.5:TAB_I[n]?1.8:2.25} stroke-linecap=${n==="more"||n==="vmore"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;
@@ -2750,15 +2768,13 @@ function Barbell({s,day,cur,onPick}){
 // Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
 function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
-  const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
-  const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
   return html`<${React.Fragment}>
-    <section class="hero hero-nav">
-      <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${date===todayStr()?null:navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
-    </section>
-    <section class="sumcard">
-      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов</span></div>
-      <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
+    <${AppBar} title="Тренировка" sub=${date===todayStr()?null:navDate(date)} right=${right}/>
+    <section class="thero tr" style=${{"--c":PC[day]}}>
+      <div class="th-row">
+        <button class="th-day" onClick=${onDay} aria-label=${P[day].name+". Сменить день или дату"}>${P[day].name}<${Icon} n="down" size=${18}/></button>
+        <span class="th-cnt"><b>${done}<em>/${total}</em></b><small>подходов</small></span>
+      </div>
       ${s.ex.length?html`<${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick}/>`:null}
       ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
     </section>
@@ -2839,7 +2855,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const [open,setOpen]=useState({});           // какие свёрнутые упражнения раскрыты
   const cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
   const reveal=k=>{ const e=s.ex[k]; if(e) setOpen(o=>({...o,[e.uid]:true})); setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
-  return html`<div>
+  return html`<div style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       onPick=${reveal}
       right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
@@ -3076,7 +3092,7 @@ function QuickAdd({onClose,openSession,openAsk,openBody,startTimer}){
     <div class="qa-rows">
       <button onClick=${run(openBody)}><${Icon} n="scale" size=${20}/><span>Вес</span><small>${lastW?fmt(num(lastW.w))+" кг · "+ago(lastW.date):"ещё нет"}</small></button>
       <button onClick=${run(openBody)}><${Icon} n="ruler" size=${20}/><span>Замеры</span><small>${lastM?ago(lastM.date):"ещё нет"}</small></button>
-      <button onClick=${run(openAsk)}><${Icon} n="chat" size=${20}/><span>Спросить тренера</span></button>
+      <button onClick=${run(openAsk)}><${Icon} n="coach" size=${20}/><span>Спросить тренера</span></button>
     </div>
   <//>`;
 }
@@ -3227,7 +3243,7 @@ function AppBar({left,title,sub,onTitle,right,label}){
   </header>`;
 }
 // Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${22}/></button>`;
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="coach" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
@@ -3495,7 +3511,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)}}/>
   </div>`;
 
-  return html`<div class="fx">
+  return html`<div class="fx" style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       cur=${i} onPick=${goEx}
       right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>`}/>

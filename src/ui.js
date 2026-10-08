@@ -330,15 +330,13 @@ function Barbell({s,day,cur,onPick}){
 // Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
 function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
-  const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
-  const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
   return html`<${React.Fragment}>
-    <section class="hero hero-nav">
-      <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${date===todayStr()?null:navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
-    </section>
-    <section class="sumcard">
-      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов</span></div>
-      <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
+    <${AppBar} title="Тренировка" sub=${date===todayStr()?null:navDate(date)} right=${right}/>
+    <section class="thero tr" style=${{"--c":PC[day]}}>
+      <div class="th-row">
+        <button class="th-day" onClick=${onDay} aria-label=${P[day].name+". Сменить день или дату"}>${P[day].name}<${Icon} n="down" size=${18}/></button>
+        <span class="th-cnt"><b>${done}<em>/${total}</em></b><small>подходов</small></span>
+      </div>
       ${s.ex.length?html`<${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick}/>`:null}
       ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
     </section>
@@ -419,7 +417,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const [open,setOpen]=useState({});           // какие свёрнутые упражнения раскрыты
   const cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
   const reveal=k=>{ const e=s.ex[k]; if(e) setOpen(o=>({...o,[e.uid]:true})); setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
-  return html`<div>
+  return html`<div style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       onPick=${reveal}
       right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
@@ -656,7 +654,7 @@ function QuickAdd({onClose,openSession,openAsk,openBody,startTimer}){
     <div class="qa-rows">
       <button onClick=${run(openBody)}><${Icon} n="scale" size=${20}/><span>Вес</span><small>${lastW?fmt(num(lastW.w))+" кг · "+ago(lastW.date):"ещё нет"}</small></button>
       <button onClick=${run(openBody)}><${Icon} n="ruler" size=${20}/><span>Замеры</span><small>${lastM?ago(lastM.date):"ещё нет"}</small></button>
-      <button onClick=${run(openAsk)}><${Icon} n="chat" size=${20}/><span>Спросить тренера</span></button>
+      <button onClick=${run(openAsk)}><${Icon} n="coach" size=${20}/><span>Спросить тренера</span></button>
     </div>
   <//>`;
 }

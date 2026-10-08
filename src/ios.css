@@ -1709,3 +1709,20 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .th-cnt b em{font-size:24px}
 .th-cnt small{font-size:13px;line-height:1}
 .thero{gap:10px}
+
+/* карточка дня (Прогресс и Тренировка): оттенок и акценты — цвет текущей тренировки */
+.thero{background:color-mix(in srgb,var(--c) 13%,var(--card))}
+.thero .th-day{display:inline-flex;align-items:center;gap:6px;color:var(--c)}
+.thero .th-day svg{flex:none;color:var(--mute);margin-top:6px}
+.thero .th-cnt b{color:var(--c)}
+.thero .th-cnt b em{color:color-mix(in srgb,var(--c) 55%,var(--mute))}
+.row.cur input[type=text]{border-color:color-mix(in srgb,var(--c,var(--acc)) 70%,transparent)}
+.thero .linkbtn.th-mus{justify-self:start}
+
+/* поле «Спросить тренера» — на своём фоне */
+.sheet-foot{padding:8px 12px 12px}
+.sheet-foot textarea{background:#2C2C2E;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:12px 16px;color:var(--ink)}
+.sheet-foot textarea:focus{outline:0;border-color:var(--acc);background:#303033}
+.thero .th-day{white-space:nowrap}
+.thero.tr .th-cnt small{display:none}
+.sheet-foot textarea{resize:none}
