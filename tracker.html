@@ -1958,6 +1958,38 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .weekscr details .help{margin:10px 16px 0}
 .weekscr details .review{margin:12px 16px 16px}
 .weekscr details .tbl th:first-child,.weekscr details .tbl td:first-child{white-space:normal;min-width:112px;max-width:128px;line-height:1.2}
+
+/* значок недобора: перебиваем старое правило «.mtile i» (заливка-полоса) */
+.mtile i.mt-badge{position:absolute;top:8px;right:8px;left:auto;bottom:auto;z-index:2}
+.wk-low i.mt-badge{position:static}
+
+/* «Фокус»: пустой вес — ровное тире по центру, без единицы */
+.tile-v .big.empty{color:var(--mute2);font-weight:500}
+
+/* ===== Liquid Glass для полей и мелких кнопок (поверх карточек — лёгкая «стеклянная» заливка с бликом по краю) ===== */
+:root{--gl-fill:rgba(255,255,255,.07);--gl-fill-on:rgba(255,255,255,.12);--gl-rim:inset 0 0 0 .5px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.1)}
+/* поля ввода */
+.row:not(.done) input[type=text],.noteedit,.form input,.form textarea,.adform input[type=text],.own input,.notetile textarea,.durtile input,.tile-in,.hsearch,input[type=date],.stp-in{
+  background:var(--gl-fill)!important;box-shadow:var(--gl-rim);border-color:transparent}
+.row:not(.done):not(.cur) input[type=text]{border-color:transparent}
+.row input[type=text]:focus,.noteedit:focus,.form input:focus,.form textarea:focus,.own input:focus,.durtile input:focus,.tile-in:focus,input[type=date]:focus,.hsearch:focus-within{
+  outline:0;background:var(--gl-fill-on)!important;box-shadow:inset 0 0 0 1.5px var(--acc)}
+.row.done input[type=text]{box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--ok) 40%,transparent)}
+.hsearch{border-radius:22px}
+.hsearch input{background:none!important;box-shadow:none}
+/* мелкие кнопки на карточках */
+.q:not(.q0):not(.q1):not(.q2):not(.q4),.round,.exb-add .btn:not(.primary),.lvb,.qpick-b button:not(.on),.sttype button:not([aria-pressed="true"]),.st-acts button,.nav-i,.chip-s:not(.ok):not(.cur){
+  background:var(--gl-fill);box-shadow:var(--gl-rim);transition:transform .1s ease-out,background-color .2s}
+:is(.q,.round,.exb-add .btn,.lvb,.qpick-b button,.sttype button,.st-acts button,.nav-i,.chip-s):active{transform:scale(.94);background:var(--gl-fill-on)}
+/* карточка «… отстаёт» — стеклянная */
+.weekscr .banner{position:relative;isolation:isolate;background:var(--lg-tint);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);border-radius:22px}
+.weekscr .banner::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge)}
+.mtile i.mt-badge{background:var(--warn);color:#000}
+.mtile:has(.mt-badge) .mt-t{padding-right:20px}
+/* значок недобора — как уведомление на иконке: в правом верхнем углу кольца */
+.mtile .mt-r i.mt-badge{position:absolute;top:-6px;right:-8px;left:auto;bottom:auto;z-index:2;min-width:20px;height:20px;padding:0 5px;font-size:11px;border-radius:10px;background:var(--warn);color:#000;box-shadow:0 0 0 2px var(--card)}
+.mtile:has(.mt-badge) .mt-t{padding-right:0}
+.tile-v .big.empty{display:inline-block;transform:translateY(-6px)}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -3678,8 +3710,8 @@ function WeekScreen({date,toast}){
     <//>`:null}
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
-        <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
-        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:html`<small>из ${fmt(x.target)}</small>`}</span>${x.gap?html`<i class="mt-badge" aria-hidden="true">${fmt(x.gap)}</i>`:null}</div>`)}</div>`}
+        <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b>${x.gap?html`<i class="mt-badge" aria-hidden="true">${fmt(x.gap)}</i>`:null}</span>
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>`}
     <section class="wkstats" aria-label="Итог недели">
       <div><b>${w.dSets}<em>/${w.pSets}</em></b><span>подходов</span></div>
       <div><b>${nOk}<em>/${tiles.length}</em></b><span>в норме</span></div>
@@ -3731,7 +3763,7 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
   return html`<div class="tile">
     <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
-      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}><b class="big">${value===""?"–":nfmt(value)}</b><small>${unit}</small></button>`}
+      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big empty">—</b>`:html`<b class="big">${nfmt(value)}</b><small>${unit}</small>`}</button>`}
     <div class="tile-b">
       <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
       <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>
