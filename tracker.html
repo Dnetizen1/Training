@@ -1469,6 +1469,14 @@ const Elapsed=({s})=>{
 /* ---------- Упражнение: журнал подходов ---------- */
 // текущий подход упражнения: первый, где ещё нет повторов (или отметки)
 const curSet=(s,e)=>{ const rows=rowsOf(s,e); for(let j=0;j<rows;j++) if(!setDone(e.sets[j]||blankSet())) return j; return -1; };
+// Поле, которое пишет в данные только после ввода (потеря фокуса / Enter): подход засчитывается по первой цифре повторов,
+// поэтому сохранять на каждое нажатие нельзя — «12» превращалось в «1» и подход (а на последнем — вся тренировка) уже считался сделанным.
+function CommitInput({value,onCommit,...rest}){
+  const [v,setV]=useState(value), [foc,setFoc]=useState(false);
+  useEffect(()=>{ if(!foc) setV(value); },[value,foc]);
+  const commit=()=>{ setFoc(false); if(v!==value) onCommit(v); };
+  return html`<input type="text" ...${rest} value=${v} onFocus=${()=>setFoc(true)} onChange=${ev=>setV(ev.target.value)} onBlur=${commit} onKeyDown=${ev=>{ if(ev.key==="Enter") ev.currentTarget.blur(); }}/>`;
+}
 function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
   const e=s.ex[i], inf=xinfo(s,e), {lo,hi,rir,rest,note}=inf.plan, wk=s.week;
   const [qOpen,setQOpen]=useState(null);
@@ -1505,8 +1513,8 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
         <div class=${"row"+(setDone(x)?" done":"")+(j===cj?" cur":"")} role="row">
           <span class="n">${prevBest&&e1rm(x.w,x.r)>prevBest?html`<span class="pr" title="Рекорд: лучше прошлого результата" aria-label="Рекорд">${I_TROPHY}</span>`:j+1}</span>
           <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r+(lp.q?" ·"+lp.q:""):"–"}</span>
-          <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].w=ev.target.value; })}/>
-          <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].r=ev.target.value; if(!ev.target.value) y.sets[j].ok=false; })}/>
+          <${CommitInput} inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onCommit=${v=>upd(y=>{ y.sets[j].w=v; })}/>
+          <${CommitInput} inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onCommit=${v=>upd(y=>{ y.sets[j].r=v; if(!v) y.sets[j].ok=false; })}/>
           <button class=${"q "+qTone(x.q)+(qOpen===j?" open":"")} aria-expanded=${String(qOpen===j)} aria-label=${"Запас повторов, подход "+(j+1)+": "+(x.q||"не указан")} onClick=${()=>setQOpen(qOpen===j?null:j)}>${x.q||"?"}</button>
         </div>
         ${qOpen===j?html`<div class="qpick" role="group" aria-label="Сколько повторов ещё мог сделать">
