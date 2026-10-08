@@ -60,6 +60,9 @@ const rowsOf=(s,e)=>e.n!=null?e.n:Math.max(setsFor(xinfo(s,e).plan.ns,s.week),e.
 const musName=k=>MUS[k];
 const setDone=x=>x.ok||num(x.r)!==null;           // подход засчитан: отмечен или есть повторы (вес не обязателен)
 const doneOf=e=>e.sets.filter(setDone).length;
+// Тип подхода: "" обычный, "myo" миоповторы, "drop" дропсет. Мио и дропсет в объёме по мышцам считаются за два подхода
+const SET_T={myo:{s:"М",l:"Миоповторы"},drop:{s:"Д",l:"Дропсет"}};
+const effOf=e=>e.sets.reduce((a,x)=>a+(setDone(x)?(SET_T[x.t]?2:1):0),0);
 const hasData=s=>s.ex&&s.ex.some(e=>e.sets.some(x=>x.w||x.r||x.ok));
 const defSession=k=>({day:k,ex:P[k].ex.map((_,i)=>({base:i,uid:"p"+i,sets:[]}))});
 function blankSession(date,day){
@@ -312,7 +315,7 @@ function sessionBlock(s,numbered){
   const d=P[s.day]; let t=`${s.date} · ${d.name}`+(s.bw?` · вес утром ${s.bw} кг`:"")+(s.dur?` · ${s.dur} мин`:"")+"\n";
   s.ex.forEach((e,i)=>{
     const inf=xinfo(s,e), {ns,lo,hi,rir}=inf.plan, mt=lvText(inf.lv);
-    const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${x.ok?"":" (не отмечен)"}`).join(", ");
+    const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${SET_T[x.t]?" ("+SET_T[x.t].l.toLowerCase()+", считается за 2)":""}${x.ok?"":" (не отмечен)"}`).join(", ");
     t+=`${numbered?(i+1)+".":"-"} ${inf.name}${e.alt&&!inf.custom?` [замена для «${inf.base}»]`:""}${inf.custom?" [добавлено]":""} · план ${rowsOf(s,e)}×${lo}–${hi}, RIR ${rirFor(rir,s.week)}`+
       `${mt?` · нагрузка на мышцы (0–10): ${mt}`:""} · факт: ${sets||"не выполнено"}${e.rir?` · реальный RIR: ${e.rir}`:""}${e.note?` · заметка: ${e.note}`:""}\n`;
   });

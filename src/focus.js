@@ -42,7 +42,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
   // подходом он не считается, пока не нажата «Подход сделан»
   const saved=s.draft&&s.draft.key===key?s.draft:null;
   const val=draft&&draft.key===key?draft:saved?Object.assign({},def,saved):Object.assign({key},def);
-  const setVal=patch=>{ const d=Object.assign({},val,patch,{key}); setDraft(d); edit(ss=>{ ss.draft={key,w:d.w,r:d.r,q:d.q}; }); };
+  const setVal=patch=>{ const d=Object.assign({},val,patch,{key}); setDraft(d); edit(ss=>{ ss.draft={key,w:d.w,r:d.r,q:d.q,t:d.t||""}; }); };
   const upd=fn=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x){ if(x.n==null) x.n=rowsOf(ss,x); while(x.sets.length<x.n) x.sets.push(blankSet()); fn(x); } });
   const nextIdx=s.ex.findIndex((x,k)=>k>i&&curSet(s,x)>=0);
   const nk=nextIdx>=0?nextIdx:(i<s.ex.length-1?i+1:-1);
@@ -53,7 +53,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
     const last=j>=rows-1, nx=nextIdx>=0?s.ex[nextIdx]:null;
     const next=!last?inf.name+" · подход "+(j+2):nx?xinfo(s,nx).name:"Тренировка закончена";
     const nextSub=!last?(val.w?nfmt(val.w)+" кг × ":"")+val.r+" · как сейчас":nx?rowsOf(s,nx)+" × "+xinfo(s,nx).plan.lo+"–"+xinfo(s,nx).plan.hi:"";
-    upd(x=>{ x.sets[j]=Object.assign({},x.sets[j],{w:val.w,r:val.r,q:val.q,ok:true}); });
+    upd(x=>{ x.sets[j]=Object.assign({},x.sets[j],{w:val.w,r:val.r,q:val.q,t:val.t||"",ok:true}); });
     edit(ss=>{ delete ss.draft; });
     if(isPR) toast({text:`Рекорд в «${inf.name}»: 1ПМ ≈ ${kgf(e1rm(val.w,val.r))} кг`});
     unlockSound(); setTimer({end:Date.now()+inf.plan.rest*1000,total:inf.plan.rest,label:inf.name,next,nextSub,done:"Подход "+(j+1)+" из "+rows+" записан"});
@@ -98,6 +98,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
             <span>Сколько ещё мог сделать</span>
             <div class="seg5" role="group" aria-label="Запас повторов">${["0","1","2","3","4+"].map(v=>html`<button key=${v} aria-pressed=${String(val.q===v)} class=${v==="0"?"q0":""} onClick=${()=>setVal({q:val.q===v?"":v})}>${v}</button>`)}</div>
           </div>
+          <${SetType} value=${val.t||""} onChange=${t=>setVal({t})}/>
           <button class="capsule" onClick=${logSet}><${Icon} n="check" size=${20}/>Подход сделан</button>
         `:html`<button class="capsule" onClick=${()=>{ const n=s.ex.findIndex(x=>curSet(s,x)>=0); n>=0?goEx(n):setShowSum(true); }}>${allDone?"Подвести итог":"Следующее упражнение"}</button>`}
       </section>
@@ -105,7 +106,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
       <section class="setlist" aria-label="Подходы">
         ${Array.from({length:rows},(_,k)=>{ const x=e.sets[k]||blankSet(), dn=setDone(x), cur=k===j&&!exDone;
           return html`<button key=${k} class=${"sl-row"+(cur?" cur":"")} onClick=${()=>{ if(dn){ upd(y=>{ y.sets[k].ok=false; y.sets[k].r=""; }); setDraft(null); } }} aria-label=${dn?"Подход "+(k+1)+" сделан. Нажми, чтобы переделать":"Подход "+(k+1)}>
-            <span>Подход ${k+1}</span>
+            <span>Подход ${k+1}${SET_T[x.t]?html` <i class="st-t" aria-label=${SET_T[x.t].l}>${SET_T[x.t].s}</i>`:null}</span>
             <b class=${dn?"ok":cur?"now":""}>${dn?(x.w?nfmt(x.w)+" × ":"")+(x.r||"")+"  ✓":cur?"сейчас":"–"}</b></button>`; })}
         <div class="sl-act">
           <button onClick=${()=>upd(x=>{ x.n+=1; x.sets.push(blankSet()); })}>+ Подход</button>

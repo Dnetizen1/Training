@@ -40,7 +40,7 @@ function MuscleBars({rows,zone,showEmpty}){
     <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}</div>
   </div>`;
 }
-const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,doneOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
+const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,effOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
 // Пояснение под знаком вопроса
 function Help({children,label}){
   const [open,setOpen]=useState(false);
@@ -84,6 +84,12 @@ const Elapsed=({s})=>{
   return html`<span class="elapsed">${h?h+":"+String(m).padStart(2,"0"):m}:${String(ss).padStart(2,"0")}</span>`;
 };
 
+// Тип подхода: обычный, миоповторы или дропсет (мио и дроп считаются за два подхода в объёме по мышцам)
+function SetType({value,onChange}){
+  return html`<div class="sttype" role="group" aria-label="Тип подхода">
+    ${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}
+    <small>${SET_T[value]?"Считается за 2 подхода":"Мио и дропсет считаются за 2 подхода"}</small></div>`;
+}
 /* ---------- Упражнение: журнал подходов ---------- */
 // текущий подход упражнения: первый, где ещё нет повторов (или отметки)
 const curSet=(s,e)=>{ const rows=rowsOf(s,e); for(let j=0;j<rows;j++) if(!setDone(e.sets[j]||blankSet())) return j; return -1; };
@@ -121,7 +127,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
       <div class="row head" role="row"><span>Сет</span><span>Прошлый</span><span>кг</span><span>Повт</span><span>Запас</span></div>
       ${Array.from({length:rows},(_,j)=>{ const x=e.sets[j]||blankSet(), lp=lt&&lt.e.sets[j]||{}; return html`<${React.Fragment} key=${j}>
         <div class=${"row"+(setDone(x)?" done":"")+(j===cj?" cur":"")} role="row">
-          <span class="n">${prevBest&&e1rm(x.w,x.r)>prevBest?html`<span class="pr" title="Рекорд: лучше прошлого результата" aria-label="Рекорд">${I_TROPHY}</span>`:j+1}</span>
+          <span class="n">${prevBest&&e1rm(x.w,x.r)>prevBest?html`<span class="pr" title="Рекорд: лучше прошлого результата" aria-label="Рекорд">${I_TROPHY}</span>`:j+1}${SET_T[x.t]?html`<i class="st-t" title=${SET_T[x.t].l+": считается за 2 подхода"} aria-label=${SET_T[x.t].l}>${SET_T[x.t].s}</i>`:null}</span>
           <span class="prev">${lp.r?(lp.w||"б/в")+"×"+lp.r+(lp.q?" ·"+lp.q:""):"–"}</span>
           <input type="text" inputmode="decimal" value=${x.w} placeholder=${lp.w||""} aria-label=${"Вес, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].w=ev.target.value; })}/>
           <input type="text" inputmode="numeric" value=${x.r} placeholder=${String(lp.r||lo)} aria-label=${"Повторы, подход "+(j+1)} onChange=${ev=>upd(y=>{ y.sets[j].r=ev.target.value; if(!ev.target.value) y.sets[j].ok=false; })}/>
@@ -131,6 +137,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
           <div class="qpick-t">Подход ${j+1}: сколько повторов ещё мог сделать? <span>0 = отказ</span></div>
           <div class="qpick-b">${["0","1","2","3","4+"].map(v=>html`<button key=${v} class=${qTone(v)+(x.q===v?" on":"")} onClick=${()=>{ upd(y=>{ y.sets[j].q=v; }); setQOpen(null); }}>${v}</button>`)}
             ${x.q?html`<button class="clr" onClick=${()=>{ upd(y=>{ y.sets[j].q=""; }); setQOpen(null); }}>Очистить</button>`:null}</div>
+          <${SetType} value=${x.t||""} onChange=${v=>upd(y=>{ y.sets[j].t=v; })}/>
         </div>`:null}
       <//>`; })}
     </div>
@@ -430,7 +437,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
 function textLog(s){
   let t=`## ${s.date} · ${P[s.day].name}\n`;
   if(s.bw) t+=`Вес утром: ${s.bw} кг`+(s.dur?` · ${s.dur} мин`:"")+"\n";
-  s.ex.forEach(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}`).join(", ");
+  s.ex.forEach(e=>{ const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${SET_T[x.t]?" ("+SET_T[x.t].l.toLowerCase()+")":""}`).join(", ");
     if(sets||e.note) t+=`- ${xinfo(s,e).name}: ${sets}${e.note?" ("+e.note+")":""}\n`; });
   if(s.note) t+=`Итог: ${s.note}\n`;
   return t;
@@ -445,7 +452,7 @@ function WeekView({date,embedded}){
   const cnt=c=>e=>c.real?rowsOf(c.s,e):setsFor(xinfo(c.s,e).plan.ns,wk);
   const pd=cols.map(c=>muscleCount(c.s,cnt(c)));
   const perDay=cols.map(c=>c.s.ex.reduce((a,e)=>a+cnt(c)(e),0));
-  const fact=MUS.map(()=>0); inWeek.forEach(x=>muscleCount(x,doneOf).forEach((c,k)=>{ fact[k]+=c.f; }));
+  const fact=MUS.map(()=>0); inWeek.forEach(x=>muscleCount(x,effOf).forEach((c,k)=>{ fact[k]+=c.f; }));
   const totD=MUS.map((_,k)=>pd.reduce((a,d)=>a+d[k].d,0)), totF=MUS.map((_,k)=>pd.reduce((a,d)=>a+d[k].f,0));
   const hasFact=fact.some(v=>v>0);
   const wid="w_"+ws, wdoc=S.data[wid];
