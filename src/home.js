@@ -95,7 +95,8 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
   const [page,setPage]=useState(0);
   const s=getSession(date,day), w=weekData(date), days=weekDays(date);
   const rows=s.ex.reduce((a,e)=>a+rowsOf(s,e),0), doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0);
-  const started=hasData(s);
+  // кнопка внизу — всегда про сегодняшнюю тренировку, даже если листаешь прошлые дни
+  const today=todayStr(), onToday=date===today, tday=onToday?day:defaultDay(today), ts=onToday?s:getSession(today,tday);
   const prs=sessions().filter(x=>x.date<=date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).flatMap(sessionPRs).slice(0,3);
   const lifts=[...new Set(ORDER.map(k=>P[k].ex[0][0]))].map(n=>({name:n,h:exerciseHistory(n)})).filter(x=>x.h.length);
   const main=lifts.slice().sort((a,b)=>b.h.length-a.h.length||b.h[b.h.length-1].date.localeCompare(a.h[a.h.length-1].date))[0];
@@ -145,7 +146,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
         <b>${d.done}</b><small>из ${d.rows} подходов</small>
         <span class="dt-img" style=${{"--c":PC[d.k]}} aria-hidden="true"></span>
       </button>`; })}</div>
-    <button class="capsule home-cta" onClick=${()=>go("train")}>${s.done?"Посмотреть итог":started?"Продолжить тренировку":"Начать тренировку"} · ${P[day].name}</button>
+    <button class="capsule home-cta" onClick=${()=>{ if(!onToday) setDate(today); go("train"); }}>${ts.done?"Посмотреть итог":hasData(ts)?"Продолжить тренировку":"Начать тренировку"} · ${P[tday].name}</button>
 
     ${main?html`<${SecHead} title="Динамика" onClick=${()=>openHistory(main.name)}/>
     <div class="ccard">
