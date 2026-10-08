@@ -185,6 +185,13 @@ function lagTip(date){
 }
 // порядок плиток: сначала самые важные для гипертрофии мышцы, мелкие — в конце
 const TILE_ORDER=[0,1,7,8,9,3,2,4,6,5,11,10,12,15,16,13,14,17,18];
+// Подсказка-поповер из стекла: растёт из кнопки «?» в правом верхнем углу, закрывается касанием вне её или Esc
+function GlassTip({children,onClose}){
+  const ref=useRef(null);
+  useEffect(()=>{ anim(ref.current,{transform:["scale(.86)","scale(1)"],opacity:[0,1],filter:["blur(6px)","blur(0px)"]},{bounce:0,duration:.35});
+    const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
+  return ReactDOM.createPortal(html`<div class="gtip-wrap" onClick=${onClose}><div class="gtip" role="dialog" ref=${ref} onClick=${ev=>ev.stopPropagation()}>${children}</div></div>`,document.body);
+}
 function WeekScreen({date,toast}){
   const [mode,setMode]=useState("now");
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
@@ -200,19 +207,29 @@ function WeekScreen({date,toast}){
   const minor=w.used.filter(m=>w.plan[m]<4);
   const nOk=tiles.filter(x=>x.ok).length, nLow=tiles.filter(x=>x.gap).length, left=4-w.done;
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
-  const [hideTip,setHideTip]=useState(false);
+  const [hideTip,setHideTip]=useState(false), [help,setHelp]=useState(false);
   const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
   return html`<div class="weekscr">
-    <${AppBar} title="Неделя" left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
-          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}/>
-    <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
-        ${[nOk?ru(nOk,"мышца","мышцы","мышц")+" в норме":"",nLow?"у "+ru(nLow,"мышцы","мышц","мышц")+" недобор":""].filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())}${nOk||nLow?". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
+    <${AppBar} title="Неделя" sub=${dayMonth(w.ws)+" – "+dayMonth(w.we)} left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
+          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}
+      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}>?</button>`}/>
+    ${help?html`<${GlassTip} onClose=${()=>setHelp(false)}>
+      <b>Как читать</b>
+      <p>Кольцо — подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсвеченная плитка — цель набрана.</p>
+      <p><em class="tip-warn">недобор</em> — в прошедших тренировках сделано меньше, чем было по плану.</p>
+      <p>Подходы эффективные: нагрузка на мышцу 7–10 = 1, 4–6 = 0,5, 1–3 = 0,25.</p>
+    <//>`:null}
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
         <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
-        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
-      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсветка плитки — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
-      ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>`}
+    <section class="wkstats" aria-label="Итог недели">
+      <div><b>${w.dSets}<em>/${w.pSets}</em></b><span>подходов</span></div>
+      <div><b>${nOk}<em>/${tiles.length}</em></b><span>в норме</span></div>
+      ${mode==="now"?html`<div><b>${Math.max(0,left)}</b><span>осталось</span></div>`:html`<div><b class=${nLow?"warn":""}>${nLow}</b><span>с недобором</span></div>`}
+    </section>
+    ${mode==="now"&&nLow?html`<p class="wk-low">У ${ru(nLow,"мышцы","мышц","мышц")} недобор</p>`:null}
+    ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
       <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>
