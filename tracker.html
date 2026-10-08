@@ -1707,6 +1707,13 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .th-day{margin:0;font:700 48px/44px var(--disp);letter-spacing:-.02em}
 .th-cnt{padding:0;margin-top:4px}
 .th-cnt b{font-size:48px;line-height:44px}
+/* «Сегодня»: название дня и счёт подходов в одну строку, без пустоты под ними */
+.th-row{align-items:baseline;gap:10px}
+.th-cnt{display:flex;align-items:baseline;gap:6px;margin:0;padding:0;white-space:nowrap}
+.th-cnt b{font-size:48px;line-height:44px}
+.th-cnt b em{font-size:24px}
+.th-cnt small{font-size:13px;line-height:1}
+.thero{gap:10px}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
