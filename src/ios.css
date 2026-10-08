@@ -1927,3 +1927,29 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 @media (prefers-reduced-transparency:reduce){.gtip{background:#2C2C2E;-webkit-backdrop-filter:none;backdrop-filter:none}}
 .wkstats > div{align-content:start}
 .wkstats{margin-top:14px}
+
+/* тренировка: такой же отступ от шапки, как на «Неделе» */
+.pg-h + .vswitch{margin-top:14px}
+
+/* «Неделя»: недобор — круглый значок в правом верхнем углу плитки */
+.mtile{position:relative}
+.mt-badge{position:absolute;top:8px;right:8px;display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--warn);color:#000;font:700 12px/1 var(--num);font-style:normal;font-variant-numeric:tabular-nums;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.wk-low{display:flex;align-items:center;gap:8px;margin:12px 4px 0;font-size:13px;line-height:17px;color:var(--mute)}
+.wk-low .mt-badge{position:static;flex:none;box-shadow:none}
+
+/* «Подробно по дням»: карточка в общем стиле, таблица листается внутри, страница не расползается */
+.weekscr{min-width:0;max-width:100%;overflow-x:clip}
+.weekscr details.grp.more{display:block;width:100%;min-width:0;max-width:100%;margin-top:16px;overflow:hidden;border-radius:20px;background:var(--card)}
+.weekscr details.grp.more > summary{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;color:var(--ink);font-size:16px;font-weight:500;border:0}
+.weekscr details.grp.more > summary span{display:flex;align-items:center;gap:10px}
+.weekscr details.grp.more > summary svg{color:var(--mute)}
+.weekscr details.grp.more > summary svg:last-child{transition:transform .25s var(--ease)}
+.weekscr details.grp.more[open] > summary svg:last-child{transform:rotate(90deg)}
+.weekscr details.grp.more[open] > summary{border-bottom:.5px solid var(--sep)}
+.weekscr details .bars{margin:0;padding:14px 16px 4px;background:none;border-radius:0;box-shadow:none}
+.weekscr details .tbl{width:auto;max-width:none;margin:12px 12px 0;overflow-x:auto;border-radius:14px;background:var(--fill)}
+.weekscr details .tbl th:first-child,.weekscr details .tbl td:first-child{background:var(--fill)}
+.weekscr details .tbl tfoot td{background:color-mix(in srgb,var(--fill) 70%,#fff 4%)}
+.weekscr details .help{margin:10px 16px 0}
+.weekscr details .review{margin:12px 16px 16px}
+.weekscr details .tbl th:first-child,.weekscr details .tbl td:first-child{white-space:normal;min-width:112px;max-width:128px;line-height:1.2}

@@ -222,14 +222,13 @@ function WeekScreen({date,toast}){
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
         <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
-        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>`}
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:html`<small>из ${fmt(x.target)}</small>`}</span>${x.gap?html`<i class="mt-badge" aria-hidden="true">${fmt(x.gap)}</i>`:null}</div>`)}</div>`}
     <section class="wkstats" aria-label="Итог недели">
       <div><b>${w.dSets}<em>/${w.pSets}</em></b><span>подходов</span></div>
       <div><b>${nOk}<em>/${tiles.length}</em></b><span>в норме</span></div>
       ${mode==="now"?html`<div><b>${Math.max(0,left)}</b><span>осталось</span></div>`:html`<div><b class=${nLow?"warn":""}>${nLow}</b><span>с недобором</span></div>`}
     </section>
-    ${mode==="now"&&nLow?html`<p class="wk-low">У ${ru(nLow,"мышцы","мышц","мышц")} недобор</p>`:null}
-    ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}
+    ${mode==="now"&&nLow?html`<p class="wk-low"><i class="mt-badge">N</i>недобор: в прошедших тренировках у ${ru(nLow,"мышцы","мышц","мышц")} сделано меньше, чем по плану</p>`:null}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
       <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>

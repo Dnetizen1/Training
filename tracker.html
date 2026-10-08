@@ -1932,6 +1932,32 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 @media (prefers-reduced-transparency:reduce){.gtip{background:#2C2C2E;-webkit-backdrop-filter:none;backdrop-filter:none}}
 .wkstats > div{align-content:start}
 .wkstats{margin-top:14px}
+
+/* тренировка: такой же отступ от шапки, как на «Неделе» */
+.pg-h + .vswitch{margin-top:14px}
+
+/* «Неделя»: недобор — круглый значок в правом верхнем углу плитки */
+.mtile{position:relative}
+.mt-badge{position:absolute;top:8px;right:8px;display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--warn);color:#000;font:700 12px/1 var(--num);font-style:normal;font-variant-numeric:tabular-nums;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.wk-low{display:flex;align-items:center;gap:8px;margin:12px 4px 0;font-size:13px;line-height:17px;color:var(--mute)}
+.wk-low .mt-badge{position:static;flex:none;box-shadow:none}
+
+/* «Подробно по дням»: карточка в общем стиле, таблица листается внутри, страница не расползается */
+.weekscr{min-width:0;max-width:100%;overflow-x:clip}
+.weekscr details.grp.more{display:block;width:100%;min-width:0;max-width:100%;margin-top:16px;overflow:hidden;border-radius:20px;background:var(--card)}
+.weekscr details.grp.more > summary{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;color:var(--ink);font-size:16px;font-weight:500;border:0}
+.weekscr details.grp.more > summary span{display:flex;align-items:center;gap:10px}
+.weekscr details.grp.more > summary svg{color:var(--mute)}
+.weekscr details.grp.more > summary svg:last-child{transition:transform .25s var(--ease)}
+.weekscr details.grp.more[open] > summary svg:last-child{transform:rotate(90deg)}
+.weekscr details.grp.more[open] > summary{border-bottom:.5px solid var(--sep)}
+.weekscr details .bars{margin:0;padding:14px 16px 4px;background:none;border-radius:0;box-shadow:none}
+.weekscr details .tbl{width:auto;max-width:none;margin:12px 12px 0;overflow-x:auto;border-radius:14px;background:var(--fill)}
+.weekscr details .tbl th:first-child,.weekscr details .tbl td:first-child{background:var(--fill)}
+.weekscr details .tbl tfoot td{background:color-mix(in srgb,var(--fill) 70%,#fff 4%)}
+.weekscr details .help{margin:10px 16px 0}
+.weekscr details .review{margin:12px 16px 16px}
+.weekscr details .tbl th:first-child,.weekscr details .tbl td:first-child{white-space:normal;min-width:112px;max-width:128px;line-height:1.2}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -3653,14 +3679,13 @@ function WeekScreen({date,toast}){
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
         <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
-        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>`}
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:html`<small>из ${fmt(x.target)}</small>`}</span>${x.gap?html`<i class="mt-badge" aria-hidden="true">${fmt(x.gap)}</i>`:null}</div>`)}</div>`}
     <section class="wkstats" aria-label="Итог недели">
       <div><b>${w.dSets}<em>/${w.pSets}</em></b><span>подходов</span></div>
       <div><b>${nOk}<em>/${tiles.length}</em></b><span>в норме</span></div>
       ${mode==="now"?html`<div><b>${Math.max(0,left)}</b><span>осталось</span></div>`:html`<div><b class=${nLow?"warn":""}>${nLow}</b><span>с недобором</span></div>`}
     </section>
-    ${mode==="now"&&nLow?html`<p class="wk-low">У ${ru(nLow,"мышцы","мышц","мышц")} недобор</p>`:null}
-    ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}
+    ${mode==="now"&&nLow?html`<p class="wk-low"><i class="mt-badge">N</i>недобор: в прошедших тренировках у ${ru(nLow,"мышцы","мышц","мышц")} сделано меньше, чем по плану</p>`:null}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
       <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>
