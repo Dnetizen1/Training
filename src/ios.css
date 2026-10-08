@@ -1726,3 +1726,30 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .thero .th-day{white-space:nowrap}
 .thero.tr .th-cnt small{display:none}
 .sheet-foot textarea{resize:none}
+
+/* карточка дня: фон снова обычный, цвет дня только в надписях (включая «подходов») */
+.thero,.thero.tr{background:var(--card)}
+.thero .th-cnt small{color:color-mix(in srgb,var(--c) 75%,var(--mute))}
+
+/* шторки смахиваются вниз за шапку */
+.sheet-head{touch-action:none;cursor:grab}
+.sheet-head .ibtn{touch-action:manipulation}
+
+/* быстрое добавление — плавающая стеклянная панель (Liquid Glass), по ширине как нижняя полоска */
+.sheet-wrap.over-tabs{background:rgba(0,0,0,.28);bottom:calc(64px + 26px + 12px + env(safe-area-inset-bottom,0px));align-items:flex-end}
+.sheet-wrap.over-tabs .sheet{width:min(calc(100% - 72px),320px);max-width:none;padding:14px 14px 14px;border-radius:32px;position:relative;isolation:isolate;touch-action:none;cursor:grab;
+  background:var(--lg-tint);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
+  box-shadow:0 10px 30px var(--lg-shadow),0 1px 2px var(--lg-shadow)}
+.sheet-wrap.over-tabs .sheet::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+  box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge),inset 0 0 12px rgba(255,255,255,.12)}
+.sheet-wrap.over-tabs .sheet-head{display:none}
+.sheet-wrap.over-tabs .sheet-body{padding:0;gap:0}
+.sheet-wrap.over-tabs .sheet::before{content:"";position:absolute;top:6px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:rgba(255,255,255,.35);z-index:3}
+.sheet-wrap.over-tabs .sheet-body{padding-top:10px}
+.over-tabs .qa-main{min-height:60px;padding:0 18px}
+.over-tabs .qa-other{margin-top:12px}
+.over-tabs .qa-other button,.over-tabs .qa-rest button{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.14)}
+.over-tabs .qa-rest{gap:6px}
+.over-tabs .qa-rest button{min-height:44px;padding:0 14px;font-size:17px;border-radius:22px}
+.over-tabs .qa-rows button{border-top-color:rgba(255,255,255,.14)}
+.over-tabs .qa-rows small{white-space:nowrap}

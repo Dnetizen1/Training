@@ -59,11 +59,19 @@ function SessionMuscles({s,onClose}){
 const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
 
 function Sheet({title,onClose,children,foot,cls}){
-  const ref=useRef(null);
+  const ref=useRef(null), drag=useRef(null), float=!!cls&&cls.includes("over-tabs");
   useEffect(()=>{ anim(ref.current,{transform:["translateY(-40px)","translateY(0)"],opacity:[.4,1]},{bounce:.12,duration:.45});
     const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
+  // смахнуть шторку вниз: за шапку (у плавающей панели — за любое место)
+  const down=ev=>{ if(ev.button>0||!(float||ev.target.closest(".sheet-head"))) return; if(!float&&ev.target.closest("button")) return; drag.current={y:ev.clientY,t:Date.now(),dy:0,cap:false,id:ev.pointerId}; };
+  const move=ev=>{ const d=drag.current; if(!d) return; d.dy=Math.max(0,ev.clientY-d.y);
+    if(d.dy>6&&!d.cap){ d.cap=true; try{ ev.currentTarget.setPointerCapture(d.id); }catch(e){} }
+    if(d.cap){ ref.current.style.transition="none"; ref.current.style.transform="translateY("+d.dy+"px)"; } };
+  const up=()=>{ const d=drag.current; drag.current=null; if(!d||!d.cap) return; const v=d.dy/Math.max(1,Date.now()-d.t), el=ref.current;
+    if(d.dy>80||(v>.5&&d.dy>30)){ el.style.transition="transform .22s var(--ease),opacity .22s"; el.style.transform="translateY(120%)"; el.style.opacity="0"; setTimeout(onClose,160); }
+    else { el.style.transition="transform .35s var(--lg-spring,cubic-bezier(.3,1.4,.5,1))"; el.style.transform=""; } };
   return ReactDOM.createPortal(html`<div class=${"sheet-wrap"+(cls?" "+cls:"")} onClick=${ev=>{ if(ev.target===ev.currentTarget) onClose(); }}>
-    <div class="sheet" role="dialog" aria-label=${title} ref=${ref}>
+    <div class=${"sheet"+(float?" float":"")} role="dialog" aria-label=${title} ref=${ref} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
       <div class="sheet-head"><b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
       ${foot?html`<div class="sheet-foot">${foot}</div>`:null}
       <div class="sheet-body">${children}</div>
