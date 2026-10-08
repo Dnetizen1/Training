@@ -72,9 +72,8 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
   </div>`;
 
   return html`<div class="fx" style=${{"--c":PC[day]}}>
-    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
+    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onAsk=${()=>openAsk(null)} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       cur=${i} onPick=${goEx}/>
-    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
 

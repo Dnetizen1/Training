@@ -335,7 +335,7 @@ function SetRing({n,done,size=36,stroke=5}){
     </g></svg>`;
 }
 // Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
-function Barbell({s,day,cur,onPick}){
+function Barbell({s,day,cur,onPick,bare}){
   const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
   return html`<div class="bbwrap">
     <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
@@ -344,26 +344,31 @@ function Barbell({s,day,cur,onPick}){
           aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
           <${SetRing} n=${r} done=${d}/><small>${i+1}</small></button>`; })}
     </div>
-    <span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>
+    ${bare?null:html`<span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>`}
   </div>`;
 }
 // Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
-function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
+// Шапка тренировки: по центру день (нажатие — сменить день или дату), слева мышцы, справа тренер;
+// сразу под ней «Журнал / Фокус», ниже — кольца упражнений и счёт подходов одной строкой.
+function TrainHero({s,date,day,onDay,onMuscles,onAsk,cur,onPick,ui,setUi}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   return html`<${React.Fragment}>
-    <${AppBar} title="Тренировка" sub=${date===todayStr()?null:navDate(date)} right=${right}/>
-    <section class="thero tr" style=${{"--c":PC[day]}}>
-      <div class="th-row">
-        <button class="th-day" onClick=${onDay} aria-label=${P[day].name+". Сменить день или дату"}>${P[day].name}<${Icon} n="down" size=${18}/></button>
-        <span class="th-cnt"><b>${done}<em>/${total}</em></b><small>подходов</small></span>
-      </div>
-      ${s.ex.length?html`<${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick}/>`:null}
-      ${onMuscles?html`<button class="th-mus" onClick=${onMuscles}><${Icon} n="bars" size=${18}/><span>Мышцы за тренировку</span><${Icon} n="right" size=${16}/></button>`:null}
-    </section>
+    <${AppBar} title=${P[day].name} onTitle=${onDay} label="Сменить день или дату" sub=${date===todayStr()?null:navDate(date)}
+      left=${onMuscles?html`<${AbIcon} n="bars" label="Мышцы за тренировку" onClick=${onMuscles}/>`:null}
+      right=${onAsk?html`<${CoachBtn} onClick=${onAsk}/>`:null}/>
+    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
+    ${s.ex.length?html`<section class="trstrip" style=${{"--c":PC[day]}}>
+      <${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick} bare=${true}/>
+      <span class="tr-cnt"><b>${done}</b> из ${total} подходов</span>
+    </section>`:null}
   <//>`;
 }
+// «Журнал / Фокус»: экраны разные, переключатель монтируется заново — подсветка стартует с прошлого пункта и доезжает
+let lastUi=null;
 function ViewSwitch({ui,setUi}){
-  return html`<div class="vswitch" role="group" aria-label="Вид экрана тренировки">
+  const idx=ui==="focus"?1:0, [i,setI]=useState(lastUi===null?idx:lastUi);
+  useEffect(()=>{ lastUi=idx; const h=requestAnimationFrame(()=>requestAnimationFrame(()=>setI(idx))); return ()=>cancelAnimationFrame(h); },[idx]);
+  return html`<div class="vswitch" role="group" aria-label="Вид экрана тренировки" style=${{"--i":i}}>
     <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${18}/>Журнал</button>
     <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${18}/>Фокус</button>
   </div>`;
@@ -466,8 +471,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
     ${sheets}
   </div>`;
   return html`<div style=${{"--c":PC[day]}}>
-    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})} onPick=${reveal}/>
-    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
+    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})} onAsk=${()=>openAsk(null)} onPick=${reveal}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
     ${list}

@@ -1882,3 +1882,21 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .done-ex > summary,.done-ex > summary span{color:var(--ink);display:flex;align-items:center;gap:8px}
 .done-ex > summary svg{color:var(--mute)}
 .x-top .ibtn,.exb-head .ibtn{color:var(--mute)}
+
+/* тренировка: «Журнал / Фокус» сразу под шапкой, ниже — полоска колец без карточки */
+.pg-h + .vswitch{margin-top:6px}
+.trstrip{display:grid;gap:8px;margin-top:16px}
+.trstrip .bbwrap{margin:0}
+.tr-cnt{font-size:13px;color:var(--mute)}
+.tr-cnt b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.trstrip + .sec2,.trstrip + .applied{margin-top:22px}
+/* кнопки под списком — ровный шаг как между карточками */
+.exlist .addex,.exlist .finish-btn{margin:0}
+.exlist .addex{margin-top:16px}
+.exlist .finish-btn{margin-top:10px}
+.done-ex .exlist .finish-btn{display:none}
+/* свёрнутые упражнения — сгруппированный список со скруглёнными краями и отступом от открытой карточки */
+.exlist > .exb + .xrow{margin-top:12px}
+.exlist > .xrow + .exb{margin-top:12px}
+.exlist > .xrow:first-child,.exlist > .exb + .xrow{border-top-left-radius:16px;border-top-right-radius:16px}
+.exlist > .xrow:has(+ .exb),.exlist > .xrow:has(+ .addex),.exlist > .xrow:has(+ .empty){border-bottom-left-radius:16px;border-bottom-right-radius:16px}
