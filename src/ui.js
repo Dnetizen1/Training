@@ -702,7 +702,16 @@ function App(){
   const setUi=v=>{ setUiRaw(v); try{ localStorage.setItem("trainlog.ui",v); }catch(e){} window.scrollTo(0,0); };
   useEffect(()=>{ document.documentElement.dataset.ui=ui; },[ui]);
   const day=picked||defaultDay(date);
-  const mainRef=useRef(null);
+  const mainRef=useRef(null), navRef=useRef(null), indRef=useRef(null), indInit=useRef(false);
+  // скользящая «стеклянная» подсветка текущей вкладки (как в liquid-glass-ui): ездит по пружине к выбранной кнопке
+  useEffect(()=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
+    const place=anim=>{ const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
+      if(!anim){ ind.style.transition="none"; }
+      ind.style.opacity="1"; ind.style.width=b.offsetWidth+"px"; ind.style.transform="translateX("+b.offsetLeft+"px)";
+      if(!anim){ ind.getBoundingClientRect(); ind.style.transition=""; } };
+    place(indInit.current); indInit.current=true;
+    const ro=window.ResizeObserver?new ResizeObserver(()=>place(false)):null; if(ro) ro.observe(nav);
+    return ()=>{ if(ro) ro.disconnect(); }; },[view]);
   useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
   useEffect(()=>{ anim(mainRef.current,{opacity:[0,1]},{type:"tween",duration:.2,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
@@ -728,9 +737,10 @@ function App(){
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
         :html`<${HistoryView} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openHistory=${setHist}/>`}
     </main>
-    <nav class="tabbar" role="tablist">
+    <nav class="tabbar lg" role="tablist" ref=${navRef}>
+      <span class="lg-ind" aria-hidden="true" ref=${indRef}></span>
       ${tabs.map(([k,l,ic])=>k==="add"?html`<button key=${k} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть":l} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>`
-        :html`<button key=${k} role="tab" aria-selected=${String(view===k)} aria-label=${l} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/></button>`)}
+        :html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} aria-label=${l} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/></button>`)}
     </nav>
     ${quick?html`<${QuickAdd} onClose=${()=>setQuick(false)} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}
       startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }}/>`:null}
