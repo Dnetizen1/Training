@@ -2801,11 +2801,10 @@ function App(){
   const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["add","Быстрое добавление","plus"],["train","Тренировка","dumbbell"],["hist","История","history"]];
   const go=v=>{ setView(v); document.body.style.minHeight=""; window.scrollTo(0,0); };
   const openSession=(d,k)=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(k); go("train"); };
-  const restFull=ui==="focus"&&view==="train"&&timer&&!timer.hidden;
   useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
   return html`<${React.Fragment}>
-    ${(timer&&!restFull)||toast?html`<div class="topbar">
-      <${Timer} t=${restFull?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
+    ${timer||toast?html`<div class="topbar">
+      <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
       <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
     </div>`:null}
     ${S.bad?html`<div class="save bad" role="status">${S.status}</div>`:null}
@@ -3072,37 +3071,10 @@ function ExerciseHistory({name,onClose}){
 
 /* Вид «Фокус» — по макету (https://claude.ai/artifact/E7r61u6nLNSxHS8iDcLWBq, экраны «Тренировка», «Отдых»).
    Одно упражнение и один текущий подход; плитки «Вес» и «Повторы» с круглыми ±; сегменты «Сколько ещё мог»;
-   капсула «Подход сделан»; после неё — экран отдыха с большим кольцом. */
+   капсула «Подход сделан»; после неё сверху появляется полоска таймера отдыха, упражнение остаётся на экране. */
 
 const W_STEP=2.5;
 const nfmt=v=>{ const x=num(v); return x===null?"":String(Math.round(x*100)/100).replace(".",","); };
-const mmss=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
-
-function RestScreen({t,onShift,onStop,onBack,back,done}){
-  const [,tick]=useState(0);
-  useEffect(()=>{ const h=setInterval(()=>tick(x=>x+1),250); return ()=>clearInterval(h); },[t]);
-  const total=Math.max(1,t.total||60), left=Math.max(0,Math.round((t.end-Date.now())/1000)), p=left/total;
-  const R=124, C=2*Math.PI*R;
-  return html`<section class="rest2" aria-label="Отдых">
-    <section class="hero">
-      <${AppBar} left=${html`<${AbIcon} n="left" label=${"Назад: "+back} onClick=${onBack}/>`} title=${left===0?"Отдых окончен":"Отдых"} sub=${back+(done?" · "+done:"")}/>
-    </section>
-    <div class="ring2">
-      <svg viewBox="0 0 280 280" aria-hidden="true">
-        <circle cx="140" cy="140" r=${R} class="ring2-bg"/>
-        <circle cx="140" cy="140" r=${R} class=${"ring2-fg"+(left===0?" over":"")} style=${{strokeDasharray:C,strokeDashoffset:C*(1-p)}} transform="rotate(-90 140 140)"/>
-      </svg>
-      <div class="ring2-c"><b class="big">${mmss(left)}</b><span>из ${mmss(total)}</span></div>
-    </div>
-    ${t.next?html`<div class="nextcard"><span>Дальше</span><b>${t.next}</b>${t.nextSub?html`<small>${t.nextSub}</small>`:null}</div>`:null}
-    <div class="pair">
-      <button class="pill" onClick=${()=>onShift(-15)}>−15 с</button>
-      <button class="pill" onClick=${()=>onShift(15)}>+15 с</button>
-    </div>
-    <button class="capsule" onClick=${onStop}>${left===0?"Начать подход":"Пропустить отдых"}</button>
-    <span class="foot-note">В конце отдыха прозвучит сигнал</span>
-  </section>`;
-}
 
 function Tile({label,hint,unit,value,step,dec,onChange}){
   const [editing,setEditing]=useState(false);
@@ -3159,22 +3131,9 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
     setDraft(null);
     if(last) setIdx(nextIdx>=0?nextIdx:i);
   };
-  const resting=timer&&!timer.hidden&&timer.end>Date.now()-60000;
-  // после отдыха не возвращаться к верху страницы: прокрутить так, чтобы сверху был переключатель вида, а под ним — упражнение
-  const wasResting=useRef(false);
-  useEffect(()=>{
-    if(!wasResting.current&&resting){ document.body.style.minHeight=""; window.scrollTo(0,0); }     // отдых всегда открывается сверху
-    if(wasResting.current&&!resting) requestAnimationFrame(()=>{ const el=document.querySelector(".fx > .vswitch"); if(!el) return;
-      const y=Math.max(0,el.getBoundingClientRect().top+window.scrollY-12);
-      // запас высоты, чтобы короткое упражнение тоже доехало до верха; задаём body, а не сетке экрана, чтобы не растягивать её строки
-      document.body.style.minHeight=(y+window.innerHeight)+"px";
-      window.scrollTo(0,y); });
-    wasResting.current=!!resting; });
   const doneSets=s.ex.reduce((a,x)=>a+Math.min(doneOf(x),rowsOf(s,x)),0);
   const summary=showSum||(s.done&&allDone);
 
-  const shift=d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}));
-  if(!summary&&resting) return html`<div class="fx"><${RestScreen} t=${timer} back=${P[day].name} done=${timer.done||""} onBack=${()=>setTimer(t=>t&&({...t,hidden:true}))} onShift=${shift} onStop=${()=>setTimer(null)}/></div>`;
   if(summary) return html`<div class="fx">
     <section class="hero">
       <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name+" · "+navDate(date)} right=${html`<button class="ab-link" onClick=${()=>go("home")}>Готово</button>`}/>

@@ -693,11 +693,10 @@ function App(){
   const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["add","Быстрое добавление","plus"],["train","Тренировка","dumbbell"],["hist","История","history"]];
   const go=v=>{ setView(v); document.body.style.minHeight=""; window.scrollTo(0,0); };
   const openSession=(d,k)=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(k); go("train"); };
-  const restFull=ui==="focus"&&view==="train"&&timer&&!timer.hidden;
   useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
   return html`<${React.Fragment}>
-    ${(timer&&!restFull)||toast?html`<div class="topbar">
-      <${Timer} t=${restFull?null:timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
+    ${timer||toast?html`<div class="topbar">
+      <${Timer} t=${timer} onStop=${()=>setTimer(null)} onShift=${d=>setTimer(t=>t&&({...t,end:Math.max(Date.now(),t.end)+d*1000}))}/>
       <${Toast} t=${toast} onClose=${()=>setToast(null)}/>
     </div>`:null}
     ${S.bad?html`<div class="save bad" role="status">${S.status}</div>`:null}
