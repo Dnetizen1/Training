@@ -65,7 +65,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
   if(summary) return html`<div class="fx">
     <section class="hero">
-      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name} right=${html`<button class="ab-link" onClick=${()=>go("home")}>Готово</button>`}/>
+      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name} right=${html`<${AbLink} icon="check" label="Готово" onClick=${()=>go("home")}/>`}/>
     </section>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)}}/>
@@ -74,7 +74,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
   return html`<div class="fx" style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       cur=${i} onPick=${goEx}
-      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>`}/>
+      right=${html`<${AbLink} icon="flag" label="Завершить" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}/>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>

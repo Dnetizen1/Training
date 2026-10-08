@@ -53,7 +53,7 @@ function Help({children,label}){
 }
 function SessionMuscles({s,onClose}){
   const [h,setH]=useState(false);
-  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}
+  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose} cls="over-tabs with-head"
       lead=${html`<button class="help-b" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}>?</button>`}>
     ${h?html`<div class="help-t">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>`:null}
     <${MuscleBars} rows=${sessionRows(s)}/>
@@ -61,18 +61,27 @@ function SessionMuscles({s,onClose}){
 }
 const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
 
+// резинка у границы: чем дальше тянешь, тем меньше следует (apple-fluid §9)
+const rubber=(x,dim,c=.55)=>x*dim*c/(dim+c*Math.abs(x));
 function Sheet({title,onClose,children,foot,cls,lead}){
-  const ref=useRef(null), drag=useRef(null), float=!!cls&&cls.includes("over-tabs");
-  useEffect(()=>{ anim(ref.current,{transform:["translateY(-40px)","translateY(0)"],opacity:[.4,1]},{bounce:.12,duration:.45});
+  const ref=useRef(null), drag=useRef(null), panel=!!cls&&cls.includes("over-tabs"), float=panel&&!cls.includes("with-head");
+  useEffect(()=>{ const el=ref.current;
+    // панель «материализуется» от нижней полоски: масштаб и размытие вместе (apple-fluid §12); шторка выезжает снизу
+    if(panel) anim(el,{transform:["translateY(24px) scale(.94)","translateY(0) scale(1)"],opacity:[0,1],filter:["blur(6px)","blur(0px)"]},{bounce:0,duration:.4});
+    else anim(el,{transform:["translateY(60px)","translateY(0)"],opacity:[.4,1]},{bounce:0,duration:.4});
     const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
-  // смахнуть шторку вниз: за шапку (у плавающей панели — за любое место)
-  const down=ev=>{ if(ev.button>0||!(float||ev.target.closest(".sheet-head"))) return; if(!float&&ev.target.closest("button")) return; drag.current={y:ev.clientY,t:Date.now(),dy:0,cap:false,id:ev.pointerId}; };
-  const move=ev=>{ const d=drag.current; if(!d) return; d.dy=Math.max(0,ev.clientY-d.y);
-    if(d.dy>6&&!d.cap){ d.cap=true; try{ ev.currentTarget.setPointerCapture(d.id); }catch(e){} }
-    if(d.cap){ ref.current.style.transition="none"; ref.current.style.transform="translateY("+d.dy+"px)"; } };
-  const up=()=>{ const d=drag.current; drag.current=null; if(!d||!d.cap) return; const v=d.dy/Math.max(1,Date.now()-d.t), el=ref.current;
-    if(d.dy>80||(v>.5&&d.dy>30)){ el.style.transition="transform .22s var(--ease),opacity .22s"; el.style.transform="translateY(120%)"; el.style.opacity="0"; setTimeout(onClose,160); }
-    else { el.style.transition="transform .35s var(--lg-spring,cubic-bezier(.3,1.4,.5,1))"; el.style.transform=""; } };
+  // смахнуть вниз: за шапку (у плавающей панели — за любое место); вверх — резинка; решает скорость, а не только расстояние
+  const down=ev=>{ if(ev.button>0||!(float||ev.target.closest(".sheet-head"))) return; if(!float&&ev.target.closest("button")) return;
+    drag.current={y:ev.clientY,dy:0,cap:false,id:ev.pointerId,hist:[[ev.clientY,performance.now()]]}; };
+  const move=ev=>{ const d=drag.current; if(!d) return; const raw=ev.clientY-d.y;
+    d.hist.push([ev.clientY,performance.now()]); if(d.hist.length>5) d.hist.shift();
+    if(Math.abs(raw)>8&&!d.cap){ d.cap=true; try{ ev.currentTarget.setPointerCapture(d.id); }catch(e){} }
+    if(!d.cap) return; d.dy=raw>0?raw:rubber(raw,ref.current.offsetHeight);
+    ref.current.style.transition="none"; ref.current.style.transform="translateY("+d.dy+"px)"; };
+  const up=()=>{ const d=drag.current; drag.current=null; if(!d||!d.cap) return; const el=ref.current, h=d.hist, a=h[0], z=h[h.length-1];
+    const v=(z[0]-a[0])/Math.max(1,z[1]-a[1]); // px/мс, плюс — вниз
+    if(v>.45||(d.dy>el.offsetHeight*.3&&v>-.1)){ el.style.transition="transform .22s cubic-bezier(.2,.8,.2,1),opacity .22s"; el.style.transform="translateY("+(el.offsetHeight+60)+"px)"; el.style.opacity="0"; setTimeout(onClose,180); }
+    else { el.style.transform=""; anim(el,{transform:["translateY("+d.dy+"px)","translateY(0px)"]},{bounce:.15,duration:.35}); } };
   return ReactDOM.createPortal(html`<div class=${"sheet-wrap"+(cls?" "+cls:"")} onClick=${ev=>{ if(ev.target===ev.currentTarget) onClose(); }}>
     <div class=${"sheet"+(float?" float":"")} role="dialog" aria-label=${title} ref=${ref} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
       <div class="sheet-head">${lead?html`<span class="sh-lead">${lead}</span>`:null}<b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
@@ -431,7 +440,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   return html`<div style=${{"--c":PC[day]}}>
     <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
       onPick=${reveal}
-      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
+      right=${html`<${AbLink} icon="flag" label=${s.done?"Итог":"Завершить"} onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}/>`}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
@@ -533,7 +542,7 @@ function HistoryView({openSession,openAsk,openHistory}){
     return {nm,last,tail:tail.map(x=>x.best),g,dir:tail.length<2||Math.abs(g)<0.5?"fl":g>0?"up":"dn"}; }).filter(Boolean).sort((a,b)=>b.last.date.localeCompare(a.last.date));
   return html`<div class="histv">
     <section class="hero">
-      <${AppBar} left=${html`<${CoachBtn} onClick=${openAsk}/>`} title="История"/>
+      <${AppBar} right=${html`<${CoachBtn} onClick=${openAsk}/>`} title="История"/>
       <div class="hseg" role="group" aria-label="Вид истории">
         <button aria-pressed=${String(mode==="cal")} onClick=${()=>setMode("cal")}>Календарь</button>
         <button aria-pressed=${String(mode==="ex")} onClick=${()=>setMode("ex")}>Упражнения</button>

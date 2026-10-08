@@ -1821,3 +1821,40 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .sheet-head .ibtn{margin:0}
 .sh-lead{left:10px;top:16px;bottom:0;width:44px;height:auto}
 .sheet-body{padding:8px 20px 24px}
+
+/* ===== шапка: слоты слева/по центру/справа; вариант A (по умолчанию) — заголовок слева, кнопки справа ===== */
+.pg-h{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"c l r";align-items:center;gap:8px;min-height:62px;padding-top:18px}
+.pg-l{grid-area:l;display:flex;gap:8px}.pg-c{grid-area:c;min-width:0}.pg-act{grid-area:r;display:flex;gap:8px}
+.pg-l:empty,.pg-act:empty{display:none}
+.ab-link{display:inline-flex;align-items:center;gap:6px}
+.ab-link svg{display:none}
+/* варианты B и C: заголовок по центру, кнопки без подписей — иконкой слева и справа */
+:root:is([data-hdr="b"],[data-hdr="c"]) .pg-h{grid-template-columns:minmax(44px,1fr) auto minmax(44px,1fr);grid-template-areas:"l c r"}
+:root:is([data-hdr="b"],[data-hdr="c"]) .pg-l:empty,:root:is([data-hdr="b"],[data-hdr="c"]) .pg-act:empty{display:block}
+:root:is([data-hdr="b"],[data-hdr="c"]) .pg-l{justify-self:start}
+:root:is([data-hdr="b"],[data-hdr="c"]) .pg-act{justify-self:end}
+:root:is([data-hdr="b"],[data-hdr="c"]) .pg-c{text-align:center}
+:root:is([data-hdr="b"],[data-hdr="c"]) .ab-link{width:44px;padding:0;justify-content:center;color:var(--acc)}
+:root:is([data-hdr="b"],[data-hdr="c"]) .ab-link svg{display:block}
+:root:is([data-hdr="b"],[data-hdr="c"]) .ab-link span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:root:is([data-hdr="b"],[data-hdr="c"]) .pillsel{width:44px;padding:0;justify-content:center}
+:root:is([data-hdr="b"],[data-hdr="c"]) .pillsel > span,:root:is([data-hdr="b"],[data-hdr="c"]) .pillsel > svg:not(:first-child){display:none}
+:root[data-hdr="b"] .pg-h h1{font-size:24px;line-height:30px}
+:root[data-hdr="c"] .pg-h h1{font:600 17px/22px var(--font);letter-spacing:-.01em}
+:root[data-hdr="c"] .pg-h small{font-size:12px}
+
+/* «Мышцы за тренировку» — такая же плавающая стеклянная панель, как быстрое добавление, но с шапкой и прокруткой */
+.sheet-wrap.over-tabs.with-head .sheet{width:min(calc(100% - 40px),350px);max-height:calc(100% - 70px);padding:0;touch-action:auto;cursor:auto}
+.sheet-wrap.over-tabs.with-head .sheet::before{content:none}
+.sheet-wrap.over-tabs.with-head .sheet-head{display:flex;min-height:58px;padding:10px 8px 0}
+.sheet-wrap.over-tabs.with-head .sheet-head::before{display:block;top:6px;background:rgba(255,255,255,.35)}
+.sheet-wrap.over-tabs.with-head .sheet-head .ibtn{visibility:visible}
+.sheet-wrap.over-tabs.with-head .sh-lead{left:8px;top:10px}
+.sheet-wrap.over-tabs.with-head .sheet-body{padding:4px 16px 16px;overflow-y:auto}
+.over-tabs.with-head .bars{padding:0;background:none;box-shadow:none}
+.sheet-wrap.over-tabs .sheet{transform-origin:50% 100%}
+
+/* край прокрутки у плавающей полоски: контент уходит под неё в затемнение, а не обрезается (apple-fluid §12) */
+body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px + env(safe-area-inset-bottom,0px));z-index:11;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.85) 70%)}
+@media (prefers-reduced-transparency:reduce){:is(.tabbar,.sheet,.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a,.vswitch,.hseg,.seg,.days,.seg5){-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background-color:#2C2C2E!important}}

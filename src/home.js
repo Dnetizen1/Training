@@ -45,11 +45,13 @@ function weekData(date){
 function AppBar({left,title,sub,onTitle,right,label}){
   const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
   return html`<header class="pg-h">
-    <div>${sub?html`<small>${sub}</small>`:null}<h1>${t}</h1></div>
-    <span class="pg-act">${left}${right}</span>
+    <span class="pg-l">${left}</span>
+    <div class="pg-c">${sub?html`<small>${sub}</small>`:null}<h1>${t}</h1></div>
+    <span class="pg-act">${right}</span>
   </header>`;
 }
 // Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
+const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
@@ -116,10 +118,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
   const cur=ts.ex.findIndex(e=>doneOf(e)<rowsOf(ts,e));
   const goToday=()=>{ if(!onToday) setDate(today); go("train"); };
   return html`<div class="home">
-    <header class="pg-h">
-      <div><h1>Прогресс</h1></div>
-      <span class="pg-act"><${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/><${CoachBtn} onClick=${openAsk}/></span>
-    </header>
+    <${AppBar} title="Прогресс" left=${html`<${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/>`} right=${html`<${CoachBtn} onClick=${openAsk}/>`}/>
     <section class="thero" style=${{"--c":PC[tday]}}>
       <div class="th-row">
         <button class="th-day" onClick=${goToday} aria-label=${"Сегодня: "+P[tday].name}>${P[tday].name}</button>
@@ -204,7 +203,7 @@ function WeekScreen({date,toast}){
   const [hideTip,setHideTip]=useState(false);
   const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
   return html`<div class="weekscr">
-    <${AppBar} title="Неделя" right=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
+    <${AppBar} title="Неделя" left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
           <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}/>
     <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
         ${[nOk?ru(nOk,"мышца","мышцы","мышц")+" в норме":"",nLow?"у "+ru(nLow,"мышцы","мышц","мышц")+" недобор":""].filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())}${nOk||nLow?". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
