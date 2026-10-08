@@ -927,9 +927,6 @@ tfoot td{background:var(--fill2)}
 .th-h span{font-size:16px;color:var(--mute)}
 .sumcard > .meter{height:10px;border-radius:5px;margin:16px 0 16px}
 .sumcard > .meter i{border-radius:5px}
-.sc-grid{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px}
-.sc-note{display:grid;place-items:center;border:1.5px dashed #5C5870;border-radius:16px;background:var(--inner);color:var(--acc);font-size:16px;font-weight:500;line-height:1.2;text-align:center;padding:10px;min-height:150px}
-.sc-note.has{color:var(--ink);font-weight:400;font-size:14px;text-align:left;place-items:start;overflow:hidden;white-space:pre-wrap}
 .sc-cells{display:grid;gap:8px;align-content:start}
 .sc-cell{display:flex;align-items:center;justify-content:space-between;gap:8px;height:41px;padding:0 12px;border-radius:12px;background:var(--fill)}
 .sc-cell span{font-size:14px;font-weight:500}
@@ -938,7 +935,6 @@ tfoot td{background:var(--fill2)}
 .c1{color:var(--c-pink)}.c2{color:var(--c-yellow)}.c3{color:var(--c-green)}
 .sc-cells small{font-size:14px;color:var(--mute);margin-top:6px}
 .th-mus{display:inline-flex;align-items:center;gap:6px;justify-self:start;margin-top:20px;font-size:14px;font-weight:500}
-.notesheet{min-height:140px;font-size:16px;background:var(--card)!important}
 .vswitch,.ttl + .vswitch,.navrow + .vswitch{display:flex;gap:10px;margin:20px 0 0;padding:0;background:none;border-radius:0}
 .vswitch button{flex:none;min-height:42px;padding:0 18px;border-radius:21px;background:var(--fill);color:var(--mute);font-size:16px;font-weight:500}
 .vswitch button[aria-pressed="true"]{background:var(--accf);color:#fff;box-shadow:none}
