@@ -1,9 +1,7 @@
 <title>Дневник тренировок</title>
-<meta name="theme-color" content="#18181A">
+<meta name="theme-color" content="#000000">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Тренировки">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
 /* Дизайн «Блины» (см. DESIGN.md) — последний раздел файла, v9. Он лежит поверх прежних слоёв:
    v2–v7 — дизайн в духе Apple Health, v8 «violet» — по референсу дневника питания. */
@@ -1423,6 +1421,226 @@ em.mt-up{color:var(--ok)}em.mt-dn{color:var(--warn)}em.mt-fl{color:var(--mute)}
 .sttype small{flex-basis:100%;font-size:12px;color:var(--mute)}
 .qpick .sttype{margin-top:4px;padding-top:10px;border-top:1px solid var(--sep)}
 .xcard .sttype{margin-top:-4px}
+
+/* ===== v10 «Фитнес» (см. DESIGN.md): язык Apple Fitness — чистый чёрный, кольца вместо грифа, SF, лаймовый акцент ===== */
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,sans-serif;
+  --disp:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+  --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif; --round:var(--num);
+  --bg:#000; --panel:#000; --card:#1C1C1E; --fill:#2C2C2E; --fill2:#2C2C2E; --inner:#2C2C2E; --track:#3A3A3C; --pillbg:#1C1C1E;
+  --chip:#2C2C2E; --chip-ink:#F5F5F7; --chip2:#2C2C2E; --sep:#2C2C2E; --tab:rgba(0,0,0,.72);
+  --ink:#F5F5F7; --ink2:#D1D1D6; --mute:#98989F; --mute2:#98989F; --lbl:#98989F; --arrow:#636366; --grid:#2C2C2E;
+  /* дни программы: у каждого свой цвет кольца на всех экранах (различаются и по светлоте) */
+  --d-ua:#FA114F; --d-la:#FF9F0A; --d-ub:#00F0FF; --d-lb:#BF8CFF;
+  /* единственный цвет действия: кнопки, «+», текущая вкладка, кольца объёма мышц; текст на нём чёрный */
+  --acc:#A6FF00; --accf:#A6FF00; --acc-ink:#000; --fab:#A6FF00; --acc-soft:#26330A; --acc-track:rgba(166,255,0,.24);
+  --sel:#3A3A3C; --sel-ink:#F5F5F7;
+  --ok:#A6FF00; --ok-soft:#26330A; --warn:#FFD60A; --warn-soft:#3A3205; --red:#FF453A; --pink:#FA114F; --blue:#64D2FF; --teal:#00F0FF;
+  --p-red:#FA114F; --p-blue:#64D2FF; --p-yellow:#FFD60A; --p-green:#A6FF00; --p-white:#F5F5F7;
+  --lv-hi:#3A0F1A; --lv-mid:#0F2F33; --lv-lo:#2C2C2E;
+  --grn:var(--acc); --grn-track:var(--acc-track); --tile:var(--fill); --roundb:var(--track); --sheet:#1C1C1E;
+  --c-pink:#FA114F; --c-yellow:#FFD60A; --c-green:#A6FF00;
+}
+html,body{background:#000}
+body{font-family:var(--font);-webkit-font-smoothing:antialiased;letter-spacing:0}
+h1,h2,.appbar h1,.ab-t b,.sumhead h2,.sec2,.sheet-head b,.splash,.cal-h h2,.hd-h b,.qa-main b{font-family:var(--disp);letter-spacing:-.02em}
+.big,.gc-v,.kring b,.kcol b,.tiles4 b,.durtile b,.th-h b,.th-cnt b,.mtile b,.tile-v,.tile input,.timer-mini,.timer .t{font-family:var(--num);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+:focus-visible{outline-color:var(--acc)}
+
+/* заголовки экранов: крупный слева, как в приложениях Apple */
+.appbar.left h1{font-size:34px;line-height:40px;font-weight:700}
+.appbar .ab-t h1{font-size:22px;font-weight:700}
+.hero-nav .ab-t b{font-size:17px;font-weight:600}
+.ab-t small{font-size:13px;color:var(--mute)}
+.ab-coach,.ab-i{background:var(--card);color:var(--ink)}
+.ab-link{height:44px;padding:0 16px;border-radius:22px;background:var(--card);color:var(--acc);font:600 15px var(--font)}
+
+/* Прогресс: заголовок, карточка «Сегодня» */
+.pg-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:6px}
+.pg-h small{font-size:13px;color:var(--mute)}
+.pg-h h1{margin:0;font:700 34px/40px var(--disp);letter-spacing:-.02em}
+.pg-act{display:flex;gap:8px}
+html:has(.thero){background:#000}
+.thero{display:grid;gap:12px;margin:14px 0 0;padding:18px;border-radius:22px;background:var(--card)}
+.th-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.th-cap{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
+.th-cap i{width:8px;height:8px;border-radius:4px;background:var(--c)}
+.th-day{display:block;margin-top:2px;padding:0;border:0;background:none;color:var(--ink);font:700 24px/28px var(--disp);letter-spacing:-.02em;text-align:left}
+.th-cnt{display:grid;justify-items:end;padding:0}
+.th-cnt b{font-size:48px;line-height:44px;font-weight:700}
+.th-cnt b em{font-style:normal;font-size:24px;color:var(--mute)}
+.th-cnt small{font-size:13px;color:var(--mute)}
+.th-go{min-height:50px;border:0;border-radius:25px;background:var(--acc);color:var(--acc-ink);font:600 17px var(--font)}
+
+/* упражнения кольцами (вместо грифа): одно кольцо — упражнение, сегмент — подход */
+.bbwrap{display:grid;gap:10px;margin-top:4px}
+.xrings{display:flex;justify-content:space-between;gap:2px;overflow-x:auto;scrollbar-width:none}
+.xrings::-webkit-scrollbar{display:none}
+.xr{flex:none;display:grid;justify-items:center;gap:4px;min-width:40px;padding:0;border:0;background:none;color:var(--mute);font:500 12px/16px var(--font);font-variant-numeric:tabular-nums}
+.xr.cur{color:var(--ink);font-weight:700}
+.xr.cur .setring{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 45%,transparent))}
+.xr:active .setring{transform:scale(.92)}
+.setring{display:block;transition:transform .15s var(--ease)}
+.bb-now{font-size:15px;line-height:20px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bb-now span{color:var(--mute)}
+
+/* шапка тренировки: счёт крупно, кольца упражнений */
+.sumcard{margin:0;padding:6px 0 0;background:none;gap:4px}
+.th-h{gap:8px;align-items:baseline}
+.th-h b{font-size:48px;line-height:48px;font-weight:700}
+.th-h b em{font-size:22px;color:var(--mute);font-weight:700}
+.th-h span,.th-sub{font-size:13px;color:var(--mute)}
+.sumcard .bbwrap{margin-top:12px}
+.linkbtn.th-mus{color:var(--acc)}
+
+/* Неделя на «Прогрессе»: концентрические кольца, по одному на день, и легенда */
+.wkcard{display:flex;gap:18px;align-items:flex-start;margin-top:12px;padding:18px;border-radius:22px;background:var(--card)}
+.wkcard > .rings{flex:none}
+.wk-b{flex:1;min-width:0;display:grid;gap:2px}
+.wkcard .wk-h{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin:0 0 6px}
+.wk-t{display:grid;gap:2px;padding:0;border:0;background:none;color:var(--ink);text-align:left}
+.wk-t b{font:600 17px/22px var(--disp)}
+.wk-t small{font-size:13px;color:var(--mute)}
+.wkcard .dn-a{width:32px;height:32px;margin:-4px -6px 0 0;color:var(--mute)}
+.wl{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:30px;padding:0;border:0;background:none;color:var(--ink);font:400 15px var(--font);text-align:left}
+.wl i{width:10px;height:10px;border-radius:5px}
+.wl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wl b{font:700 17px var(--num);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.wl b.z{color:var(--mute)}
+.home .today-back{margin-top:8px}
+.tr-h{margin-top:28px}
+.tr-l{stroke:var(--d-ua);stroke-width:3}.tr-d{fill:var(--d-ua)}
+.tr-up{color:var(--acc)}
+.plist3,.gcard{border-radius:22px;background:var(--card)}
+
+/* карточки: #1C1C1E, r22, без рамок и теней */
+.exb,.xcard,.ccard,.gcard,.banner,.dtile,.rowc,.mitem,.setlist,.nextcard,.tiles4 div,.durtile,.notetile,.bodytiles button,.bars,.tbl,.sum,.card,.grp,.lv,.form,.hist-chart,.hday,.hxlist,.plist3{border-radius:22px;background:var(--card);box-shadow:none;border:0}
+.exb-title,.x-top h2{font-family:var(--disp);font-size:20px;line-height:24px;font-weight:700;letter-spacing:-.01em}
+.sec2{font-size:22px;font-weight:700}
+.sec2 .tbadge,.sec2 .elapsed{font-family:var(--num);background:var(--card);color:var(--ink)}
+
+/* переключатели: тёмная дорожка, бегунок #3A3A3C */
+.vswitch{padding:3px;border-radius:22px;background:var(--card);gap:0}
+.vswitch button{height:38px;border-radius:19px;background:none;color:var(--mute);font:600 15px var(--font)}
+.vswitch button[aria-pressed="true"],.days button[aria-pressed="true"],.seg button[aria-pressed="true"],.viewseg button[aria-pressed="true"],.seg3 button[aria-pressed="true"],.seg5 button[aria-pressed="true"],.qpick-b button.on,.hseg button[aria-pressed="true"],.sttype button[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink)}
+.seg5 button.q0[aria-pressed="true"],.qpick-b button.q0.on{background:var(--sel);color:var(--sel-ink)}
+.days,.seg,.viewseg,.seg3,.seg5{background:var(--card);border-radius:22px}
+.hseg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;padding:3px;border-radius:22px;background:var(--card)}
+.hseg button{min-height:38px;border-radius:19px;background:none}
+
+/* кнопки: главное действие — лайм с чёрным текстом */
+.capsule,.btn.primary,.cta,.finish .review .row-actions .btn,.corr-foot .btn.primary{background:var(--acc);color:var(--acc-ink);font-weight:600}
+.capsule{min-height:50px;border-radius:25px;font-size:17px}
+.btn{border-radius:22px}
+.linkbtn,.toast button,.sl-act button,.xacts button,.help-b{color:var(--acc)}
+
+/* нагрузка на мышцы: точка — 7–10 розовая, 4–6 голубая, 1–3 серая */
+.lvline span,.tags span{background:var(--fill);color:var(--ink2)}
+.lvline span::before,.tags span::before{background:#8E8E93}
+.lvline span.hi::before,.tags span.hi::before{background:var(--d-ua)}
+.lvline span.mid::before,.tags span.mid::before{background:var(--d-ub)}
+
+/* подходы в журнале: ячейки #2C2C2E, цифры округлым SF */
+.row input[type=text],.q{border-radius:12px;background:var(--fill);font-family:var(--num);font-weight:700}
+.row.done input[type=text]{background:var(--fill)}
+.row.done .n{color:var(--c,var(--acc))}
+.row input[type=text]:focus{border-color:var(--acc);background:var(--fill)}
+.q.q0{background:var(--fill);color:var(--ink)}.q.q1,.q.q2{background:var(--fill)}
+.st-t{background:var(--warn);color:#000}
+
+/* Журнал: сделанные — строкой с кружком-галочкой, следующие — номером */
+.xrow{border-radius:0;background:var(--card);min-height:48px}
+.xrow.done i{background:var(--c,var(--acc));color:#000}
+.xrow.next{background:var(--card);box-shadow:none;color:var(--ink)}
+.xrow.next i{box-shadow:none;color:var(--mute);font-family:var(--num)}
+.xrow small{font-family:var(--num);font-weight:600;color:var(--mute)}
+.exlist{gap:0;border-radius:22px;overflow:hidden}
+.exlist > .xrow + .xrow{box-shadow:inset 0 1px 0 var(--sep)}
+.exlist > .exb{margin:8px 0}
+.exlist > .exb:first-child{margin-top:0}
+
+/* Фокус: огромные цифры, круглые −/+ */
+.tile{background:var(--card)}
+.tile-v{background:none;border-radius:12px}
+.tile-v .big,.tile-in{font-size:64px;line-height:64px;font-weight:700}
+.tile .round{border-radius:50%;background:var(--fill);color:var(--ink)}
+
+/* Итог и плитки */
+.tiles4 b,.durtile b{font-weight:700}
+.kr-fg,.ring2-fg{stroke:var(--acc)}
+.db-t i,.track .factb,.segs button i{background:var(--acc)}
+.gc-cells small{color:var(--mute)}
+.badge{background:var(--acc-soft);color:var(--acc)}
+.tile-in{border-color:var(--acc)}
+.hint.up{background:var(--ok-soft)}
+
+/* Неделя: плитка мышцы — кольцо объёма с числом внутри */
+.mtiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mtile{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;min-height:76px;padding:14px;border-radius:20px;background:var(--card);font-size:15px}
+.mt-r{position:relative;flex:none;display:grid;place-items:center;width:48px;height:48px}
+.mt-r .rings{position:absolute;inset:0}
+.mt-r b{position:relative;font-size:17px;font-weight:700}
+.mt-t{display:grid;gap:2px;min-width:0}
+.mt-t > span{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-t small{display:inline-flex;align-items:center;gap:3px;font-size:13px;color:var(--mute)}
+.mt-t small.ok{color:var(--acc)}
+.mtile em{align-self:start;margin:0;background:var(--warn-soft);color:var(--warn)}
+.mtile.ok b::after{content:none}
+.weekscr .banner{background:var(--card)}
+
+/* История: календарь — дни тренировок мини-кольцами цвета дня */
+.cd{position:relative;display:grid;place-items:center;font-family:var(--num);font-weight:600}
+.cd .rings{position:absolute;left:2px;top:2px;width:40px;height:40px}
+.cd > span{position:relative}
+.cd.now{box-shadow:none;color:var(--acc);font-weight:800}
+.cd.sel{box-shadow:none;background:var(--fill)}
+.cd.sel.now{color:var(--acc)}
+.cal-h h2{font-size:28px}
+.plate{width:10px;height:10px;border-radius:5px;background:var(--c);box-shadow:none}
+.dt-img{display:none}
+
+/* «+»: лаймовая кнопка дня, дни — чипами с точкой */
+.qa-main{min-height:64px;border-radius:32px;background:var(--acc);color:#000}
+.qa-main small{opacity:1;color:#1C1C1E}
+.qa-other{display:flex;flex-wrap:wrap;gap:8px}
+.qa-other button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:22px;background:var(--fill);color:var(--ink);font:600 15px var(--font)}
+.qa-other i{width:10px;height:10px;border-radius:5px;background:var(--c)}
+.qa-rest button{min-height:52px;padding:0 18px;border-radius:16px;background:var(--fill);font:700 20px var(--num);letter-spacing:-.02em}
+
+/* нижняя панель: во всю ширину, полупрозрачная чёрная с размытием, только иконки; текущая — лайм, «+» — лаймовый круг */
+.tabbar{left:0;right:0;bottom:0;max-width:none;margin:0;padding:4px 8px max(30px,env(safe-area-inset-bottom,0px));border-radius:0;background:var(--tab);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:none}
+.tabbar button{height:48px;border-radius:24px;background:none;color:var(--mute)}
+.tabbar button[aria-selected="true"]{background:none;color:var(--acc)}
+.tb-fab > span{width:44px;height:44px;border-radius:22px;background:var(--acc);color:#000;box-shadow:none}
+.sheet-wrap.over-tabs{bottom:calc(52px + max(30px,env(safe-area-inset-bottom,0px)))}
+.sheet-wrap.over-tabs .sheet{border-radius:28px}
+body,:root[data-view="train"] body{padding-bottom:calc(100px + max(30px,env(safe-area-inset-bottom,0px)))}
+
+/* шторки, таймер, тосты */
+.sheet{background:#1C1C1E}
+.sheet-wrap{background:rgba(0,0,0,.6)}
+.sheet .grp,.sheet .card,.sheet .form,.sheet .rowc{background:var(--fill)}
+.msg.user{background:var(--acc);color:#000}
+.timer{background:var(--card);color:var(--ink);border-radius:22px}
+.timer .t{color:var(--acc)}
+.timer button{background:var(--fill);color:var(--ink)}
+.timer.done{background:var(--acc);color:#000}
+.timer.done .t,.timer.done button{color:#000}
+.timer-mini{background:var(--card);color:var(--acc);font-size:20px}
+.timer-mini.done{background:var(--acc);color:#000}
+@keyframes restpulse{0%{box-shadow:0 0 0 0 rgba(166,255,0,.6)}70%{box-shadow:0 0 0 14px rgba(166,255,0,0)}100%{box-shadow:0 0 0 0 rgba(166,255,0,0)}}
+.toast{background:var(--fill);border-radius:22px}
+.splash{background:#000;color:var(--ink);font:700 28px var(--disp)}
+
+/* отклик на нажатие */
+:is(.wl,.wk-t,.xr,.th-day,.qa-other button):active{transform:scale(.97)}
+:is(.wl,.wk-t,.th-day,.qa-other button){transition:transform .15s var(--ease)}
+:is(.days,.seg,.seg5,.vswitch,.qpick-b,.hseg) :is(button[aria-pressed="true"],button.on):focus-visible{outline-color:var(--acc)}
+.btn.primary,.btn.wide.primary{background:var(--acc);color:var(--acc-ink)}
+.mtile{align-items:center;padding:12px}
+.mt-t > span{white-space:normal;overflow:visible;line-height:1.2;font-size:15px}
+.mt-r b{font-size:15px;letter-spacing:-.04em}
+.wk-t small{white-space:nowrap}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2115,8 +2333,8 @@ const I={
   vmore:"M12 5h.01M12 12h.01M12 19h.01", user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0", timer:"M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4.5M9.5 2.5h5",
   scale:"M5 4h14l1.5 16h-17zM9 9.5a3.5 3.5 0 0 1 6 0M12 9.5l1.5-1.5", search:"M11 4a7 7 0 1 0 .01 0M20 20l-4-4"
 };
-const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
-const PC_INK={UA:"#fff",LA:"#fff",UB:"var(--bg)",LB:"var(--bg)"};   // текст на блине: на жёлтом и зелёном — тёмный
+const PC={UA:"var(--d-ua)",LA:"var(--d-la)",UB:"var(--d-ub)",LB:"var(--d-lb)"};
+const PC_INK={UA:"#000",LA:"#000",UB:"#000",LB:"#000"};   // текст на цвете дня: все цвета яркие, текст чёрный
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
@@ -2432,20 +2650,26 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Гриф: один блин — одно упражнение, все в цвете дня, под блином его номер. Сделанная доля подходов заливает блин снизу,
-// текущее упражнение обведено и подписано под грифом. Нажатие на блин ведёт к упражнению.
+// Кольцо из сегментов: один сегмент — один подход; сделанные — цветом дня, остальные — его тенью
+function SetRing({n,done,size=36,stroke=5}){
+  const c=size/2, r=c-stroke/2-1, gap=n>1?6:0, len=(100-gap*n)/Math.max(1,n);
+  return html`<svg class="setring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
+    <g fill="none" stroke="var(--c)" stroke-width=${stroke} transform=${"rotate(-90 "+c+" "+c+")"}>
+      ${Array.from({length:Math.max(1,n)},(_,k)=>html`<circle key=${k} cx=${c} cy=${c} r=${r} pathLength="100" stroke-opacity=${k<done?1:.24}
+        stroke-dasharray=${len+" "+(100-len)} stroke-dashoffset=${-(gap/2+k*(len+gap))}/>`)}
+    </g></svg>`;
+}
+// Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
 function Barbell({s,day,cur,onPick}){
   const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
   return html`<div class="bbwrap">
-    <div class="bbell" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
-      <i class="bb-sleeve" aria-hidden="true"></i>
-      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)), p=r?d/r:0;
-        return html`<button key=${x.uid||i} class=${"bb-b"+(i===c?" cur":"")+(p>=1?" full":"")} onClick=${()=>onPick&&onPick(i)}
+    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
+      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
+        return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(r&&d>=r?" full":"")} onClick=${()=>onPick&&onPick(i)}
           aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
-          <i class="bb-p" style=${{"--p":Math.round(p*100)+"%",height:Math.max(32,76-i*(n>7?4:6))+"px"}}></i><small>${i+1}</small></button>`; })}
-      <i class="bb-collar" aria-hidden="true"></i>
+          <${SetRing} n=${r} done=${d}/><small>${i+1}</small></button>`; })}
     </div>
-    <span class="bb-now">${e?html`Сейчас: <b>${xinfo(s,e).name}</b> · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>
+    <span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>
   </div>`;
 }
 // Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
@@ -2553,7 +2777,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
         if(i===cur||open[e.uid]||(d>0&&d<r)||!r) return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`;
         const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
         const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
-        return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i>✓</i><span>${inf.name}</span><small>${sum}</small></button>`
+        return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i><${Icon} n="check" size=${15}/></i><span>${inf.name}</span><small>${sum}</small></button>`
           :html`<button key=${e.uid} id=${"ex-"+i} class="xrow next" onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${r} × ${inf.plan.lo}–${inf.plan.hi}</small></button>`; })}
       ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
       <button class="capsule addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
@@ -2656,8 +2880,9 @@ function HistoryView({openSession,openAsk,openHistory}){
         <button class="dn-a" aria-label="Следующий месяц" disabled=${month>=today.slice(0,7)} onClick=${()=>shiftMonth(1)}><${Icon} n="right" size=${18}/></button></span></div>
       <div class="cal">${["пн","вт","ср","чт","пт","сб","вс"].map(d=>html`<span key=${d}>${d}</span>`)}
         ${cells.map(d=>{ const x=byDate[d], out=d.slice(0,7)!==month;
-          return html`<button key=${d} class=${"cd"+(out?" out":"")+(d===today?" now":"")+(d===sel?" sel":"")} style=${x?{background:PC[x.day],color:PC_INK[x.day]}:null}
-            onClick=${()=>setSel(d)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")} aria-pressed=${String(d===sel)}>${+d.slice(8)}</button>`; })}</div>
+          return html`<button key=${d} class=${"cd"+(out?" out":"")+(d===today?" now":"")+(d===sel?" sel":"")} style=${x?{"--c":PC[x.day]}:null}
+            onClick=${()=>setSel(d)} aria-label=${dm(d)+(x?": "+P[x.day].name+", "+x.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(x,e)),0)+" из "+x.ex.reduce((a,e)=>a+rowsOf(x,e),0):"")} aria-pressed=${String(d===sel)}>
+            ${x?html`<${Rings} size=${40} stroke=${4} rings=${[{p:x.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(x,e)),0)/Math.max(1,x.ex.reduce((a,e)=>a+rowsOf(x,e),0)),color:PC[x.day]}]} label=""/>`:null}<span>${+d.slice(8)}</span></button>`; })}</div>
       <div class="dlegend">${ORDER.map(k=>html`<span key=${k}><${Plate} k=${k}/>${P[k].name}</span>`)}</div>
       ${ss?html`<section class="hday">
         <div class="hd-h"><b>${P[ss.day].name} · ${WDS[new Date(sel+"T00:00:00").getDay()]} ${+sel.slice(8)}</b>
@@ -2866,12 +3091,12 @@ function App(){
 
 /* Вкладка «Сводка» (как Summary в Apple Health / Fitness) и экран «История упражнения». */
 
-// Концентрические кольца: rings = [{p: 0..1, color, track}], снаружи внутрь
-function Rings({size,stroke,rings,label}){
+// Концентрические кольца: rings = [{p: 0..1, color, track}], снаружи внутрь; без track дорожка — тот же цвет, приглушённый
+function Rings({size,stroke,rings,label,gap=3}){
   const c=size/2;
   return html`<svg class="rings" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} role="img" aria-label=${label}>
-    ${rings.map((r,k)=>{ const rad=c-stroke/2-k*(stroke+3), C=2*Math.PI*rad, p=Math.max(0,Math.min(1,r.p||0));
-      return html`<g key=${k}><circle cx=${c} cy=${c} r=${rad} fill="none" stroke=${r.track} stroke-width=${stroke}/>
+    ${rings.map((r,k)=>{ const rad=c-stroke/2-k*(stroke+gap), C=2*Math.PI*rad, p=Math.max(0,Math.min(1,r.p||0));
+      return html`<g key=${k}><circle cx=${c} cy=${c} r=${rad} fill="none" stroke=${r.track||r.color} stroke-opacity=${r.track?1:.24} stroke-width=${stroke}/>
         ${p>0?html`<circle cx=${c} cy=${c} r=${rad} fill="none" stroke=${r.color} stroke-width=${stroke} stroke-linecap="round" stroke-dasharray=${C} stroke-dashoffset=${C*(1-p)} transform=${"rotate(-90 "+c+" "+c+")"}/>`:null}</g>`; })}
   </svg>`;
 }
@@ -2983,30 +3208,35 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
   const cur=ts.ex.findIndex(e=>doneOf(e)<rowsOf(ts,e));
   const goToday=()=>{ if(!onToday) setDate(today); go("train"); };
   return html`<div class="home">
+    <header class="pg-h">
+      <div><small>${RU_DAYS[new Date(today+"T00:00:00").getDay()]}, ${dayMonth(today)}</small><h1>Прогресс</h1></div>
+      <span class="pg-act"><${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/><${CoachBtn} onClick=${openAsk}/></span>
+    </header>
     <section class="thero" style=${{"--c":PC[tday]}}>
-      <div class="th-top">
-        <${CoachBtn} onClick=${openAsk}/>
-        <span>Сегодня, ${WDS[new Date(today+"T00:00:00").getDay()]} ${dayMonth(today)}</span>
-        <${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/>
+      <div class="th-row">
+        <div><small class="th-cap"><i></i>Сегодня</small><button class="th-day" onClick=${goToday}>${P[tday].name}</button></div>
+        ${ts.ex.length?html`<span class="th-cnt"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
       </div>
-      <button class="th-day" onClick=${goToday}>${P[tday].name}</button>
-      ${ts.ex.length?html`<div class="th-bar"><${Barbell} s=${ts} day=${tday} cur=${cur} onPick=${goToday}/>
-        <span class="th-cnt"><b>${doneSets}/${rows}</b><small>подходов</small></span></div>`:null}
+      ${ts.ex.length?html`<${Barbell} s=${ts} day=${tday} cur=${cur} onPick=${goToday}/>`:null}
       <button class="th-go" onClick=${goToday}>${ts.done?"Посмотреть итог":hasData(ts)?"Продолжить":"Начать тренировку"}</button>
     </section>
 
-    <div class="wk-h">
-      <button class="sec2" onClick=${()=>go("week")}><span>${thisWeek?"Неделя":dayMonth(w.ws)+" – "+dayMonth(w.we)}</span><em class="wk-n">${w.dSets} из ${w.pSets}</em></button>
-      <span class="wk-nav">
-        <button class="dn-a" aria-label="Прошлая неделя" onClick=${()=>setDate(shiftDate(date,-7))}><${Icon} n="left" size=${18}/></button>
-        <button class="dn-a" aria-label="Следующая неделя" disabled=${thisWeek} onClick=${()=>setDate(shiftDate(date,7))}><${Icon} n="right" size=${18}/></button>
-      </span>
-    </div>
+    <section class="wkcard">
+      <${Rings} size=${140} stroke=${12} gap=${3} rings=${days.map(d=>({p:d.rows?d.done/d.rows:0,color:PC[d.k]}))}
+        label=${"Неделя: "+days.map(d=>P[d.k].name+" "+d.done+" из "+d.rows).join(", ")}/>
+      <div class="wk-b">
+        <div class="wk-h">
+          <button class="wk-t" onClick=${()=>go("week")}><b>${thisWeek?"Неделя":dayMonth(w.ws)+" – "+dayMonth(w.we)}</b><small>${w.dSets} из ${w.pSets}</small></button>
+          <span class="wk-nav">
+            <button class="dn-a" aria-label="Прошлая неделя" onClick=${()=>setDate(shiftDate(date,-7))}><${Icon} n="left" size=${18}/></button>
+            <button class="dn-a" aria-label="Следующая неделя" disabled=${thisWeek} onClick=${()=>setDate(shiftDate(date,7))}><${Icon} n="right" size=${18}/></button>
+          </span>
+        </div>
+        ${days.map(d=>html`<button key=${d.k} class="wl" onClick=${()=>openSession(d.real?d.real.date:today,d.k)} aria-label=${P[d.k].name+": "+d.done+" из "+d.rows}>
+          <i style=${{background:PC[d.k]}}></i><span>${P[d.k].name}</span><b class=${d.done?"":"z"}>${d.done}/${d.rows}</b></button>`)}
+      </div>
+    </section>
     ${!thisWeek?html`<button class="linkbtn today-back" onClick=${()=>setDate(today)}>К этой неделе</button>`:null}
-    <div class="wrings">${days.map(d=>{ const lbl=d.real?(d.real.date===today?"сегодня":WDS[new Date(d.real.date+"T00:00:00").getDay()])+" · ":"";
-      return html`<button key=${d.k} class="wr" onClick=${()=>openSession(d.real?d.real.date:today,d.k)} aria-label=${P[d.k].name+": "+d.done+" из "+d.rows}>
-        <${Rings} size=${56} stroke=${7} rings=${[{p:d.rows?d.done/d.rows:0,color:PC[d.k],track:"var(--fill)"}]} label=""/>
-        <b>${P[d.k].name}</b><small>${lbl}${d.done}/${d.rows}</small></button>`; })}</div>
 
     ${main&&mh.length>1?html`<div class="tr-h"><button class="sec2" onClick=${()=>openHistory(main.name)}><span>${main.name}</span></button>
       <span class=${gain>0?"tr-up":gain<0?"tr-dn":"mute"}>${gain?(gain>0?"+":"")+fmt(gain)+" кг 1ПМ":"без изменений"}</span></div>
@@ -3075,9 +3305,9 @@ function WeekScreen({date,toast}){
     </section>
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
-        <i style=${{height:Math.min(100,x.p*100)+"%"}}></i><span>${MUS[x.m]}</span>${x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:null}
-        <b>${q4(x.v)}${x.ok?null:html`<small> / ${fmt(x.target)}</small>`}</b></div>`)}</div>
-      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Зелёная плитка — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
+        <span class="mt-r"><${Rings} size=${48} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b>${q4(x.v)}</b></span>
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?html`<small class="ok"><${Icon} n="check" size=${14}/>Цель</small>`:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
+      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
       ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>

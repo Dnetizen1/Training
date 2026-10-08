@@ -490,8 +490,8 @@ const I={
   vmore:"M12 5h.01M12 12h.01M12 19h.01", user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0", timer:"M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4.5M9.5 2.5h5",
   scale:"M5 4h14l1.5 16h-17zM9 9.5a3.5 3.5 0 0 1 6 0M12 9.5l1.5-1.5", search:"M11 4a7 7 0 1 0 .01 0M20 20l-4-4"
 };
-const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
-const PC_INK={UA:"#fff",LA:"#fff",UB:"var(--bg)",LB:"var(--bg)"};   // текст на блине: на жёлтом и зелёном — тёмный
+const PC={UA:"var(--d-ua)",LA:"var(--d-la)",UB:"var(--d-ub)",LB:"var(--d-lb)"};
+const PC_INK={UA:"#000",LA:"#000",UB:"#000",LB:"#000"};   // текст на цвете дня: все цвета яркие, текст чёрный
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };

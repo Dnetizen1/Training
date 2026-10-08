@@ -303,20 +303,26 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Гриф: один блин — одно упражнение, все в цвете дня, под блином его номер. Сделанная доля подходов заливает блин снизу,
-// текущее упражнение обведено и подписано под грифом. Нажатие на блин ведёт к упражнению.
+// Кольцо из сегментов: один сегмент — один подход; сделанные — цветом дня, остальные — его тенью
+function SetRing({n,done,size=36,stroke=5}){
+  const c=size/2, r=c-stroke/2-1, gap=n>1?6:0, len=(100-gap*n)/Math.max(1,n);
+  return html`<svg class="setring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
+    <g fill="none" stroke="var(--c)" stroke-width=${stroke} transform=${"rotate(-90 "+c+" "+c+")"}>
+      ${Array.from({length:Math.max(1,n)},(_,k)=>html`<circle key=${k} cx=${c} cy=${c} r=${r} pathLength="100" stroke-opacity=${k<done?1:.24}
+        stroke-dasharray=${len+" "+(100-len)} stroke-dashoffset=${-(gap/2+k*(len+gap))}/>`)}
+    </g></svg>`;
+}
+// Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
 function Barbell({s,day,cur,onPick}){
   const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
   return html`<div class="bbwrap">
-    <div class="bbell" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
-      <i class="bb-sleeve" aria-hidden="true"></i>
-      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)), p=r?d/r:0;
-        return html`<button key=${x.uid||i} class=${"bb-b"+(i===c?" cur":"")+(p>=1?" full":"")} onClick=${()=>onPick&&onPick(i)}
+    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
+      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
+        return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(r&&d>=r?" full":"")} onClick=${()=>onPick&&onPick(i)}
           aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
-          <i class="bb-p" style=${{"--p":Math.round(p*100)+"%",height:Math.max(32,76-i*(n>7?4:6))+"px"}}></i><small>${i+1}</small></button>`; })}
-      <i class="bb-collar" aria-hidden="true"></i>
+          <${SetRing} n=${r} done=${d}/><small>${i+1}</small></button>`; })}
     </div>
-    <span class="bb-now">${e?html`Сейчас: <b>${xinfo(s,e).name}</b> · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>
+    <span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>
   </div>`;
 }
 // Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
@@ -424,7 +430,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
         if(i===cur||open[e.uid]||(d>0&&d<r)||!r) return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`;
         const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
         const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
-        return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i>✓</i><span>${inf.name}</span><small>${sum}</small></button>`
+        return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i><${Icon} n="check" size=${15}/></i><span>${inf.name}</span><small>${sum}</small></button>`
           :html`<button key=${e.uid} id=${"ex-"+i} class="xrow next" onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${r} × ${inf.plan.lo}–${inf.plan.hi}</small></button>`; })}
       ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
       <button class="capsule addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
@@ -527,8 +533,9 @@ function HistoryView({openSession,openAsk,openHistory}){
         <button class="dn-a" aria-label="Следующий месяц" disabled=${month>=today.slice(0,7)} onClick=${()=>shiftMonth(1)}><${Icon} n="right" size=${18}/></button></span></div>
       <div class="cal">${["пн","вт","ср","чт","пт","сб","вс"].map(d=>html`<span key=${d}>${d}</span>`)}
         ${cells.map(d=>{ const x=byDate[d], out=d.slice(0,7)!==month;
-          return html`<button key=${d} class=${"cd"+(out?" out":"")+(d===today?" now":"")+(d===sel?" sel":"")} style=${x?{background:PC[x.day],color:PC_INK[x.day]}:null}
-            onClick=${()=>setSel(d)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")} aria-pressed=${String(d===sel)}>${+d.slice(8)}</button>`; })}</div>
+          return html`<button key=${d} class=${"cd"+(out?" out":"")+(d===today?" now":"")+(d===sel?" sel":"")} style=${x?{"--c":PC[x.day]}:null}
+            onClick=${()=>setSel(d)} aria-label=${dm(d)+(x?": "+P[x.day].name+", "+x.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(x,e)),0)+" из "+x.ex.reduce((a,e)=>a+rowsOf(x,e),0):"")} aria-pressed=${String(d===sel)}>
+            ${x?html`<${Rings} size=${40} stroke=${4} rings=${[{p:x.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(x,e)),0)/Math.max(1,x.ex.reduce((a,e)=>a+rowsOf(x,e),0)),color:PC[x.day]}]} label=""/>`:null}<span>${+d.slice(8)}</span></button>`; })}</div>
       <div class="dlegend">${ORDER.map(k=>html`<span key=${k}><${Plate} k=${k}/>${P[k].name}</span>`)}</div>
       ${ss?html`<section class="hday">
         <div class="hd-h"><b>${P[ss.day].name} · ${WDS[new Date(sel+"T00:00:00").getDay()]} ${+sel.slice(8)}</b>
