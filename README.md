@@ -50,7 +50,7 @@ python3 build.py        # собрать tracker.html из src/
 | `src/ios.css` | стили; тема «Блины» — раздел v9 в конце файла (прежняя фиолетовая — v8) |
 | `DESIGN.md` | почему интерфейс устроен так (Strong/Hevy, фокус-режим, анти-клише) |
 | `tools/import_exdb.py` | обновить `src/exdb.js` из свежей версии базы |
-| `.claude/skills/` | дизайн-навыки для Claude Code ([claude-design-system-prompt](https://github.com/Trystan-SA/claude-design-system-prompt), MIT): `design-system` — принципы, плюс `frontend-aesthetic-direction`, `generate-variations`, `polish-pass` и др. Подхватываются сами в любой сессии Claude Code в этом репозитории |
+| `.claude/skills/` | дизайн-навыки для Claude Code ([claude-design-system-prompt](https://github.com/Trystan-SA/claude-design-system-prompt), MIT): `design-system` — принципы, плюс `frontend-aesthetic-direction`, `generate-variations`, `polish-pass` и др. Подхватываются сами в любой сессии Claude Code в этом репозитории; `apple-design` — визуальный язык Apple ([chaos-xxl/apple-design-skill](https://github.com/chaos-xxl/apple-design-skill), MIT) |
 
 Чтобы обновить артефакт Claude после правок: собрать `tracker.html` и попросить Claude опубликовать его по той же ссылке.
 
