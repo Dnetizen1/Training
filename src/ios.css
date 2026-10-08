@@ -1328,11 +1328,6 @@ html:has(.thero){background:var(--tint,var(--bg))}
 .mtile b small{font:500 13px var(--font);color:var(--mute)}
 .mtile.ok i{background:var(--ok-soft)}
 .mtile.ok b::after{content:" ✓";font:600 15px var(--font);color:var(--ok)}
-.mtile.low{box-shadow:inset 0 0 0 2px var(--warn)}
-.mlg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:13px;color:var(--mute)}
-.mlg span{display:inline-flex;align-items:center;gap:6px}
-.mlg i{width:12px;height:12px;border-radius:4px}
-.lg-low{box-shadow:inset 0 0 0 2px var(--warn)}.lg-ok{background:var(--ok-soft)}.lg-f{background:var(--acc-soft)}
 .weekscr .banner{margin-top:16px}
 /* Тренировка: сделанное — строкой, следующие — компактно */
 .xrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-height:52px;padding:6px 14px;border:0;border-radius:16px;background:var(--card);color:var(--ink);text-align:left;font-size:15px;font-weight:500;scroll-margin-top:16px}
@@ -1398,3 +1393,18 @@ em.mt-up{color:var(--ok)}em.mt-dn{color:var(--warn)}em.mt-fl{color:var(--mute)}
 .qa-rows svg{color:var(--ink2)}
 :is(.wr,.xrow,.cd,.hx,.qa-main,.qa-other button,.qa-rest button,.qa-rows button,.th-go,.plist3 button):active{transform:scale(.97)}
 :is(.wr,.xrow,.cd,.hx,.qa-main,.qa-other button,.qa-rest button,.qa-rows button,.th-go,.plist3 button){transition:transform .15s var(--ease)}
+/* таймер: свёрнутая таблетка и пульс по окончании отдыха */
+.timer{gap:6px;padding:8px 10px;touch-action:pan-x}
+.timer .l{font-size:14px}
+.timer button{min-width:36px;height:36px;border-radius:18px}
+.timer-mini{justify-self:end;display:inline-flex;align-items:center;gap:6px;height:36px;margin:0 8px;padding:0 14px;border:0;border-radius:18px;background:var(--accf);color:#fff;font:700 16px var(--font);font-variant-numeric:tabular-nums;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.timer-mini.done{background:#1F7F49}
+@keyframes restpulse{0%{box-shadow:0 0 0 0 rgba(47,165,98,.7)}70%{box-shadow:0 0 0 14px rgba(47,165,98,0)}100%{box-shadow:0 0 0 0 rgba(47,165,98,0)}}
+.timer.done,.timer-mini.done{animation:restpulse 1.2s ease-out infinite}
+@media (prefers-reduced-motion:reduce){.timer.done,.timer-mini.done{animation:none}}
+/* шапка: тренер и настройки — белые круглые кнопки с тёмной иконкой */
+.ab-coach,.ab-i{background:var(--sel);color:var(--sel-ink)}
+/* «Неделя»: недобор — надписью в плитке вместо рамки */
+.mtile em{position:relative;align-self:flex-start;margin-top:4px;padding:1px 7px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font:600 11px/18px var(--font);font-style:normal;white-space:nowrap}
+.mtile span{line-height:1.2}
+.mnote{margin:10px 2px 0;font-size:13px;line-height:1.4;color:var(--mute)}

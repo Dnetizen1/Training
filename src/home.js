@@ -50,10 +50,8 @@ function AppBar({left,title,sub,onTitle,right,label}){
     <div class="ab-side r">${right}</div>
   </div>`;
 }
-// Тренер — круглая кнопка с облачком чата
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
-  <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" style=${{fill:"var(--ink)"}}/>
-  <circle cx="8.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="13" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="17.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/></svg></button>`;
+// Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
@@ -186,11 +184,16 @@ function WeekScreen({date,toast}){
   const [mode,setMode]=useState("now");
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
   const ref=d.toLocaleDateString("sv-SE"), w=weekData(ref), tip=mode==="now"?lagTip(date):null;
-  // плитка на мышцу: набрано / норма (10 или меньше, если программа даёт меньше); отстаёт — если идёт медленнее, чем неделя в целом
-  const pace=w.pSets?w.dSets/w.pSets:0;
-  const tiles=w.used.map(m=>{ const target=Math.min(10,w.plan[m]||10), v=w.fact[m], p=target?v/target:0;
-    return {m,v,target,p,ok:v>=target-0.01,low:v<target-0.01&&p<pace-0.25}; }).sort((a,b)=>(b.low-a.low)||(a.ok-b.ok)||a.p-b.p);
-  const nOk=tiles.filter(x=>x.ok).length, nLow=tiles.filter(x=>x.low).length, left=4-w.done;
+  // плитки — только основные мышцы (по плану недели от 4 подходов): набрано / цель (10 или сколько даёт программа).
+  // «Недобор» — в завершённых тренировках этой недели (идущая сегодня не считается) по плану было больше подходов, чем сделано.
+  const inWeek=sessions().filter(x=>x.date>=w.ws&&x.date<=w.we&&hasData(x)&&(x.done||x.date<todayStr())), doneDays=new Set(inWeek.map(x=>x.day)), planDone=MUS.map(()=>0);
+  ORDER.filter(k=>doneDays.has(k)).forEach(k=>{ const real=inWeek.filter(x=>x.day===k).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    muscleCount(real,e=>rowsOf(real,e)).forEach((c,m)=>{ planDone[m]+=c.f; }); });
+  const q4=v=>fmt(Math.round(v*4)/4);
+  const tiles=w.used.filter(m=>w.plan[m]>=4).map(m=>{ const target=Math.min(10,w.plan[m]), v=w.fact[m], gap=Math.round((planDone[m]-v)*2)/2;
+    return {m,v,target,p:v/target,ok:v>=target-0.01,gap:gap>=1?gap:0}; }).sort((a,b)=>(b.gap>0)-(a.gap>0)||(a.ok-b.ok)||a.p-b.p);
+  const minor=w.used.filter(m=>w.plan[m]<4);
+  const nOk=tiles.filter(x=>x.ok).length, nLow=tiles.filter(x=>x.gap).length, left=4-w.done;
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
   const [hideTip,setHideTip]=useState(false);
   const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
@@ -202,12 +205,14 @@ function WeekScreen({date,toast}){
           <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>
       </div>
       <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
-        ${tiles.length?ru(nOk,"мышца","мышцы","мышц")+" в норме"+(nLow?", "+nLow+(nLow===1?" отстаёт":" отстают"):"")+". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
+        ${[nOk?ru(nOk,"мышца","мышцы","мышц")+" в норме":"",nLow?"у "+ru(nLow,"мышцы","мышц","мышц")+" недобор":""].filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())}${nOk||nLow?". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
     </section>
-    ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")+(x.low?" low":"")}
-        aria-label=${MUS[x.m]+": "+fmt(Math.round(x.v*4)/4)+" из "+fmt(x.target)+(x.ok?", норма":x.low?", отстаёт":"")}>
-        <i style=${{height:Math.min(100,x.p*100)+"%"}}></i><span>${MUS[x.m]}</span><b>${fmt(Math.round(x.v*4)/4)}${x.ok?null:html`<small> / ${fmt(x.target)}</small>`}</b></div>`)}</div>
-      <div class="mlg"><span><i class="lg-low"></i>отстаёт</span><span><i class="lg-ok"></i>норма</span><span><i class="lg-f"></i>набрано</span></div>`}
+    ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
+        aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
+        <i style=${{height:Math.min(100,x.p*100)+"%"}}></i><span>${MUS[x.m]}</span>${x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:null}
+        <b>${q4(x.v)}${x.ok?null:html`<small> / ${fmt(x.target)}</small>`}</b></div>`)}</div>
+      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Зелёная плитка — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
+      ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
       <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>

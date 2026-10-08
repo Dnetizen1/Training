@@ -645,16 +645,24 @@ function QuickAdd({onClose,openSession,openAsk,openBody,startTimer}){
 }
 
 /* ---------- Таймер, всплывашка, нижние вкладки ---------- */
+// Таймер отдыха — полоска сверху. Сворачивается в маленькую таблетку (кнопка ⌃ или смахнуть вверх);
+// когда отдых закончился, пульсирует зелёным и сам закрывается через 8 секунд.
 function Timer({t,onStop,onShift}){
-  const [,tick]=useState(0);
+  const [,tick]=useState(0), [mini,setMini]=useState(false), y0=useRef(null);
   useEffect(()=>{ if(!t) return; const h=setInterval(()=>tick(x=>x+1),250); return ()=>clearInterval(h); },[t]);
+  const left=t?Math.max(0,Math.round((t.end-Date.now())/1000)):0, done=!!t&&left===0;
+  useEffect(()=>{ if(!done) return; const h=setTimeout(onStop,8000); return ()=>clearTimeout(h); },[done,t&&t.end]);
   if(!t) return null;
-  const left=Math.max(0,Math.round((t.end-Date.now())/1000));
-  return html`<div class=${"timer"+(left===0?" done":"")} role="timer">
+  const time=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");
+  if(mini) return html`<button class=${"timer-mini"+(done?" done":"")} onClick=${()=>setMini(false)} aria-label=${(done?"Отдых закончен":"Отдых, осталось "+time)+". Развернуть таймер"}>
+    <${Icon} n="timer" size=${16}/><span>${done?"Пора":time}</span></button>`;
+  return html`<div class=${"timer"+(done?" done":"")} role="timer"
+      onTouchStart=${ev=>{ y0.current=ev.touches[0].clientY; }} onTouchEnd=${ev=>{ if(y0.current!==null&&ev.changedTouches[0].clientY-y0.current<-24) setMini(true); y0.current=null; }}>
     <button onClick=${()=>onShift(-15)} aria-label="Минус 15 секунд">−15</button>
-    <div class="t">${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}</div>
-    <div class="l">${left===0?"Отдых закончен":"Отдых · "+t.label}</div>
+    <div class="t">${time}</div>
+    <div class="l">${done?"Пора!":"Отдых · "+t.label}</div>
     <button onClick=${()=>onShift(15)} aria-label="Плюс 15 секунд">+15</button>
+    <button onClick=${()=>setMini(true)} aria-label="Свернуть таймер"><${Icon} n="up" size=${16}/></button>
     <button onClick=${onStop} aria-label="Остановить таймер"><${Icon} n="close" size=${16}/></button>
   </div>`;
 }
