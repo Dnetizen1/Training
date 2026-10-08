@@ -1758,6 +1758,16 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .over-tabs .qa-rest button{min-height:44px;padding:0 14px;font-size:17px;border-radius:22px}
 .over-tabs .qa-rows button{border-top-color:rgba(255,255,255,.14)}
 .over-tabs .qa-rows small{white-space:nowrap}
+
+/* кнопки в шапках (настройки, тренер, назад, «Завершить», период, стрелки недели) — Liquid Glass */
+:is(.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a){position:relative;isolation:isolate;background:var(--lg-tint);-webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);
+  border:0;box-shadow:0 4px 14px rgba(0,0,0,.28),0 1px 2px rgba(0,0,0,.3);transition:transform .15s var(--ease),background-color .2s}
+:is(.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a)::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge),inset 0 0 8px rgba(255,255,255,.10)}
+:is(.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a):active{transform:scale(.94);background:var(--lg-tint-strong)}
+.dn-a{border-radius:50%}
+.dn-a:disabled{opacity:.4;box-shadow:none}
+.ab-link{color:var(--acc)}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
