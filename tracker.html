@@ -2,10 +2,10 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Тренировки">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-/* Тёмно-фиолетовый дизайн по референсу дневника питания (см. DESIGN.md).
-   Слои ниже (v2–v7) — прежний дизайн в духе Apple Health; поверх них в конце файла раздел v8 «violet». */
+/* Дизайн «Блины» (см. DESIGN.md) — последний раздел файла, v9. Он лежит поверх прежних слоёв:
+   v2–v7 — дизайн в духе Apple Health, v8 «violet» — по референсу дневника питания. */
 :root{
   --bg:#010101; --panel:#252137; --card:#1C1B21; --fill:#2F2C39; --fill2:#2A2833; --chip:#282837; --sep:#2C2A34;
   --ink:#F3F6F9; --ink2:#C9C7D3; --mute:#8A8793; --mute2:#757185; --inv:#010101; --grid:#484653;
@@ -1033,7 +1033,6 @@ tfoot td{background:var(--fill2)}
 .ds-day{color:var(--mute)}
 .ds-day small{font-size:12px}
 .ds-day b{font:500 16px var(--font)}
-.ds-day.today b{box-shadow:inset 0 0 0 2px var(--accf)}
 .ds-day.on.today b{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--accf)}
 .ds-day.on b{color:#111}
 .hero .dlegend{margin:8px 0 0;font-size:14px;color:var(--ink)}
@@ -1119,6 +1118,129 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 body,:root[data-view="train"] body{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 .sheet-wrap.over-tabs{bottom:max(98px,calc(64px + env(safe-area-inset-bottom,0px)))}
 .form input[type=date]{height:44px;padding:0 12px;border-radius:10px;font-size:17px}
+
+/* ===== v9 «Блины» (см. DESIGN.md): цвета соревновательных блинов IWF, тёмная «резина» зала, Unbounded + Onest ===== */
+:root{
+  --font:"Onest",-apple-system,BlinkMacSystemFont,system-ui,sans-serif; --disp:"Unbounded","Onest",system-ui,sans-serif; --round:var(--font);
+  --bg:#18181A; --panel:#18181A; --card:#222225; --fill:#2C2C30; --fill2:#29292D; --inner:#29292D; --track:#3A3A3F; --pillbg:#2C2C30;
+  --chip:#2C2C30; --chip-ink:#F4F4F2; --chip2:#2C2C30; --sep:#2E2E33; --tab:#2C2C30;
+  --ink:#F4F4F2; --ink2:#CFCFD2; --mute:#9A9A9F; --mute2:#808086; --lbl:#9A9A9F; --arrow:#6C6C72; --grid:#3A3A3F;
+  /* блины по цветам IWF: 20 синий, 15 жёлтый, 10 зелёный, 5 белый, 2,5 и 25 красный */
+  --p-red:#E03A3E; --p-blue:#2F6FDE; --p-yellow:#F2C230; --p-green:#2FA562; --p-white:#E6E6E3;
+  --acc:#8FB2F2; --accf:#2F6FDE; --fab:#E03A3E; --acc-soft:#1F2A40; --acc-track:#3A3A3F;
+  --sel:#F4F4F2; --sel-ink:#18181A;                 /* выбранное: белая таблетка, тёмный текст */
+  --pink:#E03A3E; --blue:#8FB2F2; --teal:#2FA562; --red:#F0575B;
+  --ok:#2FA562; --ok-soft:#173225; --warn:#F2C230; --warn-soft:#3A3217;
+  --lv-hi:#3A2224; --lv-mid:#1F2A40; --lv-lo:#2C2C30;
+  --c-pink:#E03A3E; --c-yellow:#F2C230; --c-green:#2FA562;
+}
+html{background:var(--bg)}
+body{font-family:var(--font)}
+h1,h2,.appbar h1,.ab-t b,.sumhead h2,.big,.gc-v,.kring b,.kcol b,.tiles4 b,.durtile b,.th-h b,.sec2,.sheet-head b,.splash{font-family:var(--disp);letter-spacing:-.01em}
+.big{font-weight:700}
+:focus-visible{outline-color:var(--acc)}
+
+/* шапка без панели: всё на фоне зала */
+.hero{border-radius:0;padding-bottom:12px}
+.appbar h1,.ab-t b{font-weight:700}
+.hero-nav .ab-t b{font-size:19px;font-weight:700}
+.ab-t small{font-size:14px;color:var(--mute)}
+.ab-coach{border:0;background:var(--fill)}
+.ab-i{background:var(--fill)}
+.ab-link{color:var(--ink);background:var(--fill);border-radius:20px;padding:0 16px;height:40px;font-weight:600;font-size:14px}
+.dn-a{color:var(--mute)}
+.dots i{background:var(--track)}.dots i.on{background:var(--ink)}
+
+/* сводка тренировки: счёт крупно, гриф с блинами */
+.sumcard{margin:0;padding:4px 0 0;background:none;border-radius:0;gap:6px}
+.th-h{justify-content:flex-start;gap:12px}
+.th-h b{font-size:40px;line-height:44px;font-weight:800}
+.th-h b em{font-style:normal;font-weight:500;color:var(--arrow)}
+.th-h span{font-size:15px}
+.th-sub{font-size:15px;color:var(--mute)}
+.bbell{position:relative;display:flex;align-items:center;gap:4px;height:96px;margin:12px 0 2px;padding-left:2px;overflow:hidden}
+.bbell::before{content:"";position:absolute;left:0;right:0;top:50%;height:6px;margin-top:-3px;border-radius:3px;background:var(--track)}
+.bb-sleeve,.bb-collar,.bb-p{position:relative;flex:none;border-radius:6px}
+.bb-sleeve{width:8px;height:30px;border-radius:3px;background:var(--arrow)}
+.bb-collar{width:10px;height:18px;border-radius:3px;background:var(--arrow)}
+.bb-p{background:linear-gradient(to top,var(--c) var(--p),var(--bg) var(--p));box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--c) 45%,var(--bg));transition:background .3s var(--ease)}
+.bb-p.cur{box-shadow:inset 0 0 0 2px var(--c)}
+.th-mus{margin-top:6px;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* выбор вида и все переключатели: белая таблетка */
+.vswitch button{border-radius:21px;background:var(--fill);color:var(--mute);font-weight:600}
+.vswitch button[aria-pressed="true"],.days button[aria-pressed="true"],.seg button[aria-pressed="true"],.viewseg button[aria-pressed="true"],.seg3 button[aria-pressed="true"],.seg5 button[aria-pressed="true"],.qpick-b button.on{background:var(--sel);color:var(--sel-ink)}
+.seg5 button.q0[aria-pressed="true"]{background:var(--p-red);color:#fff}
+.days,.seg,.viewseg,.seg3,.seg5{border-radius:22px}
+.days button,.seg button,.seg5 button{border-radius:18px}
+
+/* кнопки: главное действие — синий блин, капсула */
+.capsule,.btn.primary,.cta,.finish .review .row-actions .btn,.corr-foot .btn.primary{background:var(--accf);color:#fff;font-weight:600}
+.capsule{min-height:52px;border-radius:26px}
+.btn{border-radius:22px;font-weight:600}
+.linkbtn{color:var(--acc)}
+.tbadge,.sec2 .elapsed{color:var(--ink);background:var(--fill)}
+
+/* карточки r20 */
+.exb,.xcard,.ccard,.gcard,.banner,.dtile,.rowc,.mitem,.setlist,.nextcard,.tiles4 div,.durtile,.notetile,.bodytiles button,.bars,.tbl,.sum,.card,.grp,.lv,.form,.hist-chart{border-radius:20px}
+.exb{padding:16px 16px 10px}
+.exb-title,.x-top h2{font-family:var(--disp);font-size:16px;line-height:21px;font-weight:700}
+.sec2{font-size:19px;font-weight:700}
+
+/* нагрузка на мышцы — точкой цвета блина: 7–10 красный, 4–6 синий, 1–3 жёлтый */
+.lvline span,.tags span{display:inline-flex;align-items:center;gap:6px;height:24px;line-height:24px;padding:0 10px 0 7px;border-radius:12px;background:var(--fill);color:var(--ink2);font-size:13px}
+.lvline span::before,.tags span::before{content:"";flex:none;width:9px;height:9px;border-radius:5px;background:var(--p-yellow)}
+.lvline span.hi::before,.tags span.hi::before{background:var(--p-red)}
+.lvline span.mid::before{background:var(--p-blue)}
+.lvline span.hi,.lvline span.mid,.tags span.hi{background:var(--fill);color:var(--ink)}
+.lvline span.more::before{display:none}
+.lvrow.hi{background:var(--lv-hi)}.lvrow.mid{background:var(--lv-mid)}
+
+/* подходы */
+.row{border-top-color:var(--sep)}
+.row input[type=text],.q{border-radius:12px}
+.row.done input[type=text]{background:var(--acc-soft)}
+.row.done .n{color:var(--p-red)}
+.q.q0{background:var(--p-red);color:#fff}.q.q1{background:var(--lv-hi)}.q.q2{background:var(--acc-soft)}
+.hint.up{background:var(--ok-soft)}
+
+/* «Прогресс»: дни — блинами своего цвета */
+.dt-img{right:14px;bottom:auto;top:46px;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,var(--card) 0 12%,var(--c) 13% 62%,color-mix(in srgb,var(--c) 70%,#000) 63% 69%,var(--c) 70%)}
+.dt-img svg{transform:none;opacity:0}
+.kr-fg,.ring2-fg{stroke:var(--accf)}
+.db-t i,.track .factb{background:var(--accf)}
+.gc-cells small{color:var(--acc)}
+.ds-day.on.today b{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--ink)}
+.ds-day.today b{box-shadow:inset 0 0 0 2px var(--ink)}
+.badge{background:var(--acc-soft);color:var(--acc)}
+
+/* нижняя панель: парящая таблетка, активная вкладка — белая, «+» — красный блин */
+.tabbar{left:12px;right:12px;bottom:max(16px,env(safe-area-inset-bottom,0px));max-width:616px;margin-inline:auto;padding:6px;border-radius:32px;background:var(--tab);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.tabbar button{height:52px;border-radius:26px;color:var(--mute)}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-selected="true"]{background:var(--sel);color:var(--sel-ink)}
+.tb-fab > span{width:52px;height:52px;border-radius:26px;background:var(--fab);box-shadow:none}
+.sheet-wrap.over-tabs{bottom:calc(72px + max(16px,env(safe-area-inset-bottom,0px)))}
+.sheet-wrap.over-tabs .sheet{border-radius:24px}
+body,:root[data-view="train"] body{padding-bottom:calc(110px + max(16px,env(safe-area-inset-bottom,0px)))}
+
+/* шторки, чат, таймер */
+.sheet{background:var(--bg)}
+.sheet-head::before{background:var(--track)}
+.sheet-head b{font-size:18px}
+.msg.user{background:var(--accf)}
+.timer{background:var(--accf);border-radius:20px}
+.timer.done{background:var(--ok);color:#fff}
+.toast{border-radius:20px}
+.toast button,.sl-act button,.xacts button{color:var(--acc)}
+.sl-row b.ok,.lastw b.cur{color:var(--acc)}
+.segs button i{background:var(--accf)}
+.tile-in{border-color:var(--accf)}
+.help-b{color:var(--ink)}
+
+/* заставка: зал, без свечения */
+.splash{background:var(--bg);color:var(--ink);font-size:28px;font-weight:800}
+@media (prefers-reduced-motion:reduce){.bb-p,.kr-fg,.tb-fab > span{transition:none}}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -1809,6 +1931,7 @@ const I={
   scale:"M5 4h14l1.5 16h-17zM9 9.5a3.5 3.5 0 0 1 6 0M12 9.5l1.5-1.5"
 };
 const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
+const PC_INK={UA:"#fff",LA:"#fff",UB:"var(--bg)",LB:"var(--bg)"};   // текст на блине: на жёлтом и зелёном — тёмный
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
@@ -2117,8 +2240,20 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Шапка тренировки — как экран приёма пищи в референсе: фиолетовая навигация, под ней карточка-сводка, скруглённая снизу.
-// «Белки / Жиры / Углеводы» → подходы / упражнения / время; «Общий вес» → средний запас. Заметка к тренировке — в «Итоге».
+// Гриф: блин на упражнение, от тяжёлых к лёгким, как блины в зале (PLATES): 20 синий, 15 жёлтый, 10 зелёный, 5 белый, 2,5 красный, дальше по кругу.
+// Сделанная доля подходов заливает блин снизу; текущее упражнение — с обводкой.
+const PLATE_C=["var(--p-blue)","var(--p-yellow)","var(--p-green)","var(--p-white)","var(--p-red)"];
+function Barbell({s}){
+  const n=s.ex.length, cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
+  const full=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
+  return html`<div class="bbell" role="img" aria-label=${"Упражнения: сделано "+full+" из "+n}>
+    <i class="bb-sleeve"></i>
+    ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), p=r?Math.min(1,doneOf(e)/r):0;
+      return html`<i key=${e.uid||i} class=${"bb-p"+(i===cur?" cur":"")} style=${{"--c":PLATE_C[i%5],"--p":Math.round(p*100)+"%",height:Math.max(30,92-i*(n>7?6:9))+"px",width:Math.max(9,22-i*2)+"px"}}></i>`; })}
+    <i class="bb-collar"></i>
+  </div>`;
+}
+// Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
 function TrainHero({s,date,day,go,onDay,onMuscles,right}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
@@ -2128,14 +2263,9 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right}){
       <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
     </section>
     <section class="sumcard">
-      <div class="th-h"><b>${done} подх.</b><span>из ${total} подходов</span></div>
-      <${Meter} v=${done} max=${total}/>
-      <div class="sc-cells">
-        <div class="sc-cell"><span class="c1">Подходы</span><b>${done} / ${total}</b></div>
-        <div class="sc-cell"><span class="c2">Упражнения</span><b>${doneEx} / ${s.ex.length}</b></div>
-        <div class="sc-cell"><span class="c3">Время</span><b><${Elapsed} s=${s}/></b></div>
-          <small>Средний запас: ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</small>
-      </div>
+      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов · <${Elapsed} s=${s}/></span></div>
+      <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
+      ${s.ex.length?html`<${Barbell} s=${s}/>`:null}
       ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
     </section>
   <//>`;
@@ -2295,7 +2425,7 @@ function DateStrip({list,openSession}){
       onClick=${()=>openSession(d,x?x.day:null)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")}>
       <small class="ds-m">${mon?RU_MONTHS[t.getMonth()].slice(0,3):""}</small>
       <small>${WD[t.getDay()]}</small>
-      <b style=${x?{background:PC[x.day]}:null}>${t.getDate()}</b>
+      <b style=${x?{background:PC[x.day],color:PC_INK[x.day]}:null}>${t.getDate()}</b>
       <small class="ds-k">${x?shortDay(x.day):""}</small>
     </button>`; })}</div>`;
 }
@@ -2547,9 +2677,8 @@ function AppBar({left,title,sub,onTitle,right,label}){
 }
 // Тренер — круглая «аватарка» с фиолетовым облачком, как кнопка чата в референсе
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
-  <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFF"/><stop offset="1" stop-color="#7B55F5"/></linearGradient></defs>
-  <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="url(#cg)"/>
-  <circle cx="8.5" cy="9" r="1.4" fill="#5B3BD0"/><circle cx="13" cy="9" r="1.4" fill="#5B3BD0"/><circle cx="17.5" cy="9" r="1.4" fill="#5B3BD0"/></svg></button>`;
+  <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" style=${{fill:"var(--ink)"}}/>
+  <circle cx="8.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="13" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="17.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/></svg></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`

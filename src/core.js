@@ -488,6 +488,7 @@ const I={
   scale:"M5 4h14l1.5 16h-17zM9 9.5a3.5 3.5 0 0 1 6 0M12 9.5l1.5-1.5"
 };
 const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
+const PC_INK={UA:"#fff",LA:"#fff",UB:"var(--bg)",LB:"var(--bg)"};   // текст на блине: на жёлтом и зелёном — тёмный
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };

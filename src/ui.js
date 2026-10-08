@@ -296,8 +296,20 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Шапка тренировки — как экран приёма пищи в референсе: фиолетовая навигация, под ней карточка-сводка, скруглённая снизу.
-// «Белки / Жиры / Углеводы» → подходы / упражнения / время; «Общий вес» → средний запас. Заметка к тренировке — в «Итоге».
+// Гриф: блин на упражнение, от тяжёлых к лёгким, как блины в зале (PLATES): 20 синий, 15 жёлтый, 10 зелёный, 5 белый, 2,5 красный, дальше по кругу.
+// Сделанная доля подходов заливает блин снизу; текущее упражнение — с обводкой.
+const PLATE_C=["var(--p-blue)","var(--p-yellow)","var(--p-green)","var(--p-white)","var(--p-red)"];
+function Barbell({s}){
+  const n=s.ex.length, cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
+  const full=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
+  return html`<div class="bbell" role="img" aria-label=${"Упражнения: сделано "+full+" из "+n}>
+    <i class="bb-sleeve"></i>
+    ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), p=r?Math.min(1,doneOf(e)/r):0;
+      return html`<i key=${e.uid||i} class=${"bb-p"+(i===cur?" cur":"")} style=${{"--c":PLATE_C[i%5],"--p":Math.round(p*100)+"%",height:Math.max(30,92-i*(n>7?6:9))+"px",width:Math.max(9,22-i*2)+"px"}}></i>`; })}
+    <i class="bb-collar"></i>
+  </div>`;
+}
+// Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
 function TrainHero({s,date,day,go,onDay,onMuscles,right}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
@@ -307,14 +319,9 @@ function TrainHero({s,date,day,go,onDay,onMuscles,right}){
       <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
     </section>
     <section class="sumcard">
-      <div class="th-h"><b>${done} подх.</b><span>из ${total} подходов</span></div>
-      <${Meter} v=${done} max=${total}/>
-      <div class="sc-cells">
-        <div class="sc-cell"><span class="c1">Подходы</span><b>${done} / ${total}</b></div>
-        <div class="sc-cell"><span class="c2">Упражнения</span><b>${doneEx} / ${s.ex.length}</b></div>
-        <div class="sc-cell"><span class="c3">Время</span><b><${Elapsed} s=${s}/></b></div>
-          <small>Средний запас: ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</small>
-      </div>
+      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов · <${Elapsed} s=${s}/></span></div>
+      <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
+      ${s.ex.length?html`<${Barbell} s=${s}/>`:null}
       ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
     </section>
   <//>`;
@@ -474,7 +481,7 @@ function DateStrip({list,openSession}){
       onClick=${()=>openSession(d,x?x.day:null)} aria-label=${dm(d)+(x?": "+P[x.day].name:"")}>
       <small class="ds-m">${mon?RU_MONTHS[t.getMonth()].slice(0,3):""}</small>
       <small>${WD[t.getDay()]}</small>
-      <b style=${x?{background:PC[x.day]}:null}>${t.getDate()}</b>
+      <b style=${x?{background:PC[x.day],color:PC_INK[x.day]}:null}>${t.getDate()}</b>
       <small class="ds-k">${x?shortDay(x.day):""}</small>
     </button>`; })}</div>`;
 }

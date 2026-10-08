@@ -52,9 +52,8 @@ function AppBar({left,title,sub,onTitle,right,label}){
 }
 // Тренер — круглая «аватарка» с фиолетовым облачком, как кнопка чата в референсе
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><svg width="26" height="22" viewBox="0 0 26 22" aria-hidden="true">
-  <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFF"/><stop offset="1" stop-color="#7B55F5"/></linearGradient></defs>
-  <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" fill="url(#cg)"/>
-  <circle cx="8.5" cy="9" r="1.4" fill="#5B3BD0"/><circle cx="13" cy="9" r="1.4" fill="#5B3BD0"/><circle cx="17.5" cy="9" r="1.4" fill="#5B3BD0"/></svg></button>`;
+  <path d="M4 1h18a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H11l-5 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" style=${{fill:"var(--ink)"}}/>
+  <circle cx="8.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="13" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/><circle cx="17.5" cy="9" r="1.4" style=${{fill:"var(--bg)"}}/></svg></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
