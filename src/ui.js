@@ -19,7 +19,8 @@ function LevelPicker({value,onChange}){
   </div>`;
 }
 // График «план / сделано» по мышцам, сгруппированным как в списке мышц. rows: {k:{plan,fact}}; zone — рабочий диапазон недели
-function MuscleBars({rows,zone,showEmpty}){
+function MuscleBars({rows,zone,showEmpty,help,helpLabel}){
+  const [hOpen,setHOpen]=useState(false);
   const vals=MUS_ORDER.flatMap(k=>[rows[k].plan,rows[k].fact]);
   const max=Math.max(zone?16:1,...vals), hasFact=MUS_ORDER.some(k=>rows[k].fact>0);
   const groups=MUS_GROUPS.map(([g,ks])=>[g,ks.filter(k=>showEmpty||rows[k].plan>0||rows[k].fact>0)]).filter(g=>g[1].length);
@@ -37,7 +38,8 @@ function MuscleBars({rows,zone,showEmpty}){
         <span class="bv mono">${hasFact?fmt(r.fact)+"/":""}${fmt(r.plan)}</span>
       </div>`; })}
     <//>`)}
-    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}</div>
+    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}${help?html`<button class="help-b" aria-expanded=${String(hOpen)} aria-label=${helpLabel||"Пояснение"} onClick=${()=>setHOpen(!hOpen)}>?</button>`:null}</div>
+    ${help&&hOpen?html`<div class="help-t">${help}</div>`:null}
   </div>`;
 }
 const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,effOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
@@ -51,8 +53,7 @@ function Help({children,label}){
 }
 function SessionMuscles({s,onClose}){
   return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}>
-    <${Help} label="Как считаются подходы">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.<//>
-    <${MuscleBars} rows=${sessionRows(s)}/>
+    <${MuscleBars} rows=${sessionRows(s)} helpLabel="Как считаются подходы" help="Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано."/>
   <//>`;
 }
 const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
@@ -93,7 +94,7 @@ function SetType({value,onChange}){
 /* ---------- Упражнение: журнал подходов ---------- */
 // текущий подход упражнения: первый, где ещё нет повторов (или отметки)
 const curSet=(s,e)=>{ const rows=rowsOf(s,e); for(let j=0;j<rows;j++) if(!setDone(e.sets[j]||blankSet())) return j; return -1; };
-function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
+function ExerciseBlock({s,i,date,edit,openSheet,startTimer,onCollapse}){
   const e=s.ex[i], inf=xinfo(s,e), {lo,hi,rir,rest,note}=inf.plan, wk=s.week;
   const [qOpen,setQOpen]=useState(null);
   const rows=rowsOf(s,e);
@@ -112,9 +113,10 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
   return html`<section id=${"ex-"+i} class=${"exb"+(done?" complete":"")}>
     <div class="exb-head">
       <div class="exb-tt">
-        <button class="exb-title" onClick=${()=>openSheet("menu",e.uid)}>${inf.name}</button>
+        <button class="exb-title" onClick=${()=>onCollapse?onCollapse():openSheet("menu",e.uid)} aria-label=${onCollapse?inf.name+". Свернуть":null}>${inf.name}</button>
         ${inf.custom?html`<div class="exb-sub">добавлено в эту тренировку</div>`:e.alt?html`<div class="exb-sub">вместо: ${inf.base}</div>`:null}
       </div>
+      ${onCollapse?html`<button class="ibtn" aria-label="Свернуть упражнение" onClick=${onCollapse}><${Icon} n="up"/></button>`:null}
       <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="vmore"/></button>
     </div>
     <div class="exb-meta">
@@ -427,7 +429,8 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
     <div class="exlist">
       ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), d=Math.min(r,doneOf(e)), inf=xinfo(s,e);
         // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную
-        if(i===cur||open[e.uid]||(d>0&&d<r)||!r) return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`;
+        if(i===cur||open[e.uid]||(d>0&&d<r)||!r){ const fold=open[e.uid]&&i!==cur&&!(d>0&&d<r)&&r>0?()=>setOpen(o=>({...o,[e.uid]:false})):null;
+          return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} onCollapse=${fold} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`; }
         const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
         const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
         return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i><${Icon} n="check" size=${15}/></i><span>${inf.name}</span><small>${sum}</small></button>`

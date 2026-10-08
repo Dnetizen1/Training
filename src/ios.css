@@ -1671,3 +1671,28 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .mtile{gap:8px;padding:12px 10px}
 .mt-r,.mt-r .rings{width:52px;height:52px}
 .mt-t > span{font-size:14px;overflow-wrap:anywhere;hyphens:auto}
+
+/* ===== единая шапка страниц (за основу «Прогресс»): мелкая дата сверху, крупный заголовок слева, кнопки справа ===== */
+.pg-h{align-items:flex-end;min-height:62px;padding-top:6px}
+.hero:has(> .pg-h){padding-top:0}
+.pg-h > div{min-width:0}
+.pg-h small{display:block;font-size:13px;line-height:16px;color:var(--mute)}
+.pg-h h1{margin:0;font:700 34px/40px var(--disp);letter-spacing:-.02em;white-space:nowrap}
+.pg-h h1 .pg-t{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-align:left}
+.pg-h h1 .pg-t svg{flex:none;color:var(--mute);margin-top:4px}
+.pg-act{flex:none;align-items:center}
+.pg-act .pillsel{height:44px;border-radius:22px}
+.wk-sum{margin:10px 0 0}
+.histv > .hero{padding-bottom:0}
+.hseg{margin-top:14px}
+
+/* «Журнал / Фокус» делятся пополам */
+.vswitch,.ttl + .vswitch,.navrow + .vswitch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:16px 0 0}
+.vswitch button{flex:1 1 0;width:100%}
+
+/* «?» в строке легенды справа от «сделано» */
+.legend .help-b{margin-left:auto;flex:none}
+.help-t{margin-top:8px}
+.mt-r,.mt-r .rings{width:50px;height:50px}
+.mtile{gap:7px}
+.mt-t > span{font-size:13.5px;overflow-wrap:normal;hyphens:none}

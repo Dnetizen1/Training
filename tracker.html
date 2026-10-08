@@ -1676,6 +1676,31 @@ body,:root[data-view="train"] body{padding-bottom:calc(120px + env(safe-area-ins
 .mtile{gap:8px;padding:12px 10px}
 .mt-r,.mt-r .rings{width:52px;height:52px}
 .mt-t > span{font-size:14px;overflow-wrap:anywhere;hyphens:auto}
+
+/* ===== единая шапка страниц (за основу «Прогресс»): мелкая дата сверху, крупный заголовок слева, кнопки справа ===== */
+.pg-h{align-items:flex-end;min-height:62px;padding-top:6px}
+.hero:has(> .pg-h){padding-top:0}
+.pg-h > div{min-width:0}
+.pg-h small{display:block;font-size:13px;line-height:16px;color:var(--mute)}
+.pg-h h1{margin:0;font:700 34px/40px var(--disp);letter-spacing:-.02em;white-space:nowrap}
+.pg-h h1 .pg-t{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-align:left}
+.pg-h h1 .pg-t svg{flex:none;color:var(--mute);margin-top:4px}
+.pg-act{flex:none;align-items:center}
+.pg-act .pillsel{height:44px;border-radius:22px}
+.wk-sum{margin:10px 0 0}
+.histv > .hero{padding-bottom:0}
+.hseg{margin-top:14px}
+
+/* «Журнал / Фокус» делятся пополам */
+.vswitch,.ttl + .vswitch,.navrow + .vswitch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:16px 0 0}
+.vswitch button{flex:1 1 0;width:100%}
+
+/* «?» в строке легенды справа от «сделано» */
+.legend .help-b{margin-left:auto;flex:none}
+.help-t{margin-top:8px}
+.mt-r,.mt-r .rings{width:50px;height:50px}
+.mtile{gap:7px}
+.mt-t > span{font-size:13.5px;overflow-wrap:normal;hyphens:none}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2401,7 +2426,8 @@ function LevelPicker({value,onChange}){
   </div>`;
 }
 // График «план / сделано» по мышцам, сгруппированным как в списке мышц. rows: {k:{plan,fact}}; zone — рабочий диапазон недели
-function MuscleBars({rows,zone,showEmpty}){
+function MuscleBars({rows,zone,showEmpty,help,helpLabel}){
+  const [hOpen,setHOpen]=useState(false);
   const vals=MUS_ORDER.flatMap(k=>[rows[k].plan,rows[k].fact]);
   const max=Math.max(zone?16:1,...vals), hasFact=MUS_ORDER.some(k=>rows[k].fact>0);
   const groups=MUS_GROUPS.map(([g,ks])=>[g,ks.filter(k=>showEmpty||rows[k].plan>0||rows[k].fact>0)]).filter(g=>g[1].length);
@@ -2419,7 +2445,8 @@ function MuscleBars({rows,zone,showEmpty}){
         <span class="bv mono">${hasFact?fmt(r.fact)+"/":""}${fmt(r.plan)}</span>
       </div>`; })}
     <//>`)}
-    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}</div>
+    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}${help?html`<button class="help-b" aria-expanded=${String(hOpen)} aria-label=${helpLabel||"Пояснение"} onClick=${()=>setHOpen(!hOpen)}>?</button>`:null}</div>
+    ${help&&hOpen?html`<div class="help-t">${help}</div>`:null}
   </div>`;
 }
 const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,effOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
@@ -2433,8 +2460,7 @@ function Help({children,label}){
 }
 function SessionMuscles({s,onClose}){
   return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}>
-    <${Help} label="Как считаются подходы">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.<//>
-    <${MuscleBars} rows=${sessionRows(s)}/>
+    <${MuscleBars} rows=${sessionRows(s)} helpLabel="Как считаются подходы" help="Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано."/>
   <//>`;
 }
 const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
@@ -2475,7 +2501,7 @@ function SetType({value,onChange}){
 /* ---------- Упражнение: журнал подходов ---------- */
 // текущий подход упражнения: первый, где ещё нет повторов (или отметки)
 const curSet=(s,e)=>{ const rows=rowsOf(s,e); for(let j=0;j<rows;j++) if(!setDone(e.sets[j]||blankSet())) return j; return -1; };
-function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
+function ExerciseBlock({s,i,date,edit,openSheet,startTimer,onCollapse}){
   const e=s.ex[i], inf=xinfo(s,e), {lo,hi,rir,rest,note}=inf.plan, wk=s.week;
   const [qOpen,setQOpen]=useState(null);
   const rows=rowsOf(s,e);
@@ -2494,9 +2520,10 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
   return html`<section id=${"ex-"+i} class=${"exb"+(done?" complete":"")}>
     <div class="exb-head">
       <div class="exb-tt">
-        <button class="exb-title" onClick=${()=>openSheet("menu",e.uid)}>${inf.name}</button>
+        <button class="exb-title" onClick=${()=>onCollapse?onCollapse():openSheet("menu",e.uid)} aria-label=${onCollapse?inf.name+". Свернуть":null}>${inf.name}</button>
         ${inf.custom?html`<div class="exb-sub">добавлено в эту тренировку</div>`:e.alt?html`<div class="exb-sub">вместо: ${inf.base}</div>`:null}
       </div>
+      ${onCollapse?html`<button class="ibtn" aria-label="Свернуть упражнение" onClick=${onCollapse}><${Icon} n="up"/></button>`:null}
       <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="vmore"/></button>
     </div>
     <div class="exb-meta">
@@ -2809,7 +2836,8 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
     <div class="exlist">
       ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), d=Math.min(r,doneOf(e)), inf=xinfo(s,e);
         // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную
-        if(i===cur||open[e.uid]||(d>0&&d<r)||!r) return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`;
+        if(i===cur||open[e.uid]||(d>0&&d<r)||!r){ const fold=open[e.uid]&&i!==cur&&!(d>0&&d<r)&&r>0?()=>setOpen(o=>({...o,[e.uid]:false})):null;
+          return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} onCollapse=${fold} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`; }
         const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
         const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
         return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i><${Icon} n="check" size=${15}/></i><span>${inf.name}</span><small>${sum}</small></button>`
@@ -3179,13 +3207,13 @@ function weekData(date){
 
 // Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
 function AppBar({left,title,sub,onTitle,right,label}){
-  const t=html`<b>${title}</b>${sub?html`<small>${sub}</small>`:null}`;
-  return html`<div class="appbar">
-    <div class="ab-side">${left}</div>
-    ${onTitle?html`<button class="ab-t" onClick=${onTitle} aria-label=${label}>${t}<${Icon} n="down" size=${14}/></button>`:html`<div class="ab-t"><h1>${title}</h1>${sub?html`<small>${sub}</small>`:null}</div>`}
-    <div class="ab-side r">${right}</div>
-  </div>`;
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  return html`<header class="pg-h">
+    <div><small>${sub||todayLabel()}</small><h1>${t}</h1></div>
+    <span class="pg-act">${left}${right}</span>
+  </header>`;
 }
+const todayLabel=()=>{ const t=todayStr(); return RU_DAYS[new Date(t+"T00:00:00").getDay()]+", "+dayMonth(t); };
 // Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
@@ -3341,18 +3369,13 @@ function WeekScreen({date,toast}){
   const [hideTip,setHideTip]=useState(false);
   const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
   return html`<div class="weekscr">
-    <section class="hero hero-top">
-      <div class="appbar left">
-        <h1>Неделя</h1>
-        <label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
-          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>
-      </div>
-      <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
+    <${AppBar} title="Неделя" right=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
+          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}/>
+    <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
         ${[nOk?ru(nOk,"мышца","мышцы","мышц")+" в норме":"",nLow?"у "+ru(nLow,"мышцы","мышц","мышц")+" недобор":""].filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())}${nOk||nLow?". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
-    </section>
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
-        <span class="mt-r"><${Rings} size=${56} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
+        <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
         <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
       <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсветка плитки — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
       ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}

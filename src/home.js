@@ -43,13 +43,13 @@ function weekData(date){
 
 // Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
 function AppBar({left,title,sub,onTitle,right,label}){
-  const t=html`<b>${title}</b>${sub?html`<small>${sub}</small>`:null}`;
-  return html`<div class="appbar">
-    <div class="ab-side">${left}</div>
-    ${onTitle?html`<button class="ab-t" onClick=${onTitle} aria-label=${label}>${t}<${Icon} n="down" size=${14}/></button>`:html`<div class="ab-t"><h1>${title}</h1>${sub?html`<small>${sub}</small>`:null}</div>`}
-    <div class="ab-side r">${right}</div>
-  </div>`;
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  return html`<header class="pg-h">
+    <div><small>${sub||todayLabel()}</small><h1>${t}</h1></div>
+    <span class="pg-act">${left}${right}</span>
+  </header>`;
 }
+const todayLabel=()=>{ const t=todayStr(); return RU_DAYS[new Date(t+"T00:00:00").getDay()]+", "+dayMonth(t); };
 // Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
@@ -205,18 +205,13 @@ function WeekScreen({date,toast}){
   const [hideTip,setHideTip]=useState(false);
   const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
   return html`<div class="weekscr">
-    <section class="hero hero-top">
-      <div class="appbar left">
-        <h1>Неделя</h1>
-        <label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
-          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>
-      </div>
-      <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
+    <${AppBar} title="Неделя" right=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
+          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}/>
+    <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
         ${[nOk?ru(nOk,"мышца","мышцы","мышц")+" в норме":"",nLow?"у "+ru(nLow,"мышцы","мышц","мышц")+" недобор":""].filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())}${nOk||nLow?". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
-    </section>
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
-        <span class="mt-r"><${Rings} size=${56} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
+        <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
         <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
       <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсветка плитки — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
       ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}
