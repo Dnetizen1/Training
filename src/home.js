@@ -185,6 +185,8 @@ function lagTip(date){
   return {m:best.m,fact:w.fact[best.m],plan:w.plan[best.m],gap:best.gap,
     mod:day?{id:rid(),day,type:"add_sets",base:bi,n,from:inWeek.map(x=>x.date).sort().slice(-1)[0],reason:`не добрано ${fmt(best.gap)} подх. на «${MUS[best.m]}»`}:null};
 }
+// порядок плиток: сначала самые важные для гипертрофии мышцы, мелкие — в конце
+const TILE_ORDER=[0,1,7,8,9,3,2,4,6,5,11,10,12,15,16,13,14,17,18];
 function WeekScreen({date,toast}){
   const [mode,setMode]=useState("now");
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
@@ -196,7 +198,7 @@ function WeekScreen({date,toast}){
     muscleCount(real,e=>rowsOf(real,e)).forEach((c,m)=>{ planDone[m]+=c.f; }); });
   const q4=v=>fmt(Math.round(v*4)/4);
   const tiles=w.used.filter(m=>w.plan[m]>=4).map(m=>{ const target=Math.min(10,w.plan[m]), v=w.fact[m], gap=Math.round((planDone[m]-v)*2)/2;
-    return {m,v,target,p:v/target,ok:v>=target-0.01,gap:gap>=1?gap:0}; }).sort((a,b)=>(b.gap>0)-(a.gap>0)||(a.ok-b.ok)||a.p-b.p);
+    return {m,v,target,p:v/target,ok:v>=target-0.01,gap:gap>=1?gap:0}; }).sort((a,b)=>TILE_ORDER.indexOf(a.m)-TILE_ORDER.indexOf(b.m));
   const minor=w.used.filter(m=>w.plan[m]<4);
   const nOk=tiles.filter(x=>x.ok).length, nLow=tiles.filter(x=>x.gap).length, left=4-w.done;
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
@@ -214,9 +216,9 @@ function WeekScreen({date,toast}){
     </section>
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
-        <span class="mt-r"><${Rings} size=${48} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b>${q4(x.v)}</b></span>
-        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?html`<small class="ok"><${Icon} n="check" size=${14}/>Цель</small>`:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
-      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
+        <span class="mt-r"><${Rings} size=${56} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b></span>
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
+      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсветка плитки — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
       ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
