@@ -27,7 +27,7 @@ https://claude.ai/artifact/WBxuoNExCmZ6CVGjUb3mNN
 упражнений (знакомые берутся из встроенного справочника и работают).
 
 ### 3. Как сайт через GitHub Pages
-В репозитории: Settings → Pages → Source: «Deploy from a branch», ветка `master`, папка `/docs` (`build.py` кладёт туда копию как `index.html`).
+В репозитории: Settings → Pages → Source: «Deploy from a branch», ветка `master`, папка `/ (root)` (`build.py` кладёт копию страницы как `index.html`).
 Через минуту страница будет по адресу `https://<логин>.github.io/Training/`.
 Работает так же, как в пункте 2: данные в браузере, без тренера.
 

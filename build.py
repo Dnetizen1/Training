@@ -19,7 +19,6 @@ out = f"""<title>Дневник тренировок</title>
 {js}</script>
 """
 (Path(__file__).parent / "tracker.html").write_text(out)
-# копия для GitHub Pages (источник: ветка master, папка /docs) — страница открывается по адресу сайта без имени файла
-(Path(__file__).parent / "docs").mkdir(exist_ok=True)
-(Path(__file__).parent / "docs" / "index.html").write_text(out)
+# копия для GitHub Pages (ветка master, папка / root): сайт открывается по короткому адресу
+(Path(__file__).parent / "index.html").write_text(out)
 print("tracker.html:", len(out), "bytes")
