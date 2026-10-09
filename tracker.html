@@ -2303,6 +2303,180 @@ body:has(.timer-mini){padding-bottom:calc(var(--tb-b) + var(--tb-h) + 78px)}
 .toast{border-radius:22px;background:rgba(30,30,32,.62);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
   box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.14);color:var(--ink)}
 .toast button{color:var(--acc)}
+
+/* ===== v12 — шкала отступов 4 / 8 / 12 / 16 / 24 (замеры 390×844 @3x): шапка → блок 16, раздел 24 сверху и 12 снизу, соседи 8 ===== */
+:root{--pad:16px;--gap:8px}
+
+/* шапка: строка заголовка не прыгает от подписи — заголовок всегда на y=17, кнопки на y=10 */
+.pg-h{align-items:start}
+.pg-h > .pg-c{padding-top:7px}
+.pg-h > .pg-act{align-self:start}
+
+/* шапка -> первый блок: 16 */
+main .pg-h + .vswitch{margin-top:16px}
+.home > .pg-h + .thero{margin-top:16px}
+.weekscr > .pg-h ~ .mtiles{margin-top:16px}
+.hero > .pg-h + .hseg{margin-top:16px}
+main .pg-h + .finish{margin-top:16px}
+
+/* чипсы -> содержимое: 16 */
+.histv > .hero + .cal-h,.histv > .hero + .hsearch{margin-top:16px}
+
+/* заголовок раздела: 24 сверху, 12 до содержимого */
+main .sec2{margin-top:24px;margin-bottom:12px}
+.histv > .cal-h + .cal{margin-top:12px}
+
+/* соседи в одной группе: 8 (--gap); подпись под карточкой: 8 */
+.exlist > .exb{margin-top:0;margin-bottom:0}
+.exlist > .exb + .exb{margin-top:var(--gap)}
+.fx > .setlist{margin-top:var(--gap)}
+.fx > .nx{padding:8px 4px 4px}
+.fx .notebtn{margin-top:0}
+.weekscr > .wkstats{margin-top:var(--gap)}
+.weekscr > .wk-low,.weekscr .mnote{margin:var(--gap) 16px 0}
+.histv > .dlegend{margin-top:var(--gap);margin-bottom:0}
+.histv > .hx-note{margin:16px 16px 8px}
+
+/* отдельная группа без заголовка (подсказка, раскрывашка, кнопки страницы): 16 */
+.exlist .addex{margin-top:16px}
+.exlist .addex::before{top:-8px}
+.fx .finish-btn{margin-top:16px}
+.weekscr > .banner{margin-top:16px}
+main .done-ex{margin-top:16px}
+.done-ex + .finish-btn{margin-top:var(--gap)}
+
+/* итог тренировки */
+.finish{gap:var(--gap)}
+.finish > .tiles4{margin-top:8px}
+.finish > .notetile{margin-top:0}
+.finish > .review:not(:has(button,.sum,.st)){display:none}
+.finish > .corr{margin-top:16px;gap:0}
+.finish > .corr > h3{margin:0 0 12px;font:700 21px/26px var(--disp);letter-spacing:0}
+.finish .corr-card{gap:0}
+.corr-card > .corr-item{background:none;border-radius:0}
+.corr-card > .corr-item + .corr-item{border-top:.5px solid var(--sep)}
+.corr-card > .corr-foot{padding:12px 16px 16px}
+
+/* последний блок -> нижняя панель: 24 на всех экранах */
+.home,.weekscr,.fx{padding-bottom:0}
+body,:root[data-view] body{padding-bottom:calc(var(--tb-b) + var(--tb-h) + 24px)}
+:root body:has(.timer-mini),:root[data-view] body:has(.timer-mini){padding-bottom:calc(var(--tb-b) + var(--tb-h) + 72px)}
+
+/* внутренние отступы: карточка 16, компактная плитка 12/16, строка списка 12/16 */
+.home .wkcard{padding:var(--pad);gap:16px}
+.mtile{padding:12px}
+.tiles4 > div:not(.durtile),.durtile > button,.durtile > label{padding:12px 16px}
+.notetile{padding:12px 16px}
+.hxlist > .hx{padding:12px 16px;border-radius:0}
+.exlist > .xrow{padding-inline:16px}
+.weekscr .banner{border-radius:var(--r-card)}
+
+/* плавающий слой: 8 от краёв экрана и от нижней панели, внутри 16 */
+.sheet-wrap.over-tabs{bottom:calc(var(--tb-b) + var(--tb-h) + 8px)}
+.sheet-wrap.over-tabs .sheet,.sheet-wrap.over-tabs.with-head .sheet{width:min(calc(100% - 16px),440px)}
+.timer-mini{bottom:calc(var(--tb-b) + var(--tb-h) + 8px)}
+.sheet-wrap.over-tabs:not(.with-head) .sheet{padding:16px}
+.sheet-wrap.over-tabs:not(.with-head) .sheet-body{padding-top:8px}
+.over-tabs .qa-rest,.over-tabs .qa-rows{margin-top:12px}
+.gtip{top:calc(env(safe-area-inset-top,0px) + 58px);right:var(--g);padding:16px}
+
+/* «Прогресс»: тренд главного упражнения — тоже раздел: 24 сверху, 12 до графика */
+.home > .tr-h{margin-top:24px}
+.home > .trend{margin-top:12px}
+.fx > .vswitch + .finish{margin-top:16px}
+
+/* ===== v12 — прогресс тренировки одной полосой (как UIProgressView / полосы целей в Fitness) ===== */
+.pbar{display:grid;gap:8px}
+.pb-cap{font:400 13px/18px var(--font);color:var(--mute)}
+.pb-cap b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.pb-track{position:relative;display:block;height:6px;border-radius:3px;overflow:hidden;background:color-mix(in srgb,var(--c,var(--acc)) 24%,transparent)}
+.pb-fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:var(--c,var(--acc));transition:width .5s var(--lg-ease)}
+@media (prefers-reduced-motion:reduce){.pb-fill{transition:none}}
+.vswitch + .pbar{margin-top:16px}
+.pbar + .sec2,.pbar + .applied{margin-top:24px}
+.thero .pbar{margin:4px 0 8px}
+
+/* ===== v12 — нижнее меню: «+» снова в центре капсулы (5 мест: Прогресс, Неделя, +, Тренировка, История) ===== */
+.tabbar{right:var(--g);grid-template-columns:repeat(5,minmax(0,1fr))}
+.tabbar [data-tab="train"]{grid-column:4}
+.tabbar [data-tab="hist"]{grid-column:5}
+.tb-fab{left:calc(50% - 22px);right:auto;bottom:calc(var(--tb-b) + (var(--tb-h) - 44px)/2);width:44px;height:44px;z-index:13;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 10px rgba(0,0,0,.35)}
+.tb-fab::before{content:"";position:absolute;inset:-7px -12px}
+.tb-fab > span svg{width:24px;height:24px;stroke-width:2.4}
+.tb-fab:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.tb-fab:focus-visible > span{outline:0}
+
+/* ===== v12 — единая система кнопок: 1) стекло (плавающий слой), 2) заливка на карточке, 3) лаймовая — главное действие, 4) текст ===== */
+:root{
+  --glass:rgba(44,44,47,.8); --glass-blur:blur(16px) saturate(180%);
+  --glass-rim:inset 0 0 0 .5px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.1);
+  --glass-shadow:0 6px 20px rgba(0,0,0,.35); --glass-on:rgba(255,255,255,.1); --glass-on-hi:rgba(255,255,255,.18);
+  --fill-card:rgba(120,120,128,.32); --fill-card-hi:rgba(120,120,128,.44);
+}
+/* 1. стекло: кнопки шапки (одна или группа), чипсы, нижнее меню, плавающие панели, таймер, всплывашка, подсказка — один материал */
+.pg-act:has(> :nth-child(2)),.pg-act > :only-child,.tabbar,.timer,.timer-mini,.toast,.gtip,.sheet-wrap.over-tabs .sheet,.sheet-wrap:not(.over-tabs) .sheet{
+  background:var(--glass);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-rim),var(--glass-shadow)}
+:is(.vswitch,.hseg) > button{background:var(--glass)!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-rim)}
+:is(.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a)::after,.pg-act:has(> :nth-child(2))::after,.tabbar::after,.sheet-wrap.over-tabs .sheet::after,.sheet-wrap:not(.over-tabs) .sheet::after,.gtip::after{content:none}
+.pg-act > *{width:40px;height:40px;border-radius:20px;color:var(--ink);background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pg-act > :only-child{background:var(--glass);box-shadow:var(--glass-rim),var(--glass-shadow)}
+.pg-act:has(> :nth-child(2)) > *{width:44px}
+.pg-act svg{width:22px;height:22px}
+.pg-act > :active{background:var(--glass-on-hi)!important;transform:scale(.94)}
+.pg-act > .ab-q.on{background:var(--glass-on)!important;color:var(--acc)}
+.navmini .pg-act > *{width:44px}
+/* стекло на стекле (кнопки внутри шторок, панелей, таймера): лёгкая заливка без размытия */
+.sheet-head .ibtn{width:40px;height:40px;border-radius:20px;background:var(--glass-on);color:var(--ink)}
+.sheet-head .ibtn svg{width:20px;height:20px}
+.sheet-head .ibtn:active{background:var(--glass-on-hi)}
+.sheet-head .sh-help[aria-expanded="true"]{color:var(--acc)}
+.over-tabs .qa-other button,.over-tabs .qa-rest button,.timer button{background:var(--glass-on);box-shadow:none;min-height:40px;height:40px;border-radius:20px}
+.timer button{min-width:40px}
+/* 2. заливка на карточке: круги S 24 / M 36 / L 46, пилюля 40 */
+.exb-head{align-items:center;gap:8px}
+.exb-head .ibtn,.x-top .ibtn{width:36px;height:36px;margin:0;border-radius:18px;background:var(--fill-card);color:var(--ink);flex:none}
+.x-top{align-items:center}
+.exb-add{align-items:center}
+.exb-add .btn:not(.primary){width:46px;height:46px;min-height:46px;padding:0;border-radius:23px;background:var(--fill-card);color:var(--ink)}
+.tile-b .round{width:46px;height:46px;border-radius:23px;background:var(--fill-card);color:var(--ink);font-size:0}
+.lvb{width:36px;height:36px;border-radius:18px;background:var(--fill-card)}
+.wkcard .dn-a{width:32px;height:32px;border-radius:16px;background:var(--fill-card);color:var(--ink)}
+.wkcard .dn-a:disabled{opacity:.35}
+.cal-h .dn-a{width:36px;height:36px;border-radius:18px;background:var(--card);color:var(--ink)}
+.dn-a svg{width:18px;height:18px}
+.banner .bn-h .ibtn{background:var(--fill-card)}
+.weekscr details.grp.more > summary > svg:last-child,.done-ex > summary > svg:last-child{width:24px;height:24px;padding:5px;border-radius:12px;background:var(--fill-card);color:#D1D1D6}
+.help-b{display:grid;place-items:center;width:32px;height:32px;border-radius:16px;background:var(--fill-card);color:var(--ink2);padding:0}
+.help-b[aria-expanded="true"]{color:var(--acc)}
+.sl-act{gap:8px;padding:10px 12px 12px}
+.sl-act button{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:20px;background:var(--fill-card);color:var(--ink);font:600 15px var(--font)}
+:is(.exb-head .ibtn,.x-top .ibtn,.exb-add .btn:not(.primary),.tile-b .round,.lvb,.wkcard .dn-a,.cal-h .dn-a,.help-b,.sl-act button):active{background:var(--fill-card-hi);transform:scale(.94)}
+/* 3. лаймовая — главное действие: пилюля 46, текст 17 semibold; двухстрочная 56 */
+.capsule,.th-go,.exb-add .btn.primary,.sheet-foot .btn.primary,.corr-foot .btn.primary,.form .btn.primary,.hday .capsule,.capsule.sm,.review .btn.primary{
+  min-height:46px;border-radius:23px;font:600 17px/22px var(--font);gap:8px}
+.exb-add .btn.primary{height:46px}
+.qa-main{min-height:56px;border-radius:28px}
+:is(.capsule,.th-go,.exb-add .btn.primary,.sheet-foot .btn.primary,.corr-foot .btn.primary,.form .btn.primary):active{transform:scale(.97)}
+/* поля: значения и «?» запаса — одна высота 40 и радиус 12; сегменты — дорожка 32 */
+.row input[type=text],.row .q{height:40px;border-radius:12px}
+:is(.seg,.days,.seg5),.seg3g{padding:2px;border-radius:16px}
+:is(.seg,.days,.seg5) > button,.sttype .seg3g > button{height:28px;min-height:28px}
+:is(.seg,.days,.seg5)::before,.seg3g::before{top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/var(--n));border-radius:14px;background:#636366}
+.qpick .seg5{margin-top:2px}
+/* время тренировки рядом с заголовком — это не кнопка: просто цифры */
+.sec2 .elapsed{margin-left:auto;padding:0;background:none!important;box-shadow:none;color:var(--mute);font:500 17px var(--num);font-variant-numeric:tabular-nums;min-width:0;height:auto}
+/* «Фокус»: список упражнений по нажатию на «Упражнение N из M» */
+.mitem.pick{gap:12px}
+.mitem.pick i{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:13px;background:var(--fill-card);color:var(--ink);font:600 13px var(--num);font-style:normal}
+.mitem.pick i.ok{background:var(--acc);color:#000}
+.mitem.pick span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mitem.pick small{color:var(--mute);font:500 14px var(--num)}
+.mitem.pick.cur span{font-weight:600}
+button.sec2 > svg:last-child{color:var(--mute)}
+@media (prefers-reduced-transparency:reduce){:is(.pg-act:has(> :nth-child(2)),.pg-act > :only-child,.tabbar,.timer,.timer-mini,.toast,.gtip,.sheet,:is(.vswitch,.hseg) > button){background:#2C2C2E!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
+/* чипсы: без backdrop-filter — иначе кнопка становится отдельным слоем и белая подложка ложится поверх подписи выбранного чипса */
+:is(.vswitch,.hseg) > button{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2981,7 +3155,7 @@ function beep(){
 /* ---------- Иконки ---------- */
 const I={
   summ:"M12 4a8 8 0 1 0 .01 0M12 7v5l3 2", star:"M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z",
-  spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
+  spark:"M10.5 3.5C11 8.5 12.5 10 17.5 10.5 12.5 11 11 12.5 10.5 17.5 10 12.5 8.5 11 3.5 10.5 8.5 10 10 8.5 10.5 3.5zM18 14.5c.25 2 1 2.75 3 3-2 .25-2.75 1-3 3-.25-2-1-2.75-3-3 2-.25 2.75-1 3-3z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
   up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
   check:"M5 12.5l4.5 4.5L19 7.5", arrowUp:"M12 19V5M6 11l6-6 6 6",
@@ -3006,9 +3180,9 @@ const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="tru
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
 const TAB_I={infoc:1,copy:1,stop:1,coach:1,summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
-const Icon=({n,size=20})=>n==="spark"
-  ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"||n==="vmore"?3.5:TAB_I[n]?1.8:2.25} stroke-linecap=${n==="more"||n==="vmore"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;
+// Одна семья иконок, как SF Symbols: контур, круглые концы и стыки, линия ~1,8 px при любом размере (non-scaling-stroke).
+// Многоточие рисуется круглыми точками. Размер задаёт контекст: панель 24, кнопки шапки 22, чипсы 18, кнопки на карточке 18–22.
+const Icon=({n,size=20})=>html`<svg class="ic" width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"||n==="vmore"?3.4:1.8} stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${I[n]} vector-effect="non-scaling-stroke"/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;
 
 /* Интерфейс. Раскладка по образцу Strong/Hevy, см. DESIGN.md */
@@ -3051,7 +3225,7 @@ function MuscleBars({rows,zone,showEmpty,help,helpLabel}){
         <span class="bv mono">${hasFact?fmt(r.fact)+"/":""}${fmt(r.plan)}</span>
       </div>`; })}
     <//>`)}
-    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}${help?html`<button class="help-b" aria-expanded=${String(hOpen)} aria-label=${helpLabel||"Пояснение"} onClick=${()=>setHOpen(!hOpen)}>?</button>`:null}</div>
+    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}${help?html`<button class="help-b" aria-expanded=${String(hOpen)} aria-label=${helpLabel||"Пояснение"} onClick=${()=>setHOpen(!hOpen)}><${Icon} n="infoc" size=${18}/></button>`:null}</div>
     ${help&&hOpen?html`<div class="help-t">${help}</div>`:null}
   </div>`;
 }
@@ -3060,7 +3234,7 @@ const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,ef
 function Help({children,label}){
   const [open,setOpen]=useState(false);
   return html`<div class="help">
-    <button class="help-b" aria-expanded=${String(open)} aria-label=${label||"Пояснение"} onClick=${()=>setOpen(!open)}>?</button>
+    <button class="help-b" aria-expanded=${String(open)} aria-label=${label||"Пояснение"} onClick=${()=>setOpen(!open)}><${Icon} n="infoc" size=${18}/></button>
     ${open?html`<div class="help-t">${children}</div>`:null}
   </div>`;
 }
@@ -3149,8 +3323,8 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer,onCollapse}){
         <button class="exb-title" onClick=${()=>onCollapse?onCollapse():openSheet("menu",e.uid)} aria-label=${onCollapse?inf.name+". Свернуть":null}>${inf.name}</button>
         ${inf.custom?html`<div class="exb-sub">добавлено в эту тренировку</div>`:e.alt?html`<div class="exb-sub">вместо: ${inf.base}</div>`:null}
       </div>
-      ${onCollapse?html`<button class="ibtn" aria-label="Свернуть упражнение" onClick=${onCollapse}><${Icon} n="up"/></button>`:null}
-      <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="vmore"/></button>
+      ${onCollapse?html`<button class="ibtn" aria-label="Свернуть упражнение" onClick=${onCollapse}><${Icon} n="up" size=${18}/></button>`:null}
+      <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="more" size=${18}/></button>
     </div>
     <div class="exb-meta">
       <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
@@ -3169,17 +3343,16 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer,onCollapse}){
           <button class=${"q "+qTone(x.q)+(qOpen===j?" open":"")} aria-expanded=${String(qOpen===j)} aria-label=${"Запас повторов, подход "+(j+1)+": "+(x.q||"не указан")} onClick=${()=>setQOpen(qOpen===j?null:j)}>${x.q||"?"}</button>
         </div>
         ${qOpen===j?html`<div class="qpick" role="group" aria-label="Сколько повторов ещё мог сделать">
-          <div class="qpick-t">Подход ${j+1}: сколько повторов ещё мог сделать? <span>0 = отказ</span></div>
-          <div class="qpick-b">${["0","1","2","3","4+"].map(v=>html`<button key=${v} class=${qTone(v)+(x.q===v?" on":"")} onClick=${()=>{ upd(y=>{ y.sets[j].q=v; }); setQOpen(null); }}>${v}</button>`)}
-            ${x.q?html`<button class="clr" onClick=${()=>{ upd(y=>{ y.sets[j].q=""; }); setQOpen(null); }}>Очистить</button>`:null}</div>
+          <div class="qpick-t">Подход ${j+1}: сколько повторов ещё мог сделать? <span>0 = отказ, повторное нажатие снимает</span></div>
+          <div class="seg5" role="group" aria-label="Запас повторов">${["0","1","2","3","4+"].map(v=>html`<button key=${v} aria-pressed=${String(x.q===v)} onClick=${()=>{ upd(y=>{ y.sets[j].q=x.q===v?"":v; }); setQOpen(null); }}>${v}</button>`)}</div>
           <${SetType} value=${x.t||""} onChange=${v=>upd(y=>{ y.sets[j].t=v; })}/>
         </div>`:null}
       <//>`; })}
     </div>
     <div class="exb-add">
-      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${18}/> ${done?"Отдых":"Подход сделан"}</button>
-      <button class="btn" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/></button>
-      <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${16}/></button>
+      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${20}/> ${done?"Отдых":"Подход сделан"}</button>
+      <button class="btn" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${22}/></button>
+      <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${22}/></button>
     </div>
     <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
   </section>`;
@@ -3194,7 +3367,7 @@ function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk,openHistory}){
   return html`<${Sheet} title=${inf.name} onClose=${onClose}>
     <div class="menu">
       ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
-      ${item("target","Нагрузка на мышцы",()=>go("mus"))}
+      ${item("bars","Нагрузка на мышцы",()=>go("mus"))}
       ${openHistory?item("history","История упражнения",()=>{ onClose(); openHistory(inf.name); }):null}
       ${lt?item("clock","Заполнить как в прошлый раз",()=>{ edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.sets=lt.e.sets.map(y=>({w:y.w,r:y.r,ok:false,q:""})); x.n=x.sets.length; } }); onClose(); }):null}
       ${i>0?item("up","Поднять выше",()=>move(-1)):null}
@@ -3338,43 +3511,26 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Кольцо прогресса как в Activity: сплошная дуга с круглыми концами на тёмной дорожке цвета дня
-function ActRing({p,size=36,stroke=5}){
-  const c=size/2, r=c-stroke/2-.5, v=Math.max(0,Math.min(1,p))*100;
-  return html`<svg class="actring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
-    <circle cx=${c} cy=${c} r=${r} fill="none" stroke="var(--c)" stroke-opacity=".24" stroke-width=${stroke}/>
-    ${v>0?html`<circle cx=${c} cy=${c} r=${r} fill="none" stroke="var(--c)" stroke-width=${stroke} stroke-linecap="round" pathLength="100"
-      stroke-dasharray=${(v>=100?100:Math.max(.01,v-.01))+" 100"} transform=${"rotate(-90 "+c+" "+c+")"}/>`:null}
-  </svg>`;
-}
-// Упражнения тренировки: ряд колец Activity — дуга заполняется по сделанным подходам, внутри номер, у сделанного галочка.
-// Раскладка — сетка из равных колонок, поэтому края слева и справа одинаковые. Нажатие ведёт к упражнению.
-function Barbell({s,day,cur,onPick,bare}){
-  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
-  return html`<div class="bbwrap">
-    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day],"--n":Math.max(n,1)}}>
-      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)), full=r&&d>=r;
-        return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(full?" full":"")} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
-          <span class="xr-in"><${ActRing} p=${r?d/r:0}/><b>${full?html`<${Icon} n="check" size=${14}/>`:i+1}</b></span></button>`; })}
-    </div>
-    ${bare?null:html`<span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>`}
+// Прогресс тренировки одной полосой, как UIProgressView: дорожка — цвет дня приглушённый, заливка — цвет дня (--c задаёт родитель).
+// caption — подпись «4 из 22 подходов» над полосой (экран тренировки); без неё — только полоса (в карточке «Сегодня» счёт уже крупно).
+const setsOf=n=>n%10===1&&n%100!==11?"подхода":"подходов";
+function ProgressBar({done,total,caption}){
+  const p=total?Math.min(1,done/total):0;
+  return html`<div class="pbar" role="progressbar" aria-label="Подходы за тренировку" aria-valuemin="0" aria-valuemax=${total} aria-valuenow=${Math.min(done,total)} aria-valuetext=${done+" из "+total+" "+setsOf(total)}>
+    ${caption?html`<span class="pb-cap"><b>${done}</b> из ${total} ${setsOf(total)}</span>`:null}
+    <span class="pb-track"><span class="pb-fill" style=${{width:p*100+"%"}}></span></span>
   </div>`;
 }
-// Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
-// Шапка тренировки: по центру день (нажатие — сменить день или дату), слева мышцы, справа тренер;
-// сразу под ней «Журнал / Фокус», ниже — кольца упражнений и счёт подходов одной строкой.
-function TrainHero({s,date,day,onDay,onMuscles,onAsk,cur,onPick,ui,setUi}){
+// Шапка тренировки: по центру день (нажатие — сменить день или дату), справа мышцы и тренер;
+// сразу под ней «Журнал / Фокус», ниже — полоса прогресса подходов.
+function TrainHero({s,date,day,onDay,onMuscles,onAsk,ui,setUi}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
   return html`<${React.Fragment}>
     <${AppBar} title=${P[day].name} onTitle=${onDay} label="Сменить день или дату" sub=${date===todayStr()?null:navDate(date)}
       left=${onMuscles?html`<${AbIcon} n="bars" label="Мышцы за тренировку" onClick=${onMuscles}/>`:null}
       right=${onAsk?html`<${CoachBtn} onClick=${onAsk}/>`:null}/>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
-    ${s.ex.length?html`<section class="trstrip" style=${{"--c":PC[day]}}>
-      <${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick} bare=${true}/>
-      <span class="tr-cnt"><b>${done}</b> из ${total} подходов</span>
-    </section>`:null}
+    ${s.ex.length?html`<${ProgressBar} done=${done} total=${total} caption=${true}/>`:null}
   <//>`;
 }
 // «Журнал / Фокус»: экраны разные, переключатель монтируется заново — подсветка стартует с прошлого пункта и доезжает
@@ -3485,7 +3641,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
     ${sheets}
   </div>`;
   return html`<div style=${{"--c":PC[day]}}>
-    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})} onAsk=${()=>openAsk(null)} onPick=${reveal}/>
+    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})} onAsk=${()=>openAsk(null)}/>
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
     <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
     ${list}
@@ -3759,12 +3915,16 @@ function App(){
   const setUi=v=>{ setUiRaw(v); try{ localStorage.setItem("trainlog.ui",v); }catch(e){} window.scrollTo(0,0); };
   useEffect(()=>{ document.documentElement.dataset.ui=ui; },[ui]);
   const day=picked||defaultDay(date);
-  const mainRef=useRef(null), navRef=useRef(null), indRef=useRef(null), indInit=useRef(false);
+  const mainRef=useRef(null), navRef=useRef(null), indRef=useRef(null), fabRef=useRef(null), indInit=useRef(false);
   // «капля» Liquid Glass под текущей вкладкой: передний край убегает быстро, задний догоняет с пружиной —
   // капля растягивается в сторону движения и собирается на месте; в полёте чуть приподнимается (iOS 26)
   const placeInd=animate=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
     const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
-    const lab=b.querySelector(".tb-l"), w=Math.min(nav.clientWidth-6,Math.max(b.offsetWidth,(lab?lab.offsetWidth:0)+30)), cx=b.offsetLeft+b.offsetWidth/2;
+    const lab=b.querySelector(".tb-l"), cx=b.offsetLeft+b.offsetWidth/2, fab=fabRef.current;
+    let w=Math.max(b.offsetWidth,(lab?lab.offsetWidth:0)+30);
+    // «+» стоит в центре капсулы: подсветка соседней вкладки сужается симметрично и не подходит к нему ближе 6 px
+    if(fab){ const fl=fab.getBoundingClientRect().left-nav.getBoundingClientRect().left, fr=fl+fab.offsetWidth; w=Math.min(w,2*(cx<fl?fl-6-cx:cx-fr-6)); }
+    w=Math.min(w,2*(cx-3),2*(nav.clientWidth-3-cx));
     const L=Math.max(3,Math.round(cx-w/2)), R=Math.max(3,Math.round(nav.clientWidth-(cx+w/2))), prevL=parseFloat(ind.style.left);
     ind.classList.remove("to-l","to-r","moving");
     if(!animate||isNaN(prevL)||calm()){ ind.style.transition="none"; ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1"; ind.getBoundingClientRect(); ind.style.transition=""; return; }
@@ -3804,7 +3964,7 @@ function App(){
       <span class="lg-ind" aria-hidden="true" ref=${indRef}></span>
       ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
     </nav>
-    <button class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть быстрое добавление":"Быстрое добавление"} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${26}/></span></button>
+    <button ref=${fabRef} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть быстрое добавление":"Быстрое добавление"} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>
     ${quick?html`<${QuickAdd} onClose=${()=>setQuick(false)} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}
       startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }}/>`:null}
     ${body?html`<${BodySheet} toast=${showToast} onClose=${()=>setBody(false)}/>`:null}
@@ -3879,7 +4039,7 @@ function AppBar({left,title,sub,onTitle,right,label}){
 (()=>{ const f=()=>{ const r=document.documentElement, on=window.scrollY>40; if(on!==(r.dataset.scrolled==="1")){ if(on) r.dataset.scrolled="1"; else delete r.dataset.scrolled; } };
   window.addEventListener("scroll",f,{passive:true}); })();
 const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
@@ -3949,9 +4109,9 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
     <section class="thero" style=${{"--c":PC[tday]}}>
       <div class="th-row">
         <button class="th-day" onClick=${goToday} aria-label=${"Сегодня: "+P[tday].name}>${P[tday].name}</button>
-        ${ts.ex.length?html`<span class="th-cnt"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
+        ${ts.ex.length?html`<span class="th-cnt" aria-hidden="true"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
       </div>
-      ${ts.ex.length?html`<${Barbell} s=${ts} day=${tday} cur=${cur} onPick=${goToday}/>`:null}
+      ${ts.ex.length?html`<${ProgressBar} done=${doneSets} total=${rows}/>`:null}
       <button class="th-go" onClick=${goToday}>${ts.done?"Посмотреть итог":hasData(ts)?"Продолжить":"Начать тренировку"}</button>
     </section>
 
@@ -4039,7 +4199,7 @@ function WeekScreen({date,toast}){
   return html`<div class="weekscr">
     <${AppBar} title="Неделя" sub=${dayMonth(w.ws)+" – "+dayMonth(w.we)} left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
           <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}
-      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}>?</button>`}/>
+      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}/>
     ${help?html`<${GlassTip} onClose=${()=>setHelp(false)}>
       <b>Как читать</b>
       <p>Кольцо — подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсвеченная плитка — цель набрана.</p>
@@ -4103,15 +4263,15 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
       :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big tile-empty" aria-hidden="true"></b>`:html`<b class="big">${nfmt(value)}</b>`}<small>${unit}</small></button>`}
     <div class="tile-b">
-      <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
-      <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>
+      <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}><${Icon} n="minus" size=${22}/></button>
+      <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}><${Icon} n="plus" size=${22}/></button>
     </div>
   </div>`;
 }
 
 function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setUi,openHistory,go}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
-  const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [draft,setDraft]=useState(null), [showSum,setShowSum]=useState(false);
+  const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [draft,setDraft]=useState(null), [showSum,setShowSum]=useState(false), [pick,setPick]=useState(false);
   useEffect(()=>{ setIdx(null); setDraft(null); setShowSum(false); },[day,date]);
   const open=s.ex.findIndex(e=>curSet(s,e)>=0);
   const i=idx!=null&&idx<s.ex.length?idx:(open>=0?open:Math.max(0,s.ex.length-1));
@@ -4161,9 +4321,13 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
   </div>`;
 
   return html`<div class="fx" style=${{"--c":PC[day]}}>
-    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onAsk=${()=>openAsk(null)} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      cur=${i} onPick=${goEx}/>
-    <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
+    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onAsk=${()=>openAsk(null)} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}/>
+    <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"} onClick=${s.ex.length?()=>setPick(true):null}><${Elapsed} s=${s}/><//>
+    ${pick?html`<${Sheet} title="Упражнения" onClose=${()=>setPick(false)}>
+      <div class="menu">${s.ex.map((x,k)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
+        return html`<button key=${x.uid||k} class=${"mitem pick"+(k===i?" cur":"")} onClick=${()=>{ setPick(false); goEx(k); }}>
+          <i class=${d>=r&&r?"ok":""}>${d>=r&&r?html`<${Icon} n="check" size=${14}/>`:k+1}</i><span>${xinfo(s,x).name}</span><small>${d} из ${r}</small></button>`; })}</div>
+    <//>`:null}
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
 
     ${!e?html`<section class="xcard"><p class="st">В тренировке нет упражнений.</p><button class="capsule" onClick=${()=>setSheet({type:"add"})}>Добавить упражнение</button></section>`
@@ -4171,7 +4335,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
       <section class="xcard">
         <div class="x-top">
           <h2>${inf.name}</h2>
-          <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="vmore" size=${22}/></button>
+          <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="more" size=${18}/></button>
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
         <button class="tags" aria-label=${"Нагрузка на мышцы: "+lvSorted(inf.lv).slice(0,3).map(k=>MUS[k]+" "+inf.lv[k]).join(", ")} onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
@@ -4196,8 +4360,8 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
             <span>Подход ${k+1}${SET_T[x.t]?html` <i class="st-t" aria-label=${SET_T[x.t].l}>${SET_T[x.t].s}</i>`:null}</span>
             <b class=${dn?"ok":cur?"now":""}>${dn?(x.w?nfmt(x.w)+" × ":"")+(x.r||"")+"  ✓":cur?"сейчас":"–"}</b></button>`; })}
         <div class="sl-act">
-          <button onClick=${()=>upd(x=>{ x.n+=1; x.sets.push(blankSet()); })}>+ Подход</button>
-          ${rows>1?html`<button onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}>− Подход</button>`:null}
+          <button onClick=${()=>upd(x=>{ x.n+=1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${18}/>Подход</button>
+          ${rows>1?html`<button onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${18}/>Подход</button>`:null}
         </div>
       </section>
 

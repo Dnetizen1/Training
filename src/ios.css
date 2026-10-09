@@ -2298,3 +2298,177 @@ body:has(.timer-mini){padding-bottom:calc(var(--tb-b) + var(--tb-h) + 78px)}
 .toast{border-radius:22px;background:rgba(30,30,32,.62);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
   box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.14);color:var(--ink)}
 .toast button{color:var(--acc)}
+
+/* ===== v12 — шкала отступов 4 / 8 / 12 / 16 / 24 (замеры 390×844 @3x): шапка → блок 16, раздел 24 сверху и 12 снизу, соседи 8 ===== */
+:root{--pad:16px;--gap:8px}
+
+/* шапка: строка заголовка не прыгает от подписи — заголовок всегда на y=17, кнопки на y=10 */
+.pg-h{align-items:start}
+.pg-h > .pg-c{padding-top:7px}
+.pg-h > .pg-act{align-self:start}
+
+/* шапка -> первый блок: 16 */
+main .pg-h + .vswitch{margin-top:16px}
+.home > .pg-h + .thero{margin-top:16px}
+.weekscr > .pg-h ~ .mtiles{margin-top:16px}
+.hero > .pg-h + .hseg{margin-top:16px}
+main .pg-h + .finish{margin-top:16px}
+
+/* чипсы -> содержимое: 16 */
+.histv > .hero + .cal-h,.histv > .hero + .hsearch{margin-top:16px}
+
+/* заголовок раздела: 24 сверху, 12 до содержимого */
+main .sec2{margin-top:24px;margin-bottom:12px}
+.histv > .cal-h + .cal{margin-top:12px}
+
+/* соседи в одной группе: 8 (--gap); подпись под карточкой: 8 */
+.exlist > .exb{margin-top:0;margin-bottom:0}
+.exlist > .exb + .exb{margin-top:var(--gap)}
+.fx > .setlist{margin-top:var(--gap)}
+.fx > .nx{padding:8px 4px 4px}
+.fx .notebtn{margin-top:0}
+.weekscr > .wkstats{margin-top:var(--gap)}
+.weekscr > .wk-low,.weekscr .mnote{margin:var(--gap) 16px 0}
+.histv > .dlegend{margin-top:var(--gap);margin-bottom:0}
+.histv > .hx-note{margin:16px 16px 8px}
+
+/* отдельная группа без заголовка (подсказка, раскрывашка, кнопки страницы): 16 */
+.exlist .addex{margin-top:16px}
+.exlist .addex::before{top:-8px}
+.fx .finish-btn{margin-top:16px}
+.weekscr > .banner{margin-top:16px}
+main .done-ex{margin-top:16px}
+.done-ex + .finish-btn{margin-top:var(--gap)}
+
+/* итог тренировки */
+.finish{gap:var(--gap)}
+.finish > .tiles4{margin-top:8px}
+.finish > .notetile{margin-top:0}
+.finish > .review:not(:has(button,.sum,.st)){display:none}
+.finish > .corr{margin-top:16px;gap:0}
+.finish > .corr > h3{margin:0 0 12px;font:700 21px/26px var(--disp);letter-spacing:0}
+.finish .corr-card{gap:0}
+.corr-card > .corr-item{background:none;border-radius:0}
+.corr-card > .corr-item + .corr-item{border-top:.5px solid var(--sep)}
+.corr-card > .corr-foot{padding:12px 16px 16px}
+
+/* последний блок -> нижняя панель: 24 на всех экранах */
+.home,.weekscr,.fx{padding-bottom:0}
+body,:root[data-view] body{padding-bottom:calc(var(--tb-b) + var(--tb-h) + 24px)}
+:root body:has(.timer-mini),:root[data-view] body:has(.timer-mini){padding-bottom:calc(var(--tb-b) + var(--tb-h) + 72px)}
+
+/* внутренние отступы: карточка 16, компактная плитка 12/16, строка списка 12/16 */
+.home .wkcard{padding:var(--pad);gap:16px}
+.mtile{padding:12px}
+.tiles4 > div:not(.durtile),.durtile > button,.durtile > label{padding:12px 16px}
+.notetile{padding:12px 16px}
+.hxlist > .hx{padding:12px 16px;border-radius:0}
+.exlist > .xrow{padding-inline:16px}
+.weekscr .banner{border-radius:var(--r-card)}
+
+/* плавающий слой: 8 от краёв экрана и от нижней панели, внутри 16 */
+.sheet-wrap.over-tabs{bottom:calc(var(--tb-b) + var(--tb-h) + 8px)}
+.sheet-wrap.over-tabs .sheet,.sheet-wrap.over-tabs.with-head .sheet{width:min(calc(100% - 16px),440px)}
+.timer-mini{bottom:calc(var(--tb-b) + var(--tb-h) + 8px)}
+.sheet-wrap.over-tabs:not(.with-head) .sheet{padding:16px}
+.sheet-wrap.over-tabs:not(.with-head) .sheet-body{padding-top:8px}
+.over-tabs .qa-rest,.over-tabs .qa-rows{margin-top:12px}
+.gtip{top:calc(env(safe-area-inset-top,0px) + 58px);right:var(--g);padding:16px}
+
+/* «Прогресс»: тренд главного упражнения — тоже раздел: 24 сверху, 12 до графика */
+.home > .tr-h{margin-top:24px}
+.home > .trend{margin-top:12px}
+.fx > .vswitch + .finish{margin-top:16px}
+
+/* ===== v12 — прогресс тренировки одной полосой (как UIProgressView / полосы целей в Fitness) ===== */
+.pbar{display:grid;gap:8px}
+.pb-cap{font:400 13px/18px var(--font);color:var(--mute)}
+.pb-cap b{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.pb-track{position:relative;display:block;height:6px;border-radius:3px;overflow:hidden;background:color-mix(in srgb,var(--c,var(--acc)) 24%,transparent)}
+.pb-fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:var(--c,var(--acc));transition:width .5s var(--lg-ease)}
+@media (prefers-reduced-motion:reduce){.pb-fill{transition:none}}
+.vswitch + .pbar{margin-top:16px}
+.pbar + .sec2,.pbar + .applied{margin-top:24px}
+.thero .pbar{margin:4px 0 8px}
+
+/* ===== v12 — нижнее меню: «+» снова в центре капсулы (5 мест: Прогресс, Неделя, +, Тренировка, История) ===== */
+.tabbar{right:var(--g);grid-template-columns:repeat(5,minmax(0,1fr))}
+.tabbar [data-tab="train"]{grid-column:4}
+.tabbar [data-tab="hist"]{grid-column:5}
+.tb-fab{left:calc(50% - 22px);right:auto;bottom:calc(var(--tb-b) + (var(--tb-h) - 44px)/2);width:44px;height:44px;z-index:13;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 10px rgba(0,0,0,.35)}
+.tb-fab::before{content:"";position:absolute;inset:-7px -12px}
+.tb-fab > span svg{width:24px;height:24px;stroke-width:2.4}
+.tb-fab:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.tb-fab:focus-visible > span{outline:0}
+
+/* ===== v12 — единая система кнопок: 1) стекло (плавающий слой), 2) заливка на карточке, 3) лаймовая — главное действие, 4) текст ===== */
+:root{
+  --glass:rgba(44,44,47,.8); --glass-blur:blur(16px) saturate(180%);
+  --glass-rim:inset 0 0 0 .5px rgba(255,255,255,.12),inset 0 1px 0 rgba(255,255,255,.1);
+  --glass-shadow:0 6px 20px rgba(0,0,0,.35); --glass-on:rgba(255,255,255,.1); --glass-on-hi:rgba(255,255,255,.18);
+  --fill-card:rgba(120,120,128,.32); --fill-card-hi:rgba(120,120,128,.44);
+}
+/* 1. стекло: кнопки шапки (одна или группа), чипсы, нижнее меню, плавающие панели, таймер, всплывашка, подсказка — один материал */
+.pg-act:has(> :nth-child(2)),.pg-act > :only-child,.tabbar,.timer,.timer-mini,.toast,.gtip,.sheet-wrap.over-tabs .sheet,.sheet-wrap:not(.over-tabs) .sheet{
+  background:var(--glass);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-rim),var(--glass-shadow)}
+:is(.vswitch,.hseg) > button{background:var(--glass)!important;-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-rim)}
+:is(.ab-i,.ab-coach,.ab-link,.pillsel,.dn-a)::after,.pg-act:has(> :nth-child(2))::after,.tabbar::after,.sheet-wrap.over-tabs .sheet::after,.sheet-wrap:not(.over-tabs) .sheet::after,.gtip::after{content:none}
+.pg-act > *{width:40px;height:40px;border-radius:20px;color:var(--ink);background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pg-act > :only-child{background:var(--glass);box-shadow:var(--glass-rim),var(--glass-shadow)}
+.pg-act:has(> :nth-child(2)) > *{width:44px}
+.pg-act svg{width:22px;height:22px}
+.pg-act > :active{background:var(--glass-on-hi)!important;transform:scale(.94)}
+.pg-act > .ab-q.on{background:var(--glass-on)!important;color:var(--acc)}
+.navmini .pg-act > *{width:44px}
+/* стекло на стекле (кнопки внутри шторок, панелей, таймера): лёгкая заливка без размытия */
+.sheet-head .ibtn{width:40px;height:40px;border-radius:20px;background:var(--glass-on);color:var(--ink)}
+.sheet-head .ibtn svg{width:20px;height:20px}
+.sheet-head .ibtn:active{background:var(--glass-on-hi)}
+.sheet-head .sh-help[aria-expanded="true"]{color:var(--acc)}
+.over-tabs .qa-other button,.over-tabs .qa-rest button,.timer button{background:var(--glass-on);box-shadow:none;min-height:40px;height:40px;border-radius:20px}
+.timer button{min-width:40px}
+/* 2. заливка на карточке: круги S 24 / M 36 / L 46, пилюля 40 */
+.exb-head{align-items:center;gap:8px}
+.exb-head .ibtn,.x-top .ibtn{width:36px;height:36px;margin:0;border-radius:18px;background:var(--fill-card);color:var(--ink);flex:none}
+.x-top{align-items:center}
+.exb-add{align-items:center}
+.exb-add .btn:not(.primary){width:46px;height:46px;min-height:46px;padding:0;border-radius:23px;background:var(--fill-card);color:var(--ink)}
+.tile-b .round{width:46px;height:46px;border-radius:23px;background:var(--fill-card);color:var(--ink);font-size:0}
+.lvb{width:36px;height:36px;border-radius:18px;background:var(--fill-card)}
+.wkcard .dn-a{width:32px;height:32px;border-radius:16px;background:var(--fill-card);color:var(--ink)}
+.wkcard .dn-a:disabled{opacity:.35}
+.cal-h .dn-a{width:36px;height:36px;border-radius:18px;background:var(--card);color:var(--ink)}
+.dn-a svg{width:18px;height:18px}
+.banner .bn-h .ibtn{background:var(--fill-card)}
+.weekscr details.grp.more > summary > svg:last-child,.done-ex > summary > svg:last-child{width:24px;height:24px;padding:5px;border-radius:12px;background:var(--fill-card);color:#D1D1D6}
+.help-b{display:grid;place-items:center;width:32px;height:32px;border-radius:16px;background:var(--fill-card);color:var(--ink2);padding:0}
+.help-b[aria-expanded="true"]{color:var(--acc)}
+.sl-act{gap:8px;padding:10px 12px 12px}
+.sl-act button{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:20px;background:var(--fill-card);color:var(--ink);font:600 15px var(--font)}
+:is(.exb-head .ibtn,.x-top .ibtn,.exb-add .btn:not(.primary),.tile-b .round,.lvb,.wkcard .dn-a,.cal-h .dn-a,.help-b,.sl-act button):active{background:var(--fill-card-hi);transform:scale(.94)}
+/* 3. лаймовая — главное действие: пилюля 46, текст 17 semibold; двухстрочная 56 */
+.capsule,.th-go,.exb-add .btn.primary,.sheet-foot .btn.primary,.corr-foot .btn.primary,.form .btn.primary,.hday .capsule,.capsule.sm,.review .btn.primary{
+  min-height:46px;border-radius:23px;font:600 17px/22px var(--font);gap:8px}
+.exb-add .btn.primary{height:46px}
+.qa-main{min-height:56px;border-radius:28px}
+:is(.capsule,.th-go,.exb-add .btn.primary,.sheet-foot .btn.primary,.corr-foot .btn.primary,.form .btn.primary):active{transform:scale(.97)}
+/* поля: значения и «?» запаса — одна высота 40 и радиус 12; сегменты — дорожка 32 */
+.row input[type=text],.row .q{height:40px;border-radius:12px}
+:is(.seg,.days,.seg5),.seg3g{padding:2px;border-radius:16px}
+:is(.seg,.days,.seg5) > button,.sttype .seg3g > button{height:28px;min-height:28px}
+:is(.seg,.days,.seg5)::before,.seg3g::before{top:2px;bottom:2px;left:2px;width:calc((100% - 4px)/var(--n));border-radius:14px;background:#636366}
+.qpick .seg5{margin-top:2px}
+/* время тренировки рядом с заголовком — это не кнопка: просто цифры */
+.sec2 .elapsed{margin-left:auto;padding:0;background:none!important;box-shadow:none;color:var(--mute);font:500 17px var(--num);font-variant-numeric:tabular-nums;min-width:0;height:auto}
+/* «Фокус»: список упражнений по нажатию на «Упражнение N из M» */
+.mitem.pick{gap:12px}
+.mitem.pick i{display:grid;place-items:center;flex:none;width:26px;height:26px;border-radius:13px;background:var(--fill-card);color:var(--ink);font:600 13px var(--num);font-style:normal}
+.mitem.pick i.ok{background:var(--acc);color:#000}
+.mitem.pick span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mitem.pick small{color:var(--mute);font:500 14px var(--num)}
+.mitem.pick.cur span{font-weight:600}
+button.sec2 > svg:last-child{color:var(--mute)}
+@media (prefers-reduced-transparency:reduce){:is(.pg-act:has(> :nth-child(2)),.pg-act > :only-child,.tabbar,.timer,.timer-mini,.toast,.gtip,.sheet,:is(.vswitch,.hseg) > button){background:#2C2C2E!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
+/* чипсы: без backdrop-filter — иначе кнопка становится отдельным слоем и белая подложка ложится поверх подписи выбранного чипса */
+:is(.vswitch,.hseg) > button{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}

@@ -62,7 +62,7 @@ function AppBar({left,title,sub,onTitle,right,label}){
 (()=>{ const f=()=>{ const r=document.documentElement, on=window.scrollY>40; if(on!==(r.dataset.scrolled==="1")){ if(on) r.dataset.scrolled="1"; else delete r.dataset.scrolled; } };
   window.addEventListener("scroll",f,{passive:true}); })();
 const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
@@ -132,9 +132,9 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
     <section class="thero" style=${{"--c":PC[tday]}}>
       <div class="th-row">
         <button class="th-day" onClick=${goToday} aria-label=${"Сегодня: "+P[tday].name}>${P[tday].name}</button>
-        ${ts.ex.length?html`<span class="th-cnt"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
+        ${ts.ex.length?html`<span class="th-cnt" aria-hidden="true"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
       </div>
-      ${ts.ex.length?html`<${Barbell} s=${ts} day=${tday} cur=${cur} onPick=${goToday}/>`:null}
+      ${ts.ex.length?html`<${ProgressBar} done=${doneSets} total=${rows}/>`:null}
       <button class="th-go" onClick=${goToday}>${ts.done?"Посмотреть итог":hasData(ts)?"Продолжить":"Начать тренировку"}</button>
     </section>
 
@@ -222,7 +222,7 @@ function WeekScreen({date,toast}){
   return html`<div class="weekscr">
     <${AppBar} title="Неделя" sub=${dayMonth(w.ws)+" – "+dayMonth(w.we)} left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
           <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}
-      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}>?</button>`}/>
+      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}/>
     ${help?html`<${GlassTip} onClose=${()=>setHelp(false)}>
       <b>Как читать</b>
       <p>Кольцо — подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсвеченная плитка — цель набрана.</p>
