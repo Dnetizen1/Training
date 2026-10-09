@@ -2026,6 +2026,42 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .sheet-wrap.over-tabs.ask .sheet{max-height:calc(100% - 70px)}
 .ask .sheet-foot{flex:none;gap:8px}
 .ask .sheet-body{padding-top:12px}
+/* «Фокус»: число и тире не переносятся и не сжимаются — обе плитки одной высоты */
+.tile-v .big{flex:none;white-space:nowrap}
+.tile-v .big.empty{display:block;transform:none}
+/* пустой вес: тире рисуем полоской, а не символом — символ из запасного шрифта раздувал строку и сдвигал ± */
+.tile-v .big.empty{display:flex;align-items:center;justify-content:center;width:44px;height:64px;line-height:64px}
+.tile-v .big.empty::before{content:"";width:36px;height:6px;border-radius:3px;background:var(--mute2)}
+
+/* нижняя панель: «капля» тянется в сторону движения (передний край быстрее заднего) и чуть приподнимается в полёте */
+.tabbar .lg-ind{left:0;right:auto;width:auto;transform:none;
+  transition:left .5s var(--lg-spring),right .5s var(--lg-spring),transform .25s var(--lg-ease),background-color .25s,opacity .2s}
+.tabbar .lg-ind.to-r{transition:right .26s cubic-bezier(.2,.8,.2,1),left .52s var(--lg-spring),transform .25s var(--lg-ease),background-color .25s,opacity .2s}
+.tabbar .lg-ind.to-l{transition:left .26s cubic-bezier(.2,.8,.2,1),right .52s var(--lg-spring),transform .25s var(--lg-ease),background-color .25s,opacity .2s}
+.tabbar .lg-ind.moving{transform:scaleY(1.1);background:rgba(255,255,255,.22)}
+.tabbar:has(button:not(.tb-fab):active) .lg-ind{transform:scale(1.06,1.12);background:rgba(255,255,255,.24)}
+@media (prefers-reduced-motion:reduce){.tabbar .lg-ind,.tabbar .lg-ind.to-r,.tabbar .lg-ind.to-l{transition:opacity .2s}}
+
+/* ===== шапка iOS 26: заголовок 34 px слева, подпись под ним, справа стеклянные кнопки ===== */
+.pg-h{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"c r";align-items:center;gap:12px;min-height:62px;padding-top:18px}
+.pg-c{grid-area:c;display:flex;flex-direction:column;min-width:0;text-align:left}
+.pg-h h1{margin:0;font:700 34px/41px var(--disp);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-h small{margin:0;font-size:15px;line-height:20px;color:var(--mute)}
+.pg-h h1 .pg-t{gap:4px}
+.pg-h h1 .pg-t svg{margin-top:6px}
+.pg-act{grid-area:r;display:flex;align-items:center;gap:8px;align-self:start}
+.pg-act:empty{display:none}
+.ab-link svg{display:none}
+/* две кнопки и больше — одна капсула, как сгруппированные кнопки панели в iOS 26 */
+.pg-act:has(> :nth-child(2)){gap:0;position:relative;isolation:isolate;border-radius:22px;background:var(--lg-tint);
+  -webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);box-shadow:0 4px 14px rgba(0,0,0,.28),0 1px 2px rgba(0,0,0,.3)}
+.pg-act:has(> :nth-child(2))::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge),inset 0 0 8px rgba(255,255,255,.1)}
+.pg-act:has(> :nth-child(2)) > *{width:46px;height:44px;padding:0;justify-content:center;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:22px}
+.pg-act:has(> :nth-child(2)) > *::after{content:none}
+.pg-act:has(> :nth-child(2)) > :active{transform:scale(.9)}
+.pg-act:has(> :nth-child(2)) .pillsel > span,.pg-act:has(> :nth-child(2)) .pillsel > svg:not(:first-child){display:none}
+.pg-act:has(> :nth-child(2)) .pillsel svg:first-child{width:22px;height:22px}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -3194,7 +3230,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
       setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>`;
   // тренировка завершена: сверху итог и разбор, упражнения свёрнуты ниже
   if(s.done) return html`<div style=${{"--c":PC[day]}}>
-    <${AppBar} title="Тренировка" sub=${date===todayStr()?null:navDate(date)}/>
+    <${AppBar} title="Итог" sub=${date===todayStr()?null:navDate(date)}/>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:"Тренировка завершена"}}/>
     <details class="grp more done-ex">
       <summary class="grp-row"><span><${Icon} n="list" size=${16}/>Упражнения · ${s.ex.length}</span><${Icon} n="right" size=${16}/></summary>
@@ -3474,16 +3510,21 @@ function App(){
   useEffect(()=>{ document.documentElement.dataset.ui=ui; },[ui]);
   const day=picked||defaultDay(date);
   const mainRef=useRef(null), navRef=useRef(null), indRef=useRef(null), indInit=useRef(false);
-  // скользящая «стеклянная» подсветка текущей вкладки (как в liquid-glass-ui): ездит по пружине к выбранной кнопке
-  useEffect(()=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
-    const place=anim=>{ const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
-      if(!anim){ ind.style.transition="none"; }
-      ind.style.opacity="1"; ind.style.width=b.offsetWidth+"px"; ind.style.transform="translateX("+b.offsetLeft+"px)";
-      if(!anim){ ind.getBoundingClientRect(); ind.style.transition=""; } };
-    place(indInit.current); indInit.current=true;
-    const ro=window.ResizeObserver?new ResizeObserver(()=>place(false)):null; if(ro) ro.observe(nav);
-    return ()=>{ if(ro) ro.disconnect(); }; },[view]);
-  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; document.documentElement.dataset.hdr="c"; },[day]);
+  // «капля» Liquid Glass под текущей вкладкой: передний край убегает быстро, задний догоняет с пружиной —
+  // капля растягивается в сторону движения и собирается на месте; в полёте чуть приподнимается (iOS 26)
+  const placeInd=animate=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
+    const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
+    const L=b.offsetLeft, R=nav.clientWidth-b.offsetLeft-b.offsetWidth, prevL=parseFloat(ind.style.left);
+    ind.classList.remove("to-l","to-r","moving");
+    if(!animate||isNaN(prevL)||calm()){ ind.style.transition="none"; ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1"; ind.getBoundingClientRect(); ind.style.transition=""; return; }
+    if(Math.abs(prevL-L)<1) return;
+    ind.getBoundingClientRect(); ind.classList.add(L>prevL?"to-r":"to-l","moving");
+    ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1";
+    clearTimeout(ind._t); ind._t=setTimeout(()=>ind.classList.remove("moving"),420); };
+  useEffect(()=>{ placeInd(indInit.current); indInit.current=true; },[view]);
+  useEffect(()=>{ const nav=navRef.current; if(!nav||!window.ResizeObserver) return; let w=nav.clientWidth;
+    const ro=new ResizeObserver(()=>{ if(nav.clientWidth!==w){ w=nav.clientWidth; placeInd(false); } }); ro.observe(nav); return ()=>ro.disconnect(); },[]);
+  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
   useEffect(()=>{ anim(mainRef.current,{opacity:[0,1]},{type:"tween",duration:.2,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };
@@ -3567,15 +3608,14 @@ function weekData(date){
 }
 
 // Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
+// Шапка как в iOS 26: крупный заголовок слева (подпись — под ним), кнопки справа; две и больше — в одной стеклянной капсуле
 function AppBar({left,title,sub,onTitle,right,label}){
-  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${20}/></button>`:title;
   return html`<header class="pg-h">
-    <span class="pg-l">${left}</span>
-    <div class="pg-c">${sub?html`<small>${sub}</small>`:null}<h1>${t}</h1></div>
-    <span class="pg-act">${right}</span>
+    <div class="pg-c"><h1>${t}</h1>${sub?html`<small>${sub}</small>`:null}</div>
+    <span class="pg-act">${left}${right}</span>
   </header>`;
 }
-// Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
 const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
@@ -3799,7 +3839,7 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
   return html`<div class="tile">
     <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
-      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}><b class=${"big"+(value===""?" empty":"")}>${value===""?"—":nfmt(value)}</b><small>${unit}</small></button>`}
+      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big empty" aria-hidden="true"></b>`:html`<b class="big">${nfmt(value)}</b>`}<small>${unit}</small></button>`}
     <div class="tile-b">
       <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
       <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>

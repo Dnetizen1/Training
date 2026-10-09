@@ -461,7 +461,7 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
       setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>`;
   // тренировка завершена: сверху итог и разбор, упражнения свёрнуты ниже
   if(s.done) return html`<div style=${{"--c":PC[day]}}>
-    <${AppBar} title="Тренировка" sub=${date===todayStr()?null:navDate(date)}/>
+    <${AppBar} title="Итог" sub=${date===todayStr()?null:navDate(date)}/>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:"Тренировка завершена"}}/>
     <details class="grp more done-ex">
       <summary class="grp-row"><span><${Icon} n="list" size=${16}/>Упражнения · ${s.ex.length}</span><${Icon} n="right" size=${16}/></summary>
@@ -741,16 +741,21 @@ function App(){
   useEffect(()=>{ document.documentElement.dataset.ui=ui; },[ui]);
   const day=picked||defaultDay(date);
   const mainRef=useRef(null), navRef=useRef(null), indRef=useRef(null), indInit=useRef(false);
-  // скользящая «стеклянная» подсветка текущей вкладки (как в liquid-glass-ui): ездит по пружине к выбранной кнопке
-  useEffect(()=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
-    const place=anim=>{ const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
-      if(!anim){ ind.style.transition="none"; }
-      ind.style.opacity="1"; ind.style.width=b.offsetWidth+"px"; ind.style.transform="translateX("+b.offsetLeft+"px)";
-      if(!anim){ ind.getBoundingClientRect(); ind.style.transition=""; } };
-    place(indInit.current); indInit.current=true;
-    const ro=window.ResizeObserver?new ResizeObserver(()=>place(false)):null; if(ro) ro.observe(nav);
-    return ()=>{ if(ro) ro.disconnect(); }; },[view]);
-  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; document.documentElement.dataset.hdr="c"; },[day]);
+  // «капля» Liquid Glass под текущей вкладкой: передний край убегает быстро, задний догоняет с пружиной —
+  // капля растягивается в сторону движения и собирается на месте; в полёте чуть приподнимается (iOS 26)
+  const placeInd=animate=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
+    const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
+    const L=b.offsetLeft, R=nav.clientWidth-b.offsetLeft-b.offsetWidth, prevL=parseFloat(ind.style.left);
+    ind.classList.remove("to-l","to-r","moving");
+    if(!animate||isNaN(prevL)||calm()){ ind.style.transition="none"; ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1"; ind.getBoundingClientRect(); ind.style.transition=""; return; }
+    if(Math.abs(prevL-L)<1) return;
+    ind.getBoundingClientRect(); ind.classList.add(L>prevL?"to-r":"to-l","moving");
+    ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1";
+    clearTimeout(ind._t); ind._t=setTimeout(()=>ind.classList.remove("moving"),420); };
+  useEffect(()=>{ placeInd(indInit.current); indInit.current=true; },[view]);
+  useEffect(()=>{ const nav=navRef.current; if(!nav||!window.ResizeObserver) return; let w=nav.clientWidth;
+    const ro=new ResizeObserver(()=>{ if(nav.clientWidth!==w){ w=nav.clientWidth; placeInd(false); } }); ro.observe(nav); return ()=>ro.disconnect(); },[]);
+  useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
   useEffect(()=>{ anim(mainRef.current,{opacity:[0,1]},{type:"tween",duration:.2,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
   useEffect(()=>{ const f=()=>{ if(document.visibilityState==="visible"&&auto&&date!==todayStr()){ setDateRaw(todayStr()); setPicked(null); } };

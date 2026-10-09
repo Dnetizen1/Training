@@ -42,15 +42,14 @@ function weekData(date){
 }
 
 // Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
+// Шапка как в iOS 26: крупный заголовок слева (подпись — под ним), кнопки справа; две и больше — в одной стеклянной капсуле
 function AppBar({left,title,sub,onTitle,right,label}){
-  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${20}/></button>`:title;
   return html`<header class="pg-h">
-    <span class="pg-l">${left}</span>
-    <div class="pg-c">${sub?html`<small>${sub}</small>`:null}<h1>${t}</h1></div>
-    <span class="pg-act">${right}</span>
+    <div class="pg-c"><h1>${t}</h1>${sub?html`<small>${sub}</small>`:null}</div>
+    <span class="pg-act">${left}${right}</span>
   </header>`;
 }
-// Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
 const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;

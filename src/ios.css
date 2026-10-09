@@ -2021,3 +2021,39 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .sheet-wrap.over-tabs.ask .sheet{max-height:calc(100% - 70px)}
 .ask .sheet-foot{flex:none;gap:8px}
 .ask .sheet-body{padding-top:12px}
+/* «Фокус»: число и тире не переносятся и не сжимаются — обе плитки одной высоты */
+.tile-v .big{flex:none;white-space:nowrap}
+.tile-v .big.empty{display:block;transform:none}
+/* пустой вес: тире рисуем полоской, а не символом — символ из запасного шрифта раздувал строку и сдвигал ± */
+.tile-v .big.empty{display:flex;align-items:center;justify-content:center;width:44px;height:64px;line-height:64px}
+.tile-v .big.empty::before{content:"";width:36px;height:6px;border-radius:3px;background:var(--mute2)}
+
+/* нижняя панель: «капля» тянется в сторону движения (передний край быстрее заднего) и чуть приподнимается в полёте */
+.tabbar .lg-ind{left:0;right:auto;width:auto;transform:none;
+  transition:left .5s var(--lg-spring),right .5s var(--lg-spring),transform .25s var(--lg-ease),background-color .25s,opacity .2s}
+.tabbar .lg-ind.to-r{transition:right .26s cubic-bezier(.2,.8,.2,1),left .52s var(--lg-spring),transform .25s var(--lg-ease),background-color .25s,opacity .2s}
+.tabbar .lg-ind.to-l{transition:left .26s cubic-bezier(.2,.8,.2,1),right .52s var(--lg-spring),transform .25s var(--lg-ease),background-color .25s,opacity .2s}
+.tabbar .lg-ind.moving{transform:scaleY(1.1);background:rgba(255,255,255,.22)}
+.tabbar:has(button:not(.tb-fab):active) .lg-ind{transform:scale(1.06,1.12);background:rgba(255,255,255,.24)}
+@media (prefers-reduced-motion:reduce){.tabbar .lg-ind,.tabbar .lg-ind.to-r,.tabbar .lg-ind.to-l{transition:opacity .2s}}
+
+/* ===== шапка iOS 26: заголовок 34 px слева, подпись под ним, справа стеклянные кнопки ===== */
+.pg-h{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"c r";align-items:center;gap:12px;min-height:62px;padding-top:18px}
+.pg-c{grid-area:c;display:flex;flex-direction:column;min-width:0;text-align:left}
+.pg-h h1{margin:0;font:700 34px/41px var(--disp);letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-h small{margin:0;font-size:15px;line-height:20px;color:var(--mute)}
+.pg-h h1 .pg-t{gap:4px}
+.pg-h h1 .pg-t svg{margin-top:6px}
+.pg-act{grid-area:r;display:flex;align-items:center;gap:8px;align-self:start}
+.pg-act:empty{display:none}
+.ab-link svg{display:none}
+/* две кнопки и больше — одна капсула, как сгруппированные кнопки панели в iOS 26 */
+.pg-act:has(> :nth-child(2)){gap:0;position:relative;isolation:isolate;border-radius:22px;background:var(--lg-tint);
+  -webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%);box-shadow:0 4px 14px rgba(0,0,0,.28),0 1px 2px rgba(0,0,0,.3)}
+.pg-act:has(> :nth-child(2))::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 1.5px 1.5px 0 -.5px var(--lg-edge),inset -1px -1px 0 -.5px var(--lg-edge),inset 0 0 8px rgba(255,255,255,.1)}
+.pg-act:has(> :nth-child(2)) > *{width:46px;height:44px;padding:0;justify-content:center;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;border-radius:22px}
+.pg-act:has(> :nth-child(2)) > *::after{content:none}
+.pg-act:has(> :nth-child(2)) > :active{transform:scale(.9)}
+.pg-act:has(> :nth-child(2)) .pillsel > span,.pg-act:has(> :nth-child(2)) .pillsel > svg:not(:first-child){display:none}
+.pg-act:has(> :nth-child(2)) .pillsel svg:first-child{width:22px;height:22px}
