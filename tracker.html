@@ -2062,6 +2062,32 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .pg-act:has(> :nth-child(2)) > :active{transform:scale(.9)}
 .pg-act:has(> :nth-child(2)) .pillsel > span,.pg-act:has(> :nth-child(2)) .pillsel > svg:not(:first-child){display:none}
 .pg-act:has(> :nth-child(2)) .pillsel svg:first-child{width:22px;height:22px}
+
+/* плавающие панели (быстрое добавление, тренер, мышцы) — шире, по 10 px от краёв */
+.sheet-wrap.over-tabs .sheet,.sheet-wrap.over-tabs.with-head .sheet{width:min(calc(100% - 20px),440px)}
+
+/* кнопка пояснения слева — того же вида, что крестик справа */
+.sheet-head .sh-help{color:var(--ink2)}
+.sheet-head .sh-help[aria-expanded="true"]{color:var(--acc)}
+
+/* «Спросить тренера»: поле внизу, как в «Сообщениях»: однострочное, растёт по мере ввода; круглая кнопка справа */
+.ask .sheet-body{order:2;padding:4px 14px 8px}
+.ask .sheet-foot{order:3;flex:none;flex-direction:row;padding:6px 10px 10px}
+.composer{display:flex;align-items:flex-end;gap:8px;width:100%;padding:4px 4px 4px 14px;border-radius:22px;background:var(--gl-fill);box-shadow:var(--gl-rim)}
+.composer:focus-within{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.ask .sheet-foot .composer textarea{flex:1;min-width:0;min-height:36px;height:36px;max-height:148px;padding:8px 0;margin:0;border:0;border-radius:0;background:none!important;box-shadow:none!important;font-size:16px;line-height:20px;resize:none;overflow-y:auto}
+.ask .sheet-foot .composer textarea:focus{outline:0;box-shadow:none}
+.send-b{flex:none;display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;border-radius:18px;background:var(--acc);color:#000;transition:transform .1s ease-out,opacity .2s}
+.send-b:active{transform:scale(.9)}
+.send-b:disabled{opacity:.3}
+.send-b.stop{background:var(--ink);color:#000}
+.ask .help-t{margin:0 0 10px}
+
+/* размеры по шкале iOS: крупный заголовок 34, карточка дня — Title 1 (28), счёт тем же размером */
+.thero .th-day{font:700 28px/34px var(--disp);letter-spacing:-.02em}
+.thero .th-cnt b{font-size:28px;line-height:34px}
+.thero .th-cnt b em{font-size:17px}
+.thero .th-day svg{margin-top:2px}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2749,6 +2775,9 @@ const I={
   clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
   swap:"M7 7h12l-3-3M17 17H5l3 3", rings:"M12 3a9 9 0 1 0 .01 0M12 8a4 4 0 1 0 .01 0", history:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01",
   book:"M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6zM6 3.5v17M9.5 8h5.5M9.5 11.5h5.5", chart:"M4 4v16h16M7.5 15l3.5-4 3 2.5 4.5-6",
+  infoc:"M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 0 1 0-17zM12 11v5.5M12 7.8h.01",
+  copy:"M9 9h10v11H9zM5 15V4h10",
+  stop:"M7 7h10v10H7z",
   coach:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM12 8l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z",
   chat:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM8.5 11.3h.01M12 11.3h.01M15.5 11.3h.01",
   sliders:"M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4", cal:"M5 6h14v14H5zM5 10h14M9 4v4M15 4v4", flag:"M6 21V4M6 4.5h11l-2.5 4 2.5 4H6",
@@ -2761,7 +2790,7 @@ const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="tru
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
-const TAB_I={coach:1,summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
+const TAB_I={infoc:1,copy:1,stop:1,coach:1,summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
 const Icon=({n,size=20})=>n==="spark"
   ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
   : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"||n==="vmore"?3.5:TAB_I[n]?1.8:2.25} stroke-linecap=${n==="more"||n==="vmore"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;
@@ -2823,7 +2852,7 @@ function Help({children,label}){
 function SessionMuscles({s,onClose}){
   const [h,setH]=useState(false);
   return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose} cls="over-tabs with-head"
-      lead=${html`<button class="help-b" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}>?</button>`}>
+      lead=${html`<button class="ibtn sh-help" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}><${Icon} n="infoc" size=${22}/></button>`}>
     ${h?html`<div class="help-t">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>`:null}
     <${MuscleBars} rows=${sessionRows(s)}/>
   <//>`;
@@ -3425,14 +3454,19 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
     setLive(""); ctl.current=null;
   };
   const chips=["Тренажёр занят, чем заменить?","Какой вес ставить сегодня?","Дискомфорт в суставе, что делать?","Как правильно делать первое упражнение?","Добавь упражнение на отстающую мышцу"];
-  const foot=html`<textarea rows="5" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
-    ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
-      :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
-      :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}>Скопировать</button>`}`;
-  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask">
+  const [help,setHelp]=useState(false);
+  // поле растёт по мере ввода (до ~6 строк), кнопка — круглая справа, как в «Сообщениях»
+  const grow=el=>{ if(!el) return; el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,148)+"px"; };
+  const act=live?html`<button class="send-b stop" aria-label="Остановить" onClick=${()=>ctl.current&&ctl.current.abort()}><${Icon} n="stop" size=${16}/></button>`
+    :S.sample?html`<button class="send-b" aria-label="Отправить" disabled=${!input.trim()} onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
+    :html`<button class="send-b" aria-label="Скопировать запрос" disabled=${!input.trim()} onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}><${Icon} n="copy" size=${18}/></button>`;
+  const foot=html`<div class="composer"><textarea rows="1" value=${input} placeholder="Спроси тренера" aria-label="Вопрос тренеру"
+      ref=${grow} onInput=${ev=>grow(ev.target)} onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>${act}</div>`;
+  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask"
+      lead=${html`<button class="ibtn sh-help" aria-label="Пояснение" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}>
     <div class="chat" ref=${box}>
-      ${!S.sample?html`<div class="st">Помощник недоступен на этой странице. Напиши вопрос и скопируй запрос, чтобы вставить его в чат.</div>`:null}
-      ${!turns.length&&!live?html`<div class="st">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}</div>
+      ${help?html`<div class="help-t">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}${!S.sample?" Здесь помощник недоступен: напиши вопрос и скопируй запрос кнопкой справа от поля, чтобы вставить его в чат.":""}</div>`:null}
+      ${!turns.length&&!live?html`
         <div class="menu">${chips.map(c=>html`<button key=${c} class="mitem" onClick=${()=>S.sample?send(c):setInput(c)}><${Icon} n="spark" size=${16}/><span>${c}</span></button>`)}</div>`:null}
       ${turns.map((t,k)=>html`<div key=${k} class=${"msg "+t.role}>${t.role==="assistant"?html`<${Rich} text=${t.content}/>`:t.content}</div>`)}
       ${live?html`<div class="msg assistant">${live==="…"?html`<span class="st">Думаю…</span>`:html`<${Rich} text=${live}/>`}</div>`:null}

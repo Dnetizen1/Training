@@ -54,7 +54,7 @@ function Help({children,label}){
 function SessionMuscles({s,onClose}){
   const [h,setH]=useState(false);
   return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose} cls="over-tabs with-head"
-      lead=${html`<button class="help-b" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}>?</button>`}>
+      lead=${html`<button class="ibtn sh-help" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}><${Icon} n="infoc" size=${22}/></button>`}>
     ${h?html`<div class="help-t">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>`:null}
     <${MuscleBars} rows=${sessionRows(s)}/>
   <//>`;
@@ -656,14 +656,19 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
     setLive(""); ctl.current=null;
   };
   const chips=["Тренажёр занят, чем заменить?","Какой вес ставить сегодня?","Дискомфорт в суставе, что делать?","Как правильно делать первое упражнение?","Добавь упражнение на отстающую мышцу"];
-  const foot=html`<textarea rows="5" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
-    ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
-      :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
-      :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}>Скопировать</button>`}`;
-  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask">
+  const [help,setHelp]=useState(false);
+  // поле растёт по мере ввода (до ~6 строк), кнопка — круглая справа, как в «Сообщениях»
+  const grow=el=>{ if(!el) return; el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,148)+"px"; };
+  const act=live?html`<button class="send-b stop" aria-label="Остановить" onClick=${()=>ctl.current&&ctl.current.abort()}><${Icon} n="stop" size=${16}/></button>`
+    :S.sample?html`<button class="send-b" aria-label="Отправить" disabled=${!input.trim()} onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
+    :html`<button class="send-b" aria-label="Скопировать запрос" disabled=${!input.trim()} onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}><${Icon} n="copy" size=${18}/></button>`;
+  const foot=html`<div class="composer"><textarea rows="1" value=${input} placeholder="Спроси тренера" aria-label="Вопрос тренеру"
+      ref=${grow} onInput=${ev=>grow(ev.target)} onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>${act}</div>`;
+  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask"
+      lead=${html`<button class="ibtn sh-help" aria-label="Пояснение" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}>
     <div class="chat" ref=${box}>
-      ${!S.sample?html`<div class="st">Помощник недоступен на этой странице. Напиши вопрос и скопируй запрос, чтобы вставить его в чат.</div>`:null}
-      ${!turns.length&&!live?html`<div class="st">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}</div>
+      ${help?html`<div class="help-t">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}${!S.sample?" Здесь помощник недоступен: напиши вопрос и скопируй запрос кнопкой справа от поля, чтобы вставить его в чат.":""}</div>`:null}
+      ${!turns.length&&!live?html`
         <div class="menu">${chips.map(c=>html`<button key=${c} class="mitem" onClick=${()=>S.sample?send(c):setInput(c)}><${Icon} n="spark" size=${16}/><span>${c}</span></button>`)}</div>`:null}
       ${turns.map((t,k)=>html`<div key=${k} class=${"msg "+t.role}>${t.role==="assistant"?html`<${Rich} text=${t.content}/>`:t.content}</div>`)}
       ${live?html`<div class="msg assistant">${live==="…"?html`<span class="st">Думаю…</span>`:html`<${Rich} text=${live}/>`}</div>`:null}
