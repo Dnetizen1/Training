@@ -1641,6 +1641,14 @@ body,:root[data-view="train"] body{padding-bottom:calc(100px + max(30px,env(safe
 .mt-t > span{white-space:normal;overflow:visible;line-height:1.2;font-size:15px}
 .mt-r b{font-size:15px;letter-spacing:-.04em}
 .wk-t small{white-space:nowrap}
+
+/* правки: плитки «Изменение/Талия» на всю ширину карточки, дата в замерах по центру поля, шторка упражнения приподнята над нижней кромкой */
+.gcard{justify-items:stretch}
+.gc-cells{width:100%;justify-self:stretch}
+.form input[type=date]{display:flex;align-items:center;line-height:44px;padding-block:0}
+.form input[type=date]::-webkit-date-and-time-value{margin:0;min-height:0;line-height:44px;text-align:left}
+.sheet-wrap.lift{padding-bottom:max(34px,calc(16px + env(safe-area-inset-bottom,0px)))}
+.sheet-wrap.lift .sheet{border-radius:28px}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -2503,7 +2511,7 @@ function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk,openHistory}){
   const e=s.ex[i], inf=xinfo(s,e), lt=lastTime(inf.name,date);
   const item=(icon,label,fn,cls)=>html`<button class=${"mitem "+(cls||"")} onClick=${fn}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
   const move=d=>{ edit(ss=>{ const k=ss.ex.findIndex(y=>y.uid===uid), j=k+d; if(k<0||j<0||j>=ss.ex.length) return; [ss.ex[k],ss.ex[j]]=[ss.ex[j],ss.ex[k]]; }); onClose(); };
-  return html`<${Sheet} title=${inf.name} onClose=${onClose}>
+  return html`<${Sheet} title=${inf.name} onClose=${onClose} cls="lift">
     <div class="menu">
       ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
       ${item("target","Нагрузка на мышцы",()=>go("mus"))}

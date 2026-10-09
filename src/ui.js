@@ -156,7 +156,7 @@ function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk,openHistory}){
   const e=s.ex[i], inf=xinfo(s,e), lt=lastTime(inf.name,date);
   const item=(icon,label,fn,cls)=>html`<button class=${"mitem "+(cls||"")} onClick=${fn}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
   const move=d=>{ edit(ss=>{ const k=ss.ex.findIndex(y=>y.uid===uid), j=k+d; if(k<0||j<0||j>=ss.ex.length) return; [ss.ex[k],ss.ex[j]]=[ss.ex[j],ss.ex[k]]; }); onClose(); };
-  return html`<${Sheet} title=${inf.name} onClose=${onClose}>
+  return html`<${Sheet} title=${inf.name} onClose=${onClose} cls="lift">
     <div class="menu">
       ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
       ${item("target","Нагрузка на мышцы",()=>go("mus"))}

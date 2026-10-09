@@ -1636,3 +1636,11 @@ body,:root[data-view="train"] body{padding-bottom:calc(100px + max(30px,env(safe
 .mt-t > span{white-space:normal;overflow:visible;line-height:1.2;font-size:15px}
 .mt-r b{font-size:15px;letter-spacing:-.04em}
 .wk-t small{white-space:nowrap}
+
+/* правки: плитки «Изменение/Талия» на всю ширину карточки, дата в замерах по центру поля, шторка упражнения приподнята над нижней кромкой */
+.gcard{justify-items:stretch}
+.gc-cells{width:100%;justify-self:stretch}
+.form input[type=date]{display:flex;align-items:center;line-height:44px;padding-block:0}
+.form input[type=date]::-webkit-date-and-time-value{margin:0;min-height:0;line-height:44px;text-align:left}
+.sheet-wrap.lift{padding-bottom:max(34px,calc(16px + env(safe-area-inset-bottom,0px)))}
+.sheet-wrap.lift .sheet{border-radius:28px}
