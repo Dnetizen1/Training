@@ -19,7 +19,8 @@ function LevelPicker({value,onChange}){
   </div>`;
 }
 // График «план / сделано» по мышцам, сгруппированным как в списке мышц. rows: {k:{plan,fact}}; zone — рабочий диапазон недели
-function MuscleBars({rows,zone,showEmpty}){
+function MuscleBars({rows,zone,showEmpty,help,helpLabel}){
+  const [hOpen,setHOpen]=useState(false);
   const vals=MUS_ORDER.flatMap(k=>[rows[k].plan,rows[k].fact]);
   const max=Math.max(zone?16:1,...vals), hasFact=MUS_ORDER.some(k=>rows[k].fact>0);
   const groups=MUS_GROUPS.map(([g,ks])=>[g,ks.filter(k=>showEmpty||rows[k].plan>0||rows[k].fact>0)]).filter(g=>g[1].length);
@@ -37,7 +38,8 @@ function MuscleBars({rows,zone,showEmpty}){
         <span class="bv mono">${hasFact?fmt(r.fact)+"/":""}${fmt(r.plan)}</span>
       </div>`; })}
     <//>`)}
-    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}</div>
+    <div class="legend"><span><i class="planb"></i>план</span><span><i class="factb"></i>сделано</span>${zone?html`<span><i class="zone"></i>10–16 в неделю</span>`:null}${help?html`<button class="help-b" aria-expanded=${String(hOpen)} aria-label=${helpLabel||"Пояснение"} onClick=${()=>setHOpen(!hOpen)}><${Icon} n="infoc" size=${18}/></button>`:null}</div>
+    ${help&&hOpen?html`<div class="help-t">${help}</div>`:null}
   </div>`;
 }
 const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,effOf), r={}; MUS.forEach((_,k)=>{ r[k]={plan:p[k].f,fact:f[k].f}; }); return r; };
@@ -45,25 +47,44 @@ const sessionRows=s=>{ const p=muscleCount(s,e=>rowsOf(s,e)), f=muscleCount(s,ef
 function Help({children,label}){
   const [open,setOpen]=useState(false);
   return html`<div class="help">
-    <button class="help-b" aria-expanded=${String(open)} aria-label=${label||"Пояснение"} onClick=${()=>setOpen(!open)}>?</button>
+    <button class="help-b" aria-expanded=${String(open)} aria-label=${label||"Пояснение"} onClick=${()=>setOpen(!open)}><${Icon} n="infoc" size=${18}/></button>
     ${open?html`<div class="help-t">${children}</div>`:null}
   </div>`;
 }
 function SessionMuscles({s,onClose}){
-  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose}>
-    <${Help} label="Как считаются подходы">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.<//>
+  const [h,setH]=useState(false);
+  return html`<${Sheet} title=${"Мышцы: "+P[s.day].name} onClose=${onClose} cls="over-tabs with-head"
+      lead=${html`<button class="ibtn sh-help" aria-expanded=${String(h)} aria-label="Как считаются подходы" onClick=${()=>setH(!h)}><${Icon} n="infoc" size=${22}/></button>`}>
+    ${h?html`<div class="help-t">Эффективные подходы: нагрузка на мышцу 7–10 = 1 подход, 4–6 = 0,5, 1–3 = 0,25. Серая полоса — план этой тренировки, цветная — уже сделано.</div>`:null}
     <${MuscleBars} rows=${sessionRows(s)}/>
   <//>`;
 }
 const MusBtn=({onClick})=>html`<button class="musbtn" onClick=${onClick} aria-label="Мышцы за тренировку"><${Icon} n="bars" size=${16}/><span>Мышцы</span></button>`;
 
-function Sheet({title,onClose,children,foot,cls}){
-  const ref=useRef(null);
-  useEffect(()=>{ anim(ref.current,{transform:["translateY(-40px)","translateY(0)"],opacity:[.4,1]},{bounce:.12,duration:.45});
+// резинка у границы: чем дальше тянешь, тем меньше следует (apple-fluid §9)
+const rubber=(x,dim,c=.55)=>x*dim*c/(dim+c*Math.abs(x));
+function Sheet({title,onClose,children,foot,cls,lead}){
+  const ref=useRef(null), drag=useRef(null), panel=!!cls&&cls.includes("over-tabs"), float=panel&&!cls.includes("with-head");
+  useEffect(()=>{ const el=ref.current;
+    // панель «материализуется» от нижней полоски: масштаб и размытие вместе (apple-fluid §12); шторка выезжает снизу
+    if(panel) anim(el,{transform:["translateY(24px) scale(.94)","translateY(0) scale(1)"],opacity:[0,1],filter:["blur(6px)","blur(0px)"]},{bounce:0,duration:.4});
+    else anim(el,{transform:["translateY(60px)","translateY(0)"],opacity:[.4,1]},{bounce:0,duration:.4});
     const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
+  // смахнуть вниз: за шапку (у плавающей панели — за любое место); вверх — резинка; решает скорость, а не только расстояние
+  const down=ev=>{ if(ev.button>0||!(float||ev.target.closest(".sheet-head"))) return; if(!float&&ev.target.closest("button")) return;
+    drag.current={y:ev.clientY,dy:0,cap:false,id:ev.pointerId,hist:[[ev.clientY,performance.now()]]}; };
+  const move=ev=>{ const d=drag.current; if(!d) return; const raw=ev.clientY-d.y;
+    d.hist.push([ev.clientY,performance.now()]); if(d.hist.length>5) d.hist.shift();
+    if(Math.abs(raw)>8&&!d.cap){ d.cap=true; try{ ev.currentTarget.setPointerCapture(d.id); }catch(e){} }
+    if(!d.cap) return; d.dy=raw>0?raw:rubber(raw,ref.current.offsetHeight);
+    ref.current.style.transition="none"; ref.current.style.transform="translateY("+d.dy+"px)"; };
+  const up=()=>{ const d=drag.current; drag.current=null; if(!d||!d.cap) return; const el=ref.current, h=d.hist, a=h[0], z=h[h.length-1];
+    const v=(z[0]-a[0])/Math.max(1,z[1]-a[1]); // px/мс, плюс — вниз
+    if(v>.45||(d.dy>el.offsetHeight*.3&&v>-.1)){ el.style.transition="transform .22s cubic-bezier(.2,.8,.2,1),opacity .22s"; el.style.transform="translateY("+(el.offsetHeight+60)+"px)"; el.style.opacity="0"; setTimeout(onClose,180); }
+    else { el.style.transform=""; anim(el,{transform:["translateY("+d.dy+"px)","translateY(0px)"]},{bounce:.15,duration:.35}); } };
   return ReactDOM.createPortal(html`<div class=${"sheet-wrap"+(cls?" "+cls:"")} onClick=${ev=>{ if(ev.target===ev.currentTarget) onClose(); }}>
-    <div class="sheet" role="dialog" aria-label=${title} ref=${ref}>
-      <div class="sheet-head"><b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
+    <div class=${"sheet"+(float?" float":"")} role="dialog" aria-label=${title} ref=${ref} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
+      <div class="sheet-head">${lead?html`<span class="sh-lead">${lead}</span>`:null}<b>${title}</b><button class="ibtn" aria-label="Закрыть" onClick=${onClose}><${Icon} n="close"/></button></div>
       ${foot?html`<div class="sheet-foot">${foot}</div>`:null}
       <div class="sheet-body">${children}</div>
     </div></div>`,document.body);
@@ -86,14 +107,14 @@ const Elapsed=({s})=>{
 
 // Тип подхода: обычный, миоповторы или дропсет (мио и дроп считаются за два подхода в объёме по мышцам)
 function SetType({value,onChange}){
-  return html`<div class="sttype" role="group" aria-label="Тип подхода">
-    ${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}
+  return html`<div class="sttype">
+    <div class="seg3g" role="group" aria-label="Тип подхода">${[["","Обычный"],["myo","Мио"],["drop","Дропсет"]].map(([v,l])=>html`<button key=${v} aria-pressed=${String(value===v)} onClick=${()=>onChange(v)}>${l}</button>`)}</div>
     <small>${SET_T[value]?"Считается за 2 подхода":"Мио и дропсет считаются за 2 подхода"}</small></div>`;
 }
 /* ---------- Упражнение: журнал подходов ---------- */
 // текущий подход упражнения: первый, где ещё нет повторов (или отметки)
 const curSet=(s,e)=>{ const rows=rowsOf(s,e); for(let j=0;j<rows;j++) if(!setDone(e.sets[j]||blankSet())) return j; return -1; };
-function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
+function ExerciseBlock({s,i,date,edit,openSheet,startTimer,onCollapse}){
   const e=s.ex[i], inf=xinfo(s,e), {lo,hi,rir,rest,note}=inf.plan, wk=s.week;
   const [qOpen,setQOpen]=useState(null);
   const rows=rowsOf(s,e);
@@ -112,10 +133,11 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
   return html`<section id=${"ex-"+i} class=${"exb"+(done?" complete":"")}>
     <div class="exb-head">
       <div class="exb-tt">
-        <button class="exb-title" onClick=${()=>openSheet("menu",e.uid)}>${inf.name}</button>
+        <button class="exb-title" onClick=${()=>onCollapse?onCollapse():openSheet("menu",e.uid)} aria-label=${onCollapse?inf.name+". Свернуть":null}>${inf.name}</button>
         ${inf.custom?html`<div class="exb-sub">добавлено в эту тренировку</div>`:e.alt?html`<div class="exb-sub">вместо: ${inf.base}</div>`:null}
       </div>
-      <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="vmore"/></button>
+      ${onCollapse?html`<button class="ibtn" aria-label="Свернуть упражнение" onClick=${onCollapse}><${Icon} n="up" size=${18}/></button>`:null}
+      <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>openSheet("menu",e.uid)}><${Icon} n="more" size=${18}/></button>
     </div>
     <div class="exb-meta">
       <span class="mono"><b>${rows}×${lo}–${hi}</b> · RIR ${rirFor(rir,wk)} · отдых ${restTxt(rest)}</span>
@@ -134,17 +156,16 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer}){
           <button class=${"q "+qTone(x.q)+(qOpen===j?" open":"")} aria-expanded=${String(qOpen===j)} aria-label=${"Запас повторов, подход "+(j+1)+": "+(x.q||"не указан")} onClick=${()=>setQOpen(qOpen===j?null:j)}>${x.q||"?"}</button>
         </div>
         ${qOpen===j?html`<div class="qpick" role="group" aria-label="Сколько повторов ещё мог сделать">
-          <div class="qpick-t">Подход ${j+1}: сколько повторов ещё мог сделать? <span>0 = отказ</span></div>
-          <div class="qpick-b">${["0","1","2","3","4+"].map(v=>html`<button key=${v} class=${qTone(v)+(x.q===v?" on":"")} onClick=${()=>{ upd(y=>{ y.sets[j].q=v; }); setQOpen(null); }}>${v}</button>`)}
-            ${x.q?html`<button class="clr" onClick=${()=>{ upd(y=>{ y.sets[j].q=""; }); setQOpen(null); }}>Очистить</button>`:null}</div>
+          <div class="qpick-t">Подход ${j+1}: сколько повторов ещё мог сделать? <span>0 = отказ, повторное нажатие снимает</span></div>
+          <div class="seg5" role="group" aria-label="Запас повторов">${["0","1","2","3","4+"].map(v=>html`<button key=${v} aria-pressed=${String(x.q===v)} onClick=${()=>{ upd(y=>{ y.sets[j].q=x.q===v?"":v; }); setQOpen(null); }}>${v}</button>`)}</div>
           <${SetType} value=${x.t||""} onChange=${v=>upd(y=>{ y.sets[j].t=v; })}/>
         </div>`:null}
       <//>`; })}
     </div>
     <div class="exb-add">
-      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${18}/> ${done?"Отдых":"Подход "+(cj+1)+" сделан"} · ${restTxt(rest)}</button>
-      <button class="btn" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/></button>
-      <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${16}/></button>
+      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${20}/> ${done?"Отдых":"Подход сделан"}</button>
+      <button class="btn" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${22}/></button>
+      <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${22}/></button>
     </div>
     <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
   </section>`;
@@ -159,7 +180,7 @@ function ExerciseMenu({s,uid,date,edit,go,onClose,onRemove,onAsk,openHistory}){
   return html`<${Sheet} title=${inf.name} onClose=${onClose} cls="lift">
     <div class="menu">
       ${item("swap",inf.custom?"Переименовать":"Заменить упражнение",()=>go("swap"))}
-      ${item("target","Нагрузка на мышцы",()=>go("mus"))}
+      ${item("bars","Нагрузка на мышцы",()=>go("mus"))}
       ${openHistory?item("history","История упражнения",()=>{ onClose(); openHistory(inf.name); }):null}
       ${lt?item("clock","Заполнить как в прошлый раз",()=>{ edit(ss=>{ const x=ss.ex.find(y=>y.uid===uid); if(x){ x.sets=lt.e.sets.map(y=>({w:y.w,r:y.r,ok:false,q:""})); x.n=x.sets.length; } }); onClose(); }):null}
       ${i>0?item("up","Поднять выше",()=>move(-1)):null}
@@ -224,7 +245,7 @@ function AddSheet({edit,onClose}){
   return html`<${Sheet} title="Добавить упражнение" onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${add}>Добавить в тренировку</button>`}>
     <div class="adform">${inp("name","Название","text")}${inp("n","Подходы","numeric")}${inp("lo","Повт. от","numeric")}${inp("hi","Повт. до","numeric")}</div>
     <div class="seg" role="group" aria-label="Как указать мышцы">
-      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Нагрузка автоматически</button>
+      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Автоматически</button>
       <button aria-pressed=${String(mode==="manual")} onClick=${()=>setMode("manual")}>Вручную</button>
     </div>
     ${mode==="manual"?html`<${LevelPicker} value=${mus} onChange=${setMus}/>`:html`<div class="st">Нагрузка на мышцы (0–10) определится сама после добавления. Поправить можно через «⋯ → Нагрузка на мышцы».</div>`}
@@ -303,49 +324,36 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Кольцо из сегментов: один сегмент — один подход; сделанные — цветом дня, остальные — его тенью
-function SetRing({n,done,size=36,stroke=5}){
-  const c=size/2, r=c-stroke/2-1, gap=n>1?6:0, len=(100-gap*n)/Math.max(1,n);
-  return html`<svg class="setring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
-    <g fill="none" stroke="var(--c)" stroke-width=${stroke} transform=${"rotate(-90 "+c+" "+c+")"}>
-      ${Array.from({length:Math.max(1,n)},(_,k)=>html`<circle key=${k} cx=${c} cy=${c} r=${r} pathLength="100" stroke-opacity=${k<done?1:.24}
-        stroke-dasharray=${len+" "+(100-len)} stroke-dashoffset=${-(gap/2+k*(len+gap))}/>`)}
-    </g></svg>`;
-}
-// Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
-function Barbell({s,day,cur,onPick}){
-  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
-  return html`<div class="bbwrap">
-    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
-      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
-        return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(r&&d>=r?" full":"")} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
-          <${SetRing} n=${r} done=${d}/><small>${i+1}</small></button>`; })}
-    </div>
-    <span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>
+// Прогресс тренировки одной полосой, как UIProgressView: дорожка — цвет дня приглушённый, заливка — цвет дня (--c задаёт родитель).
+// caption — подпись «4 из 22 подходов» над полосой (экран тренировки); без неё — только полоса (в карточке «Сегодня» счёт уже крупно).
+const setsOf=n=>n%10===1&&n%100!==11?"подхода":"подходов";
+function ProgressBar({done,total,caption}){
+  const p=total?Math.min(1,done/total):0;
+  return html`<div class="pbar" role="progressbar" aria-label="Подходы за тренировку" aria-valuemin="0" aria-valuemax=${total} aria-valuenow=${Math.min(done,total)} aria-valuetext=${done+" из "+total+" "+setsOf(total)}>
+    ${caption?html`<span class="pb-cap"><b>${done}</b> из ${total} ${setsOf(total)}</span>`:null}
+    <span class="pb-track"><span class="pb-fill" style=${{width:p*100+"%"}}></span></span>
   </div>`;
 }
-// Шапка тренировки: навигация, под ней сводка — счёт подходов, гриф с блинами по упражнениям, мышцы. Заметка к тренировке — в «Итоге».
-function TrainHero({s,date,day,go,onDay,onMuscles,right,cur,onPick}){
+// Шапка тренировки: по центру день (нажатие — сменить день или дату), справа мышцы и тренер;
+// сразу под ней «Журнал / Фокус», ниже — полоса прогресса подходов.
+function TrainHero({s,date,day,onDay,onMuscles,onAsk,ui,setUi}){
   const done=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0), total=s.ex.reduce((a,e)=>a+rowsOf(s,e),0);
-  const doneEx=s.ex.filter(e=>rowsOf(s,e)>0&&doneOf(e)>=rowsOf(s,e)).length;
-  const qs=s.ex.flatMap(e=>e.sets.map(x=>x.q)).filter(q=>q!==""&&q!=null).map(q=>q==="4+"?4:+q);
   return html`<${React.Fragment}>
-    <section class="hero hero-nav">
-      <${AppBar} left=${html`<${AbIcon} n="left" label="Назад, к прогрессу" onClick=${()=>go("home")}/>`} title=${P[day].name} sub=${navDate(date)} onTitle=${onDay} label="Сменить день или дату" right=${right}/>
-    </section>
-    <section class="sumcard">
-      <div class="th-h"><b>${done}<em> / ${total}</em></b><span>подходов</span></div>
-      <span class="th-sub">${doneEx} из ${s.ex.length} упражнений · средний запас ${qs.length?fmt(Math.round(qs.reduce((a,b)=>a+b,0)/qs.length*10)/10):"–"}</span>
-      ${s.ex.length?html`<${Barbell} s=${s} day=${day} cur=${cur??s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e))} onPick=${onPick}/>`:null}
-      ${onMuscles?html`<button class="linkbtn th-mus" onClick=${onMuscles}>Мышцы за тренировку<${Icon} n="down" size=${18}/></button>`:null}
-    </section>
+    <${AppBar} title=${P[day].name} onTitle=${onDay} label="Сменить день или дату" sub=${date===todayStr()?null:navDate(date)}
+      left=${onMuscles?html`<${AbIcon} n="bars" label="Мышцы за тренировку" onClick=${onMuscles}/>`:null}
+      right=${onAsk?html`<${CoachBtn} onClick=${onAsk}/>`:null}/>
+    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
+    ${s.ex.length?html`<${ProgressBar} done=${done} total=${total} caption=${true}/>`:null}
   <//>`;
 }
+// «Журнал / Фокус»: экраны разные, переключатель монтируется заново — подсветка стартует с прошлого пункта и доезжает
+let lastUi=null;
 function ViewSwitch({ui,setUi}){
-  return html`<div class="vswitch" role="group" aria-label="Вид экрана тренировки">
-    <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${18}/>Журнал</button>
-    <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${18}/>Фокус</button>
+  const idx=ui==="focus"?1:0, [i,setI]=useState(lastUi===null?idx:lastUi);
+  useEffect(()=>{ lastUi=idx; const h=requestAnimationFrame(()=>requestAnimationFrame(()=>setI(idx))); return ()=>cancelAnimationFrame(h); },[idx]);
+  return html`<div class="vswitch" role="group" aria-label="Вид экрана тренировки" style=${{"--i":i}}>
+    <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${18}/><span>Журнал</span></button>
+    <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${18}/><span>Фокус</span></button>
   </div>`;
 }
 function DaySheet({s,date,day,setDate,setDay,setWeek,ui,setUi,onClose}){
@@ -415,29 +423,42 @@ function TrainView({date,setDate,day,setDay,toast,startTimer,openAsk,ui,setUi,op
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
   const [sheet,setSheet]=useState(null);       // {type, uid, opts}
   const [open,setOpen]=useState({});           // какие свёрнутые упражнения раскрыты
+  const [shut,setShut]=useState({});           // какие открытые (текущее, начатое) свёрнуты вручную
   const cur=s.ex.findIndex(e=>doneOf(e)<rowsOf(s,e));
-  const reveal=k=>{ const e=s.ex[k]; if(e) setOpen(o=>({...o,[e.uid]:true})); setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
-  return html`<div>
-    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      onPick=${reveal}
-      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setTimeout(()=>{ const f=document.querySelector(".finish"); f&&f.scrollIntoView({behavior:calm()?"auto":"smooth"}); },50); }}>${s.done?"Итог":"Завершить"}</button>`}/>
-    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
-    <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
-    <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
-    <div class="exlist">
+  const reveal=k=>{ const e=s.ex[k]; if(e){ setOpen(o=>({...o,[e.uid]:true})); setShut(o=>({...o,[e.uid]:false})); } setTimeout(()=>{ const el=document.getElementById("ex-"+k); el&&el.scrollIntoView({behavior:calm()?"auto":"smooth",block:"start"}); },30); };
+  const top=()=>window.scrollTo({top:0,behavior:calm()?"auto":"smooth"});
+  const list=html`<div class="exlist">
       ${s.ex.map((e,i)=>{ const r=rowsOf(s,e), d=Math.min(r,doneOf(e)), inf=xinfo(s,e);
-        // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную
-        if(i===cur||open[e.uid]||(d>0&&d<r)||!r) return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`;
+        // сделанное сворачивается в строку, следующие — компактные строки; открыто текущее, начатое и раскрытое вручную; любое открытое можно свернуть
+        if(!shut[e.uid]&&(i===cur||open[e.uid]||(d>0&&d<r)||!r)){ const fold=r>0?()=>{ setShut(o=>({...o,[e.uid]:true})); setOpen(o=>({...o,[e.uid]:false})); }:null;
+          return html`<${ExerciseBlock} key=${e.uid} s=${s} i=${i} date=${date} edit=${edit} startTimer=${startTimer} onCollapse=${fold} openSheet=${(type,uid,opts)=>setSheet({type,uid,opts})}/>`; }
         const sets=e.sets.filter(setDone), ws=[...new Set(sets.map(x=>x.w||""))];
         const sum=ws.length===1&&ws[0]?fmt(num(ws[0]))+" × "+sets.map(x=>x.r||"✓").join(" · "):sets.map(x=>(x.w?fmt(num(x.w))+"×":"")+(x.r||"✓")).join(" · ");
         return d>=r?html`<button key=${e.uid} id=${"ex-"+i} class="xrow done" onClick=${()=>reveal(i)} aria-label=${inf.name+": сделано, "+sum+". Раскрыть"}><i><${Icon} n="check" size=${15}/></i><span>${inf.name}</span><small>${sum}</small></button>`
-          :html`<button key=${e.uid} id=${"ex-"+i} class="xrow next" onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${r} × ${inf.plan.lo}–${inf.plan.hi}</small></button>`; })}
+          :html`<button key=${e.uid} id=${"ex-"+i} class=${"xrow next"+(i===cur?" now":"")} onClick=${()=>reveal(i)} aria-label=${(i+1)+". "+inf.name+". Раскрыть"}><i>${i+1}</i><span>${inf.name}</span><small>${d?d+" из "+r:r+" × "+inf.plan.lo+"–"+inf.plan.hi}</small></button>`; })}
       ${!s.ex.length?html`<div class="empty">В тренировке нет упражнений.</div>`:null}
       <button class="capsule addex" onClick=${()=>setSheet({type:"add"})}><${Icon} n="plus" size=${18}/> Добавить упражнение</button>
-    </div>
-    <${FinishPanel} s=${s} edit=${edit} toast=${toast}/>
-    <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
-      setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>
+      ${!s.done?html`<button class="glassbtn finish-btn" onClick=${()=>{ finish(); top(); }}><${Icon} n="flag" size=${18}/>Завершить тренировку</button>`:null}
+    </div>`;
+  const sheets=html`<${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
+      setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>`;
+  // тренировка завершена: сверху итог и разбор, упражнения свёрнуты ниже
+  if(s.done) return html`<div style=${{"--c":PC[day]}}>
+    <${AppBar} title="Итог" sub=${date===todayStr()?null:navDate(date)}/>
+    <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:"Тренировка завершена"}}/>
+    <details class="grp more done-ex">
+      <summary class="grp-row"><span><${Icon} n="list" size=${16}/>Упражнения · ${s.ex.length}</span><${Icon} n="right" size=${16}/></summary>
+      ${list}
+    </details>
+    <button class="glassbtn finish-btn" onClick=${()=>finish()}><${Icon} n="left" size=${18}/>Вернуться к тренировке</button>
+    ${sheets}
+  </div>`;
+  return html`<div style=${{"--c":PC[day]}}>
+    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})} onAsk=${()=>openAsk(null)}/>
+    <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
+    <${SecHead} title="Упражнения"><${Elapsed} s=${s}/><//>
+    ${list}
+    ${sheets}
   </div>`;
 }
 function textLog(s){
@@ -521,10 +542,10 @@ function HistoryView({openSession,openAsk,openHistory}){
     return {nm,last,tail:tail.map(x=>x.best),g,dir:tail.length<2||Math.abs(g)<0.5?"fl":g>0?"up":"dn"}; }).filter(Boolean).sort((a,b)=>b.last.date.localeCompare(a.last.date));
   return html`<div class="histv">
     <section class="hero">
-      <${AppBar} left=${html`<${CoachBtn} onClick=${openAsk}/>`} title="История"/>
+      <${AppBar} right=${html`<${CoachBtn} onClick=${openAsk}/>`} title="История"/>
       <div class="hseg" role="group" aria-label="Вид истории">
-        <button aria-pressed=${String(mode==="cal")} onClick=${()=>setMode("cal")}>Календарь</button>
-        <button aria-pressed=${String(mode==="ex")} onClick=${()=>setMode("ex")}>Упражнения</button>
+        <button aria-pressed=${String(mode==="cal")} onClick=${()=>setMode("cal")}><span>Календарь</span></button>
+        <button aria-pressed=${String(mode==="ex")} onClick=${()=>setMode("ex")}><span>Упражнения</span></button>
       </div>
     </section>
     ${mode==="cal"?html`
@@ -581,7 +602,7 @@ function AskSheet({focus,onClose,date,day,toast}){
   const ctl=useRef(null), box=useRef(null);
   const s=getSession(date,day);
   useEffect(()=>{ if(focus!=null&&s.ex[focus]) setInput(`Подбери замену для «${xinfo(s,s.ex[focus]).name}» (упражнение ${focus+1}): `); },[]);
-  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b) b.scrollTop=b.scrollHeight; },[turns,live]);
+  useEffect(()=>{ const b=box.current&&box.current.parentNode; if(b&&(turns.length||live)) b.scrollTop=b.scrollHeight; },[turns,live]);
   const context=()=>{ const cur=getSession(date,day), prev=recent(date,3);
     return `Ты персональный тренер по гипертрофии внутри приложения-дневника тренировок. Отвечай по-русски, коротко и по делу (до 150 слов, если не просят подробнее), списками где уместно. Не называй себя ИИ или Claude, ты просто тренер в приложении. При боли в сухожилии советуй убрать упражнение и показаться спортивному врачу.
 ${PROFILE}
@@ -618,14 +639,19 @@ ${S.tools?`У тебя есть инструменты replace_exercise и add_e
     setLive(""); ctl.current=null;
   };
   const chips=["Тренажёр занят, чем заменить?","Какой вес ставить сегодня?","Дискомфорт в суставе, что делать?","Как правильно делать первое упражнение?","Добавь упражнение на отстающую мышцу"];
-  const foot=html`<textarea rows="2" value=${input} placeholder="Например: чем заменить жим лёжа, если болит плечо?" onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>
-    ${live?html`<button class="btn" onClick=${()=>ctl.current&&ctl.current.abort()}>Стоп</button>`
-      :S.sample?html`<button class="btn primary" aria-label="Отправить" onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
-      :html`<button class="btn" onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}>Скопировать</button>`}`;
-  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot}>
+  const [help,setHelp]=useState(false);
+  // поле растёт по мере ввода (до ~6 строк), кнопка — круглая справа, как в «Сообщениях»
+  const grow=el=>{ if(!el) return; el.style.height="auto"; el.style.height=Math.min(el.scrollHeight,148)+"px"; };
+  const act=live?html`<button class="send-b stop" aria-label="Остановить" onClick=${()=>ctl.current&&ctl.current.abort()}><${Icon} n="stop" size=${16}/></button>`
+    :S.sample?html`<button class="send-b" aria-label="Отправить" disabled=${!input.trim()} onClick=${()=>send()}><${Icon} n="send" size=${18}/></button>`
+    :html`<button class="send-b" aria-label="Скопировать запрос" disabled=${!input.trim()} onClick=${()=>input.trim()&&copyText(context()+"\n\nВОПРОС: "+input.trim(),"Запрос скопирован, вставь его в чат")}><${Icon} n="copy" size=${18}/></button>`;
+  const foot=html`<div class="composer"><textarea rows="1" value=${input} placeholder="Спроси тренера" aria-label="Вопрос тренеру"
+      ref=${grow} onInput=${ev=>grow(ev.target)} onChange=${ev=>setInput(ev.target.value)} onKeyDown=${ev=>{ if(ev.key==="Enter"&&!ev.shiftKey&&S.sample){ ev.preventDefault(); send(); } }}></textarea>${act}</div>`;
+  return html`<${Sheet} title="Спросить тренера" onClose=${onClose} foot=${foot} cls="over-tabs with-head ask"
+      lead=${html`<button class="ibtn sh-help" aria-label="Пояснение" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}>
     <div class="chat" ref=${box}>
-      ${!S.sample?html`<div class="st">Помощник недоступен на этой странице. Напиши вопрос и скопируй запрос, чтобы вставить его в чат.</div>`:null}
-      ${!turns.length&&!live?html`<div class="st">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}</div>
+      ${help?html`<div class="help-t">Тренер видит текущую тренировку, программу и последние записи.${S.tools?" Может сам заменить или добавить упражнение, это отменяется кнопкой «Вернуть».":""}${!S.sample?" Здесь помощник недоступен: напиши вопрос и скопируй запрос кнопкой справа от поля, чтобы вставить его в чат.":""}</div>`:null}
+      ${!turns.length&&!live?html`
         <div class="menu">${chips.map(c=>html`<button key=${c} class="mitem" onClick=${()=>S.sample?send(c):setInput(c)}><${Icon} n="spark" size=${16}/><span>${c}</span></button>`)}</div>`:null}
       ${turns.map((t,k)=>html`<div key=${k} class=${"msg "+t.role}>${t.role==="assistant"?html`<${Rich} text=${t.content}/>`:t.content}</div>`)}
       ${live?html`<div class="msg assistant">${live==="…"?html`<span class="st">Думаю…</span>`:html`<${Rich} text=${live}/>`}</div>`:null}
@@ -653,7 +679,7 @@ function QuickAdd({onClose,openSession,openAsk,openBody,startTimer}){
     <div class="qa-rows">
       <button onClick=${run(openBody)}><${Icon} n="scale" size=${20}/><span>Вес</span><small>${lastW?fmt(num(lastW.w))+" кг · "+ago(lastW.date):"ещё нет"}</small></button>
       <button onClick=${run(openBody)}><${Icon} n="ruler" size=${20}/><span>Замеры</span><small>${lastM?ago(lastM.date):"ещё нет"}</small></button>
-      <button onClick=${run(openAsk)}><${Icon} n="chat" size=${20}/><span>Спросить тренера</span></button>
+      <button onClick=${run(openAsk)}><${Icon} n="spark" size=${22}/><span>Спросить тренера</span></button>
     </div>
   <//>`;
 }
@@ -674,7 +700,7 @@ function Timer({t,onStop,onShift}){
       onTouchStart=${ev=>{ y0.current=ev.touches[0].clientY; }} onTouchEnd=${ev=>{ if(y0.current!==null&&ev.changedTouches[0].clientY-y0.current<-24) setMini(true); y0.current=null; }}>
     <button onClick=${()=>onShift(-15)} aria-label="Минус 15 секунд">−15</button>
     <div class="t">${time}</div>
-    <div class="l">${done?"Пора!":"Отдых · "+t.label}</div>
+    <div class="l">${done?"Пора!":"Отдых"}</div>
     <button onClick=${()=>onShift(15)} aria-label="Плюс 15 секунд">+15</button>
     <button onClick=${()=>setMini(true)} aria-label="Свернуть таймер"><${Icon} n="up" size=${16}/></button>
     <button onClick=${onStop} aria-label="Остановить таймер"><${Icon} n="close" size=${16}/></button>
@@ -702,7 +728,26 @@ function App(){
   const setUi=v=>{ setUiRaw(v); try{ localStorage.setItem("trainlog.ui",v); }catch(e){} window.scrollTo(0,0); };
   useEffect(()=>{ document.documentElement.dataset.ui=ui; },[ui]);
   const day=picked||defaultDay(date);
-  const mainRef=useRef(null);
+  const mainRef=useRef(null), navRef=useRef(null), indRef=useRef(null), fabRef=useRef(null), indInit=useRef(false);
+  // «капля» Liquid Glass под текущей вкладкой: передний край убегает быстро, задний догоняет с пружиной —
+  // капля растягивается в сторону движения и собирается на месте; в полёте чуть приподнимается (iOS 26)
+  const placeInd=animate=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
+    const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
+    const lab=b.querySelector(".tb-l"), cx=b.offsetLeft+b.offsetWidth/2, fab=fabRef.current;
+    let w=Math.max(b.offsetWidth,(lab?lab.offsetWidth:0)+30);
+    // «+» стоит в центре капсулы: подсветка соседней вкладки сужается симметрично и не подходит к нему ближе 6 px
+    if(fab){ const fl=fab.getBoundingClientRect().left-nav.getBoundingClientRect().left, fr=fl+fab.offsetWidth; w=Math.min(w,2*(cx<fl?fl-6-cx:cx-fr-6)); }
+    w=Math.min(w,2*(cx-3),2*(nav.clientWidth-3-cx));
+    const L=Math.max(3,Math.round(cx-w/2)), R=Math.max(3,Math.round(nav.clientWidth-(cx+w/2))), prevL=parseFloat(ind.style.left);
+    ind.classList.remove("to-l","to-r","moving");
+    if(!animate||isNaN(prevL)||calm()){ ind.style.transition="none"; ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1"; ind.getBoundingClientRect(); ind.style.transition=""; return; }
+    if(Math.abs(prevL-L)<1) return;
+    ind.getBoundingClientRect(); ind.classList.add(L>prevL?"to-r":"to-l","moving");
+    ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1";
+    clearTimeout(ind._t); ind._t=setTimeout(()=>ind.classList.remove("moving"),420); };
+  useEffect(()=>{ placeInd(indInit.current); indInit.current=true; },[view]);
+  useEffect(()=>{ const nav=navRef.current; if(!nav||!window.ResizeObserver) return; let w=nav.clientWidth;
+    const ro=new ResizeObserver(()=>{ if(nav.clientWidth!==w){ w=nav.clientWidth; placeInd(false); } }); ro.observe(nav); return ()=>ro.disconnect(); },[]);
   useEffect(()=>{ document.documentElement.dataset.day=day; document.documentElement.lang="ru"; },[day]);
   useEffect(()=>{ anim(mainRef.current,{opacity:[0,1]},{type:"tween",duration:.2,ease:[.2,.8,.2,1]}); },[view,day]);
   const setDate=d=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(null); };
@@ -712,7 +757,7 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["add","Быстрое добавление","plus"],["train","Тренировка","dumbbell"],["hist","История","history"]];
+  const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["train","Тренировка","dumbbell"],["hist","История","history"]];
   const go=v=>{ setView(v); document.body.style.minHeight=""; window.scrollTo(0,0); };
   const openSession=(d,k)=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(k); go("train"); };
   useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
@@ -728,10 +773,11 @@ function App(){
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
         :html`<${HistoryView} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openHistory=${setHist}/>`}
     </main>
-    <nav class="tabbar" role="tablist">
-      ${tabs.map(([k,l,ic])=>k==="add"?html`<button key=${k} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть":l} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>`
-        :html`<button key=${k} role="tab" aria-selected=${String(view===k)} aria-label=${l} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/></button>`)}
+    <nav class="tabbar lg" role="tablist" aria-label="Разделы" ref=${navRef}>
+      <span class="lg-ind" aria-hidden="true" ref=${indRef}></span>
+      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
     </nav>
+    <button ref=${fabRef} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть быстрое добавление":"Быстрое добавление"} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>
     ${quick?html`<${QuickAdd} onClose=${()=>setQuick(false)} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}
       startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }}/>`:null}
     ${body?html`<${BodySheet} toast=${showToast} onClose=${()=>setBody(false)}/>`:null}

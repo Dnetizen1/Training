@@ -42,16 +42,27 @@ function weekData(date){
 }
 
 // Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
+// Шапка как в Apple Fitness (iOS 26): заголовок слева, подпись под ним, справа стеклянные кнопки (две и больше — одной капсулой).
+// Когда страницу прокрутили, сверху появляется компактная полоса: заголовок по центру, те же кнопки на том же месте,
+// под ней контент уходит в размытие (край прокрутки). Полоса скрыта через visibility — её кнопки не дублируются для читалки экрана.
 function AppBar({left,title,sub,onTitle,right,label}){
-  const t=html`<b>${title}</b>${sub?html`<small>${sub}</small>`:null}`;
-  return html`<div class="appbar">
-    <div class="ab-side">${left}</div>
-    ${onTitle?html`<button class="ab-t" onClick=${onTitle} aria-label=${label}>${t}<${Icon} n="down" size=${14}/></button>`:html`<div class="ab-t"><h1>${title}</h1>${sub?html`<small>${sub}</small>`:null}</div>`}
-    <div class="ab-side r">${right}</div>
-  </div>`;
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  return html`<${React.Fragment}>
+    <header class="pg-h">
+      <div class="pg-c"><h1>${t}</h1>${sub?html`<small>${sub}</small>`:null}</div>
+      <span class="pg-act">${left}${right}</span>
+    </header>
+    ${ReactDOM.createPortal(html`<div class="navmini">
+      <div class="nm-c">${onTitle?html`<button class="nm-t" onClick=${onTitle} aria-label=${label}><b>${title}</b><${Icon} n="down" size=${14}/></button>`:html`<b>${title}</b>`}${sub?html`<small>${sub}</small>`:null}</div>
+      <span class="pg-act">${left}${right}</span>
+    </div>`,document.body)}
+  <//>`;
 }
-// Тренер — белая круглая кнопка с иконкой чата, как кнопка настроек справа
-const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="chat" size=${22}/></button>`;
+// признак «страницу прокрутили» для компактной шапки (один слушатель на всё приложение)
+(()=>{ const f=()=>{ const r=document.documentElement, on=window.scrollY>40; if(on!==(r.dataset.scrolled==="1")){ if(on) r.dataset.scrolled="1"; else delete r.dataset.scrolled; } };
+  window.addEventListener("scroll",f,{passive:true}); })();
+const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${22}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
 const SecHead=({title,onClick,children})=>onClick
   ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
@@ -117,16 +128,13 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
   const cur=ts.ex.findIndex(e=>doneOf(e)<rowsOf(ts,e));
   const goToday=()=>{ if(!onToday) setDate(today); go("train"); };
   return html`<div class="home">
-    <header class="pg-h">
-      <div><small>${RU_DAYS[new Date(today+"T00:00:00").getDay()]}, ${dayMonth(today)}</small><h1>Прогресс</h1></div>
-      <span class="pg-act"><${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/><${CoachBtn} onClick=${openAsk}/></span>
-    </header>
+    <${AppBar} title="Прогресс" left=${html`<${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/>`} right=${html`<${CoachBtn} onClick=${openAsk}/>`}/>
     <section class="thero" style=${{"--c":PC[tday]}}>
       <div class="th-row">
-        <div><small class="th-cap"><i></i>Сегодня</small><button class="th-day" onClick=${goToday}>${P[tday].name}</button></div>
-        ${ts.ex.length?html`<span class="th-cnt"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
+        <button class="th-day" onClick=${goToday} aria-label=${"Сегодня: "+P[tday].name}>${P[tday].name}</button>
+        ${ts.ex.length?html`<span class="th-cnt" aria-hidden="true"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
       </div>
-      ${ts.ex.length?html`<${Barbell} s=${ts} day=${tday} cur=${cur} onPick=${goToday}/>`:null}
+      ${ts.ex.length?html`<${ProgressBar} done=${doneSets} total=${rows}/>`:null}
       <button class="th-go" onClick=${goToday}>${ts.done?"Посмотреть итог":hasData(ts)?"Продолжить":"Начать тренировку"}</button>
     </section>
 
@@ -157,7 +165,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
 
     <${SecHead} title="Вес"/>
     <button class="gcard" onClick=${openBody}>
-      <b class="gc-v">${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
+      <b class=${"gc-v"+(bw===null?" gc-empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
       ${bw!==null?html`<span class="gc-cells">
         <span><small>Изменение</small><b>${(bw-bw0>0?"+":"")+fmt(Math.round((bw-bw0)*10)/10)} кг</b></span>
         <span><small>Талия</small><b>${waist?fmt(num(waist.waist))+" см":"–"}</b></span>
@@ -185,6 +193,15 @@ function lagTip(date){
   return {m:best.m,fact:w.fact[best.m],plan:w.plan[best.m],gap:best.gap,
     mod:day?{id:rid(),day,type:"add_sets",base:bi,n,from:inWeek.map(x=>x.date).sort().slice(-1)[0],reason:`не добрано ${fmt(best.gap)} подх. на «${MUS[best.m]}»`}:null};
 }
+// порядок плиток: сначала самые важные для гипертрофии мышцы, мелкие — в конце
+const TILE_ORDER=[0,1,7,8,9,3,2,4,6,5,11,10,12,15,16,13,14,17,18];
+// Подсказка-поповер из стекла: растёт из кнопки «?» в правом верхнем углу, закрывается касанием вне её или Esc
+function GlassTip({children,onClose}){
+  const ref=useRef(null);
+  useEffect(()=>{ anim(ref.current,{transform:["scale(.86)","scale(1)"],opacity:[0,1],filter:["blur(6px)","blur(0px)"]},{bounce:0,duration:.35});
+    const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
+  return ReactDOM.createPortal(html`<div class="gtip-wrap" onClick=${onClose}><div class="gtip" role="dialog" ref=${ref} onClick=${ev=>ev.stopPropagation()}>${children}</div></div>`,document.body);
+}
 function WeekScreen({date,toast}){
   const [mode,setMode]=useState("now");
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
@@ -196,28 +213,32 @@ function WeekScreen({date,toast}){
     muscleCount(real,e=>rowsOf(real,e)).forEach((c,m)=>{ planDone[m]+=c.f; }); });
   const q4=v=>fmt(Math.round(v*4)/4);
   const tiles=w.used.filter(m=>w.plan[m]>=4).map(m=>{ const target=Math.min(10,w.plan[m]), v=w.fact[m], gap=Math.round((planDone[m]-v)*2)/2;
-    return {m,v,target,p:v/target,ok:v>=target-0.01,gap:gap>=1?gap:0}; }).sort((a,b)=>(b.gap>0)-(a.gap>0)||(a.ok-b.ok)||a.p-b.p);
+    return {m,v,target,p:v/target,ok:v>=target-0.01,gap:gap>=1?gap:0}; }).sort((a,b)=>TILE_ORDER.indexOf(a.m)-TILE_ORDER.indexOf(b.m));
   const minor=w.used.filter(m=>w.plan[m]<4);
   const nOk=tiles.filter(x=>x.ok).length, nLow=tiles.filter(x=>x.gap).length, left=4-w.done;
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
-  const [hideTip,setHideTip]=useState(false);
+  const [hideTip,setHideTip]=useState(false), [help,setHelp]=useState(false);
   const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
   return html`<div class="weekscr">
-    <section class="hero hero-top">
-      <div class="appbar left">
-        <h1>Неделя</h1>
-        <label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
-          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>
-      </div>
-      <p class="wk-sum">${dayMonth(w.ws)} – ${dayMonth(w.we)} · ${w.dSets} из ${w.pSets} подходов.<br/>
-        ${[nOk?ru(nOk,"мышца","мышцы","мышц")+" в норме":"",nLow?"у "+ru(nLow,"мышцы","мышц","мышц")+" недобор":""].filter(Boolean).join(", ").replace(/^./,c=>c.toUpperCase())}${nOk||nLow?". ":""}${mode==="now"&&left>0?"Осталось "+ru(left,"тренировка","тренировки","тренировок")+".":""}</p>
-    </section>
+    <${AppBar} title="Неделя" sub=${dayMonth(w.ws)+" – "+dayMonth(w.we)} left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
+          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}
+      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}/>
+    ${help?html`<${GlassTip} onClose=${()=>setHelp(false)}>
+      <b>Как читать</b>
+      <p>Кольцо — подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсвеченная плитка — цель набрана.</p>
+      <p><em class="tip-warn">недобор</em> — в прошедших тренировках сделано меньше, чем было по плану.</p>
+      <p>Подходы эффективные: нагрузка на мышцу 7–10 = 1, 4–6 = 0,5, 1–3 = 0,25.</p>
+    <//>`:null}
     ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
         aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
-        <span class="mt-r"><${Rings} size=${48} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b>${q4(x.v)}</b></span>
-        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?html`<small class="ok"><${Icon} n="check" size=${14}/>Цель</small>`:x.gap?html`<em>недобор ${fmt(x.gap)}</em>`:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>
-      <p class="mnote">Подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо — цель набрана. «Недобор» — в прошедших тренировках сделано меньше, чем было по плану.</p>
-      ${minor.length?html`<p class="mnote">Второстепенные: ${minor.map(m=>MUS[m]+" "+q4(w.fact[m])).join(" · ")}</p>`:null}`}
+        <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b>${x.gap?html`<i class="mt-badge" aria-hidden="true">${fmt(x.gap)}</i>`:null}</span>
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>`}
+    <section class="wkstats" aria-label="Итог недели">
+      <div><b>${w.dSets}<em>/${w.pSets}</em></b><span>подходов</span></div>
+      <div><b>${nOk}<em>/${tiles.length}</em></b><span>в норме</span></div>
+      ${mode==="now"?html`<div><b>${Math.max(0,left)}</b><span>осталось</span></div>`:html`<div><b class=${nLow?"warn":""}>${nLow}</b><span>с недобором</span></div>`}
+    </section>
+    ${mode==="now"&&nLow?html`<p class="wk-low"><i class="mt-badge">N</i>недобор: в прошедших тренировках у ${ru(nLow,"мышцы","мышц","мышц")} сделано меньше, чем по плану</p>`:null}
     ${tip&&!hideTip?html`<section class="banner">
       <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
       <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>

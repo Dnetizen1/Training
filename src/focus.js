@@ -12,17 +12,17 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
   return html`<div class="tile">
     <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
-      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}><b class="big">${value===""?"–":nfmt(value)}</b><small>${unit}</small></button>`}
+      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big tile-empty" aria-hidden="true"></b>`:html`<b class="big">${nfmt(value)}</b>`}<small>${unit}</small></button>`}
     <div class="tile-b">
-      <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
-      <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>
+      <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}><${Icon} n="minus" size=${22}/></button>
+      <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}><${Icon} n="plus" size=${22}/></button>
     </div>
   </div>`;
 }
 
 function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setUi,openHistory,go}){
   const {s,edit,remove,setWeek,finish}=useSession(date,day,toast), wk=s.week;
-  const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [draft,setDraft]=useState(null), [showSum,setShowSum]=useState(false);
+  const [idx,setIdx]=useState(null), [sheet,setSheet]=useState(null), [draft,setDraft]=useState(null), [showSum,setShowSum]=useState(false), [pick,setPick]=useState(false);
   useEffect(()=>{ setIdx(null); setDraft(null); setShowSum(false); },[day,date]);
   const open=s.ex.findIndex(e=>curSet(s,e)>=0);
   const i=idx!=null&&idx<s.ex.length?idx:(open>=0?open:Math.max(0,s.ex.length-1));
@@ -65,18 +65,20 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
 
   if(summary) return html`<div class="fx">
     <section class="hero">
-      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name+" · "+navDate(date)} right=${html`<button class="ab-link" onClick=${()=>go("home")}>Готово</button>`}/>
+      <${AppBar} left=${html`<${AbIcon} n="left" label=${showSum?"Назад, к тренировке":"Назад, к прогрессу"} onClick=${()=>showSum?setShowSum(false):go("home")}/>`} title="Итог" sub=${P[day].name} right=${html`<${AbLink} icon="check" label="Готово" onClick=${()=>go("home")}/>`}/>
     </section>
     <${ViewSwitch} ui=${ui} setUi=${setUi}/>
     <${FinishPanel} s=${s} edit=${edit} toast=${toast} head=${{title:P[day].name,sub:longDate(date)}}/>
   </div>`;
 
-  return html`<div class="fx">
-    <${TrainHero} s=${s} date=${date} day=${day} go=${go} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}
-      cur=${i} onPick=${goEx}
-      right=${html`<button class="ab-link" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); }}>Завершить</button>`}/>
-    <${ViewSwitch} ui=${ui} setUi=${setUi}/>
-    <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"}><${Elapsed} s=${s}/><//>
+  return html`<div class="fx" style=${{"--c":PC[day]}}>
+    <${TrainHero} s=${s} date=${date} day=${day} ui=${ui} setUi=${setUi} onAsk=${()=>openAsk(null)} onDay=${()=>setSheet({type:"day"})} onMuscles=${()=>setSheet({type:"muscles"})}/>
+    <${SecHead} title=${e?"Упражнение "+(i+1)+" из "+s.ex.length:"Нет упражнений"} onClick=${s.ex.length?()=>setPick(true):null}><${Elapsed} s=${s}/><//>
+    ${pick?html`<${Sheet} title="Упражнения" onClose=${()=>setPick(false)}>
+      <div class="menu">${s.ex.map((x,k)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
+        return html`<button key=${x.uid||k} class=${"mitem pick"+(k===i?" cur":"")} onClick=${()=>{ setPick(false); goEx(k); }}>
+          <i class=${d>=r&&r?"ok":""}>${d>=r&&r?html`<${Icon} n="check" size=${14}/>`:k+1}</i><span>${xinfo(s,x).name}</span><small>${d} из ${r}</small></button>`; })}</div>
+    <//>`:null}
     <${AppliedBanner} s=${s} date=${date} day=${day} edit=${edit}/>
 
     ${!e?html`<section class="xcard"><p class="st">В тренировке нет упражнений.</p><button class="capsule" onClick=${()=>setSheet({type:"add"})}>Добавить упражнение</button></section>`
@@ -84,7 +86,7 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
       <section class="xcard">
         <div class="x-top">
           <h2>${inf.name}</h2>
-          <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="vmore" size=${22}/></button>
+          <button class="ibtn" aria-label="Действия с упражнением" onClick=${()=>setSheet({type:"menu",uid:e.uid})}><${Icon} n="more" size=${18}/></button>
         </div>
         <span class="x-sub">${exDone?"Все подходы сделаны":"Подход "+(j+1)+" из "+rows} · цель ${inf.plan.lo}–${inf.plan.hi} повторов · запас ${rirFor(inf.plan.rir)}${e.alt&&!inf.custom?" · вместо: "+inf.base:""}</span>
         <button class="tags" aria-label=${"Нагрузка на мышцы: "+lvSorted(inf.lv).slice(0,3).map(k=>MUS[k]+" "+inf.lv[k]).join(", ")} onClick=${()=>setSheet({type:"mus",uid:e.uid})}>${lvSorted(inf.lv).slice(0,3).map(k=>html`<span key=${k} class=${inf.lv[k]>=7?"hi":inf.lv[k]>=4?"mid":"lo"}>${MUS[k]} ${inf.lv[k]}</span>`)}</button>
@@ -109,13 +111,14 @@ function FocusView({date,setDate,day,setDay,toast,timer,setTimer,openAsk,ui,setU
             <span>Подход ${k+1}${SET_T[x.t]?html` <i class="st-t" aria-label=${SET_T[x.t].l}>${SET_T[x.t].s}</i>`:null}</span>
             <b class=${dn?"ok":cur?"now":""}>${dn?(x.w?nfmt(x.w)+" × ":"")+(x.r||"")+"  ✓":cur?"сейчас":"–"}</b></button>`; })}
         <div class="sl-act">
-          <button onClick=${()=>upd(x=>{ x.n+=1; x.sets.push(blankSet()); })}>+ Подход</button>
-          ${rows>1?html`<button onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}>− Подход</button>`:null}
+          <button onClick=${()=>upd(x=>{ x.n+=1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${18}/>Подход</button>
+          ${rows>1?html`<button onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${18}/>Подход</button>`:null}
         </div>
       </section>
 
       ${nInf?html`<button class="nx" onClick=${()=>goEx(nk)}><span>Дальше: ${nInf.name}</span><small>${rowsOf(s,s.ex[nk])} × ${nInf.plan.lo}–${nInf.plan.hi}</small></button>`:null}
       <${NoteField} value=${e.note||""} onChange=${v=>edit(ss=>{ const x=ss.ex.find(y=>y.uid===e.uid); if(x) x.note=v; })}/>
+      <button class="glassbtn finish-btn" onClick=${()=>{ if(!s.done) finish(); setShowSum(true); window.scrollTo(0,0); }}><${Icon} n="flag" size=${18}/>Завершить тренировку</button>
     <//>`}
     <${SessionSheets} sheet=${sheet} setSheet=${setSheet} s=${s} date=${date} day=${day} edit=${edit} remove=${remove} openAsk=${openAsk} openHistory=${openHistory}
       setDate=${setDate} setDay=${setDay} setWeek=${setWeek} ui=${ui} setUi=${setUi}/>
