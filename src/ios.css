@@ -2083,3 +2083,157 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .thero .th-cnt b{font-size:28px;line-height:34px}
 .thero .th-cnt b em{font-size:17px}
 .thero .th-day svg{margin-top:2px}
+
+/* =====================================================================================================
+   v11 — по референсу Apple Fitness (iOS 26), замеры со скриншотов 390×844 pt (см. DESIGN.md, «Референс Fitness»).
+   Принцип: два уровня. Контент — плоские карточки #1C1C1E (едва заметный градиент вправо), без рамок и теней.
+   Стекло — только у плавающего слоя: нижняя панель, кнопки шапки, чипсы, всплывающие панели.
+   Поля 18, внутренний отступ карточки 15 ≈ радиус 16, зазор между карточками 9, между разделами 16–24.
+   ===================================================================================================== */
+:root{
+  --g:18px; --gap:9px; --r-card:16px; --pad:15px;
+  --card:#1C1C1E; --surface:linear-gradient(100deg,#1C1C1E 45%,#212123);
+  --on-card:rgba(118,118,128,.24); --on-card-hi:rgba(118,118,128,.34);   /* поля и мелкие кнопки на карточке */
+  --close-bg:#3A3A3C; --chev-bg:#5C5C60; --btn-in-card:#48484C;
+  --mute:#98989F; --sep:#2C2C2E;
+  --tb-h:58px; --tb-b:max(10px,calc(env(safe-area-inset-bottom,0px) - 14px));
+  /* старые «стеклянные» карточки и поля — теперь плоские, как в референсе */
+  --card-glass:var(--surface); --card-rim:none;
+  --gl-fill:var(--on-card); --gl-fill-on:var(--on-card-hi); --gl-rim:none;
+}
+
+/* --- шапка: заголовок 21/26 bold (Title 2), подпись 13 серым, кнопки-круги 40 --- */
+.pg-h{align-items:center;min-height:50px;padding-top:10px;gap:12px}
+.pg-h h1{font:700 21px/26px var(--disp);letter-spacing:0}
+.pg-h small{font-size:13px;line-height:17px;margin-top:1px}
+.pg-h h1 .pg-t{gap:2px}
+.pg-h h1 .pg-t svg{margin-top:3px}
+.pg-act{align-self:center}
+.pg-act > *{width:40px;height:40px;border-radius:20px}
+.pg-act:has(> :nth-child(2)){border-radius:20px}
+.pg-act:has(> :nth-child(2)) > *{width:44px;height:40px}
+.pg-act .ab-link{width:auto;padding:0 14px}
+.pg-h + .vswitch,.pg-h + .mtiles,.pg-h + .thero{margin-top:12px}
+.hero:has(> .pg-h){padding-bottom:0}
+
+/* компактная шапка при прокрутке: заголовок по центру, кнопки на том же месте, контент под ней размыт */
+.navmini{position:fixed;left:0;right:0;top:0;z-index:13;height:calc(env(safe-area-inset-top,0px) + 60px);padding:env(safe-area-inset-top,0px) var(--g) 0;
+  display:flex;align-items:center;justify-content:flex-end;visibility:hidden;opacity:0;transition:opacity .2s ease,visibility 0s linear .2s;pointer-events:none}
+:root[data-scrolled] .navmini{visibility:visible;opacity:1;transition:opacity .2s ease;pointer-events:auto}
+.navmini::before{content:"";position:absolute;left:0;right:0;top:0;bottom:-28px;z-index:-1;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(0,0,0,.82),rgba(0,0,0,.55) 62%,rgba(0,0,0,0));
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);-webkit-mask-image:linear-gradient(to bottom,#000 60%,transparent);mask-image:linear-gradient(to bottom,#000 60%,transparent)}
+.navmini .nm-c{position:absolute;left:96px;right:96px;top:env(safe-area-inset-top,0px);height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.navmini .nm-c b{font:600 17px/22px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.navmini .nm-c small{font-size:13px;line-height:16px;color:var(--mute)}
+.navmini .nm-t{display:inline-flex;align-items:center;gap:3px;border:0;background:none;padding:0;color:var(--ink);pointer-events:auto}
+.navmini .nm-t svg{color:var(--mute)}
+.navmini .pg-act{display:flex}
+:root[data-quick="1"] .navmini,body:has(.sheet-wrap) .navmini{z-index:11}
+
+/* --- разделы: заголовок 21 bold, как «Free Monthly Sampler» --- */
+.sec2{font:700 21px/26px var(--disp);letter-spacing:0;margin:24px 0 10px}
+.wk-h .sec2,.tr-h .sec2{margin:0}
+
+/* --- карточки: радиус 16, отступ 15, зазор 9 --- */
+.exb,.xcard,.setlist,.thero,.wkcard,.mtile,.wkstats,.tiles4 div,.durtile,.notetile,.card,.hday,.hx,.hxlist,.plist3,.sum,.corr-card,.tip,.nextcard,.hist-chart,.banner,.home .grp,.bodytiles button{border-radius:var(--r-card)}
+.weekscr details.grp.more,.exlist{border-radius:var(--r-card)}
+.exlist > .xrow:first-child,.exlist > .exb + .xrow{border-top-left-radius:var(--r-card);border-top-right-radius:var(--r-card);box-shadow:none}
+.exlist > .xrow:has(+ .exb),.exlist > .xrow:has(+ .addex),.exlist > .xrow:has(+ .empty){border-bottom-left-radius:var(--r-card);border-bottom-right-radius:var(--r-card)}
+.thero,.xcard,.card,.hday{padding:var(--pad)}
+.exb{padding:var(--pad) var(--pad) 12px}
+.mtiles{gap:var(--gap)}
+.tiles4{gap:var(--gap)}
+.exlist > .exb + .xrow,.exlist > .xrow + .exb{margin-top:var(--gap)}
+.thero + .wkcard,.home > section + section{margin-top:var(--gap)}
+
+/* --- текст в карточках: заголовок 16–17 semibold, значения SF Rounded 26 semibold --- */
+.exb-title,.x-top h2{font:600 18px/23px var(--font);letter-spacing:0}
+.mt-t > span{font-weight:600}
+.thero .th-day{font:700 26px/31px var(--disp);letter-spacing:0}
+.thero .th-cnt b{font:600 26px/31px var(--num);letter-spacing:-.01em}
+.thero .th-cnt b em{font-size:16px}
+.tiles4 b,.wkstats b{font:600 26px/30px var(--num);letter-spacing:-.01em}
+.tiles4 span,.wkstats span{font-size:13px}
+
+/* --- кнопки: главная — лаймовая пилюля 46; второстепенная на странице — пилюля цвета карточки с лаймовым текстом; на карточке — серая с лаймовым текстом --- */
+.capsule,.th-go{min-height:46px;border-radius:23px;font:600 17px var(--font)}
+.glassbtn,.exlist .addex{min-height:46px;border-radius:23px;background:var(--card)!important;color:var(--acc);font:600 17px var(--font);
+  -webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.glassbtn::after{content:none}
+.glassbtn svg,.exlist .addex svg{color:var(--acc)}
+.glassbtn:active,.exlist .addex:active{background:#2C2C2E!important}
+.exlist .addex{position:relative;width:100%;margin:33px 0 0}
+.exlist .addex::before{content:"";position:absolute;left:0;right:0;top:-17px;height:.5px;background:var(--sep)}
+.exlist .finish-btn{margin-top:var(--gap)}
+.exlist{overflow:visible}
+
+/* --- чипсы сверху (Журнал/Фокус, Календарь/Упражнения) — как «For You / Explore» в Fitness+: тёмные пилюли 40, выбранная белая с чёрным текстом; белая подложка переезжает --- */
+:is(.vswitch,.hseg){gap:8px;padding:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;border-radius:0}
+:is(.vswitch,.hseg)::after{content:none}
+:is(.vswitch,.hseg) > button{position:static;z-index:auto;height:40px;min-height:40px;padding:0 14px;border-radius:20px;background:#242426!important;color:var(--ink);font:500 16px var(--font);display:flex;align-items:center;justify-content:center;gap:6px}
+:is(.vswitch,.hseg) > button > *{position:relative;z-index:2}
+:is(.vswitch,.hseg) > button[aria-pressed="true"]{color:#000;font-weight:600}
+:is(.vswitch,.hseg) > button svg,:is(.vswitch,.hseg) > button[aria-pressed="true"] svg{color:inherit}
+:is(.vswitch,.hseg)::before{z-index:1;top:0;bottom:0;left:0;width:calc((100% - 8px)/2);border-radius:20px;background:#F4F4F4;box-shadow:none;
+  transform:translateX(calc(var(--i)*(100% + 8px)))}
+
+/* --- сегменты внутри карточек (запас, тип подхода, день) — как системный UISegmentedControl: плоская дорожка, светлый бегунок --- */
+:is(.seg,.days,.seg5),.seg3g{background:var(--on-card);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+:is(.seg,.days,.seg5)::after,.seg3g::after{content:none}
+:is(.seg,.days,.seg5)::before,.seg3g::before{background:#5A5A5E;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+
+/* --- нижняя панель как в Fitness: по ширине контента, 58 высотой, иконка + подпись 10, выбранная — светлая пилюля и лайм --- */
+.tabbar{left:var(--g);right:var(--g);width:auto;max-width:none;transform:none;margin:0;bottom:var(--tb-b);height:var(--tb-h);padding:0 3px;border-radius:29px;
+  background:rgba(30,30,32,.6);box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.tabbar button{height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink);border-radius:26px}
+.tabbar button svg{width:24px;height:24px}
+.tabbar .tb-l{font:600 10px/12px var(--font);letter-spacing:.01em;white-space:nowrap}
+.tabbar button[aria-selected="true"]{color:var(--acc)}
+.tabbar .lg-ind{top:3px;height:52px;border-radius:26px;background:rgba(255,255,255,.13)}
+.tabbar .lg-ind.moving{background:rgba(255,255,255,.2)}
+.tb-fab > span{width:44px;height:44px}
+.sheet-wrap.over-tabs{bottom:calc(var(--tb-b) + var(--tb-h) + 10px)}
+body,:root[data-view="train"] body{padding-bottom:calc(var(--tb-b) + var(--tb-h) + 28px)}
+body::after{height:calc(var(--tb-b) + var(--tb-h) + 34px);background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.7) 75%)}
+
+/* --- карточка-подсказка «… отстаёт» как «A Customisable Summary»: заголовок 16, текст серым, серая кнопка с лаймовым текстом, крестик в круге 24 --- */
+.weekscr .banner{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;padding:var(--pad);gap:6px}
+.weekscr .banner::after{content:none}
+.banner .bn-h{align-items:flex-start}
+.banner .bn-h b{font:600 16px/21px var(--font)}
+.banner > span{font-size:15px;line-height:20px;color:var(--mute)}
+.banner .bn-h .ibtn{width:24px;height:24px;flex:none;border-radius:12px;background:var(--close-bg);color:#D1D1D6;margin:0}
+.banner .bn-h .ibtn svg{width:13px;height:13px}
+.banner .capsule{margin-top:8px;background:var(--btn-in-card);color:var(--acc)}
+
+/* --- раскрывающиеся строки: шеврон в сером круге 18, как у «Step Count ›» --- */
+.weekscr details.grp.more > summary svg:last-child,.done-ex > summary svg:last-child{width:20px;height:20px;padding:4px;border-radius:10px;background:var(--chev-bg);color:#1C1C1E}
+
+/* --- кольца упражнений: равные колонки сеткой, края слева и справа одинаковые --- */
+.xrings{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));justify-items:center;gap:0;overflow:visible}
+.xr{min-width:0}
+/* b — кольца Activity: сплошная дуга, номер внутри, у сделанного — галочка */
+.xr-in{position:relative;display:grid;place-items:center;width:36px;height:36px}
+.xr-in .actring{position:absolute;inset:0;transition:transform .15s var(--ease)}
+.xr-in b{position:relative;font:600 13px/1 var(--num);color:var(--mute);font-variant-numeric:tabular-nums}
+.xr.cur .xr-in b{color:var(--ink)}
+.xr.full .xr-in b{color:var(--c)}
+.xr.cur .actring{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 50%,transparent))}
+.xr:active .actring{transform:scale(.9)}
+/* c — капсулы: длина по числу подходов, сегмент — подход */
+.xcaps{display:flex;gap:6px;align-items:flex-start}
+.xc{flex-basis:0;min-width:16px;display:grid;justify-items:center;gap:6px;padding:10px 0 2px;border:0;background:none;color:var(--mute);font:500 11px/13px var(--num)}
+.xc-bar{display:flex;gap:2px;width:100%;height:8px}
+.xc-bar i{flex:1;border-radius:4px;background:color-mix(in srgb,var(--c) 26%,transparent)}
+.xc-bar i.on{background:var(--c)}
+.xc.cur .xc-bar{height:10px;margin-top:-1px}
+.xc.cur{color:var(--ink);font-weight:700}
+.xc:active .xc-bar{transform:scaleY(1.3)}
+/* «Вес» — карточка как «Step Count»: значение SF Rounded 26; пусто — лаймовое действие и серая подсказка слева */
+.gcard{background:var(--surface);border-radius:var(--r-card);padding:var(--pad);text-align:left}
+.gcard .gc-v{font:600 26px/31px var(--num);letter-spacing:-.01em}
+.gcard .gc-v.empty{font:600 17px/22px var(--font);color:var(--acc);letter-spacing:0}
+.gcard .gc-r,.gcard .gc-r span{justify-content:flex-start;text-align:left;font-size:15px;line-height:20px;color:var(--mute)}
+.cal-h h2{font:700 21px/26px var(--disp);letter-spacing:0}
+.mtile{gap:11px}

@@ -42,14 +42,25 @@ function weekData(date){
 }
 
 // Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
-// Шапка как в iOS 26: крупный заголовок слева (подпись — под ним), кнопки справа; две и больше — в одной стеклянной капсуле
+// Шапка как в Apple Fitness (iOS 26): заголовок слева, подпись под ним, справа стеклянные кнопки (две и больше — одной капсулой).
+// Когда страницу прокрутили, сверху появляется компактная полоса: заголовок по центру, те же кнопки на том же месте,
+// под ней контент уходит в размытие (край прокрутки). Полоса скрыта через visibility — её кнопки не дублируются для читалки экрана.
 function AppBar({left,title,sub,onTitle,right,label}){
-  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${20}/></button>`:title;
-  return html`<header class="pg-h">
-    <div class="pg-c"><h1>${t}</h1>${sub?html`<small>${sub}</small>`:null}</div>
-    <span class="pg-act">${left}${right}</span>
-  </header>`;
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  return html`<${React.Fragment}>
+    <header class="pg-h">
+      <div class="pg-c"><h1>${t}</h1>${sub?html`<small>${sub}</small>`:null}</div>
+      <span class="pg-act">${left}${right}</span>
+    </header>
+    ${ReactDOM.createPortal(html`<div class="navmini">
+      <div class="nm-c">${onTitle?html`<button class="nm-t" onClick=${onTitle} aria-label=${label}><b>${title}</b><${Icon} n="down" size=${14}/></button>`:html`<b>${title}</b>`}${sub?html`<small>${sub}</small>`:null}</div>
+      <span class="pg-act">${left}${right}</span>
+    </div>`,document.body)}
+  <//>`;
 }
+// признак «страницу прокрутили» для компактной шапки (один слушатель на всё приложение)
+(()=>{ const f=()=>{ const r=document.documentElement, on=window.scrollY>40; if(on!==(r.dataset.scrolled==="1")){ if(on) r.dataset.scrolled="1"; else delete r.dataset.scrolled; } };
+  window.addEventListener("scroll",f,{passive:true}); })();
 const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
 const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${28}/></button>`;
 const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
@@ -154,7 +165,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
 
     <${SecHead} title="Вес"/>
     <button class="gcard" onClick=${openBody}>
-      <b class="gc-v">${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
+      <b class=${"gc-v"+(bw===null?" empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
       ${bw!==null?html`<span class="gc-cells">
         <span><small>Изменение</small><b>${(bw-bw0>0?"+":"")+fmt(Math.round((bw-bw0)*10)/10)} кг</b></span>
         <span><small>Талия</small><b>${waist?fmt(num(waist.waist))+" см":"–"}</b></span>

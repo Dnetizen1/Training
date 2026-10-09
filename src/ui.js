@@ -164,7 +164,7 @@ function ExerciseBlock({s,i,date,edit,openSheet,startTimer,onCollapse}){
       <//>`; })}
     </div>
     <div class="exb-add">
-      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${18}/> ${done?"Отдых":"Подход "+(cj+1)+" сделан"} · ${restTxt(rest)}</button>
+      <button class=${"btn wide "+(done?"":"primary")} onClick=${setDoneNow}><${Icon} n="check" size=${18}/> ${done?"Отдых":"Подход сделан"}</button>
       <button class="btn" aria-label="Добавить подход" onClick=${()=>upd(x=>{ x.n=x.n+1; x.sets.push(blankSet()); })}><${Icon} n="plus" size=${16}/></button>
       <button class="btn" disabled=${rows<=1} aria-label="Убрать последний подход" onClick=${()=>upd(x=>{ x.n=Math.max(1,x.n-1); x.sets=x.sets.slice(0,x.n); })}><${Icon} n="minus" size=${16}/></button>
     </div>
@@ -335,15 +335,34 @@ function SetRing({n,done,size=36,stroke=5}){
     </g></svg>`;
 }
 // Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
+// Кольцо прогресса как в Activity: сплошная дуга с круглыми концами на тёмной дорожке цвета дня
+function ActRing({p,size=36,stroke=5}){
+  const c=size/2, r=c-stroke/2-.5, v=Math.max(0,Math.min(1,p))*100;
+  return html`<svg class="actring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
+    <circle cx=${c} cy=${c} r=${r} fill="none" stroke="var(--c)" stroke-opacity=".24" stroke-width=${stroke}/>
+    ${v>0?html`<circle cx=${c} cy=${c} r=${r} fill="none" stroke="var(--c)" stroke-width=${stroke} stroke-linecap="round" pathLength="100"
+      stroke-dasharray=${(v>=100?100:Math.max(.01,v-.01))+" 100"} transform=${"rotate(-90 "+c+" "+c+")"}/>`:null}
+  </svg>`;
+}
+// Упражнения тренировки: ряд колец (вариант задаётся data-rings на <html>: a — сегменты по подходам, b — кольца Activity, c — капсулы).
+// Раскладка — сетка из равных колонок, поэтому края слева и справа одинаковые. Нажатие ведёт к упражнению.
 function Barbell({s,day,cur,onPick,bare}){
-  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
+  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null, v=document.documentElement.dataset.rings||"b";
+  const lab=(x,i,r,d)=>(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов";
   return html`<div class="bbwrap">
-    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
+    ${v==="c"?html`<div class="xcaps" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
       ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
-        return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(r&&d>=r?" full":"")} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
-          <${SetRing} n=${r} done=${d}/><small>${i+1}</small></button>`; })}
-    </div>
+        return html`<button key=${x.uid||i} class=${"xc"+(i===c?" cur":"")+(r&&d>=r?" full":"")} style=${{flexGrow:Math.max(1,r)}} onClick=${()=>onPick&&onPick(i)}
+          aria-current=${i===c?"step":null} aria-label=${lab(x,i,r,d)}>
+          <span class="xc-bar">${Array.from({length:Math.max(1,r)},(_,k)=>html`<i key=${k} class=${k<d?"on":""}></i>`)}</span><small>${i+1}</small></button>`; })}
+    </div>`
+    :html`<div class=${"xrings v-"+v} role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day],"--n":Math.max(n,1)}}>
+      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)), full=r&&d>=r;
+        return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(full?" full":"")} onClick=${()=>onPick&&onPick(i)}
+          aria-current=${i===c?"step":null} aria-label=${lab(x,i,r,d)}>
+          ${v==="b"?html`<span class="xr-in"><${ActRing} p=${r?d/r:0}/><b>${full?html`<${Icon} n="check" size=${14}/>`:i+1}</b></span>`
+            :html`<${SetRing} n=${r} done=${d}/><small>${i+1}</small>`}</button>`; })}
+    </div>`}
     ${bare?null:html`<span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>`}
   </div>`;
 }
@@ -369,8 +388,8 @@ function ViewSwitch({ui,setUi}){
   const idx=ui==="focus"?1:0, [i,setI]=useState(lastUi===null?idx:lastUi);
   useEffect(()=>{ lastUi=idx; const h=requestAnimationFrame(()=>requestAnimationFrame(()=>setI(idx))); return ()=>cancelAnimationFrame(h); },[idx]);
   return html`<div class="vswitch" role="group" aria-label="Вид экрана тренировки" style=${{"--i":i}}>
-    <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${18}/>Журнал</button>
-    <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${18}/>Фокус</button>
+    <button aria-pressed=${String(ui!=="focus")} onClick=${()=>setUi("journal")}><${Icon} n="list" size=${18}/><span>Журнал</span></button>
+    <button aria-pressed=${String(ui==="focus")} onClick=${()=>setUi("focus")}><${Icon} n="target" size=${18}/><span>Фокус</span></button>
   </div>`;
 }
 function DaySheet({s,date,day,setDate,setDay,setWeek,ui,setUi,onClose}){
@@ -561,8 +580,8 @@ function HistoryView({openSession,openAsk,openHistory}){
     <section class="hero">
       <${AppBar} right=${html`<${CoachBtn} onClick=${openAsk}/>`} title="История"/>
       <div class="hseg" role="group" aria-label="Вид истории">
-        <button aria-pressed=${String(mode==="cal")} onClick=${()=>setMode("cal")}>Календарь</button>
-        <button aria-pressed=${String(mode==="ex")} onClick=${()=>setMode("ex")}>Упражнения</button>
+        <button aria-pressed=${String(mode==="cal")} onClick=${()=>setMode("cal")}><span>Календарь</span></button>
+        <button aria-pressed=${String(mode==="ex")} onClick=${()=>setMode("ex")}><span>Упражнения</span></button>
       </div>
     </section>
     ${mode==="cal"?html`
@@ -788,7 +807,7 @@ function App(){
     <nav class="tabbar lg" role="tablist" ref=${navRef}>
       <span class="lg-ind" aria-hidden="true" ref=${indRef}></span>
       ${tabs.map(([k,l,ic])=>k==="add"?html`<button key=${k} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть":l} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>`
-        :html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} aria-label=${l} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/></button>`)}
+        :html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
     </nav>
     ${quick?html`<${QuickAdd} onClose=${()=>setQuick(false)} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}
       startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }}/>`:null}
