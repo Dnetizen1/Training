@@ -33,10 +33,10 @@ function md(src){
 /* ---------- Модель упражнения ---------- */
 // base>=0 — упражнение программы; base=-1 — добавлено вручную
 function xinfo(s,e){
-  const row=e.base>=0&&P[s.day]?P[s.day].ex[e.base]:null;
+  const pr=progOf(s), row=e.base>=0&&pr.P[s.day]?pr.P[s.day].ex[e.base]:null;
   const plan=row?{ns:row[1],lo:row[2],hi:row[3],rir:row[4],rest:row[5],note:row[6]}:Object.assign({ns:3,lo:8,hi:12,rir:"1",rest:120,note:""},e.plan||{});
   const base=row?row[0]:(e.name||"Упражнение");
-  const lv=e.lv||(e.mus?lvFromOld(e.mus):null)||(row?LV[s.day][e.base]:null)||{};
+  const lv=e.lv||(e.mus?lvFromOld(e.mus):null)||(row?pr.LV[s.day][e.base]:null)||{};
   return {row,custom:!row,base,name:row?(e.alt||base):base,plan,lv,mus:lvWeights(lv)};
 }
 const musKeys=m=>MUS_ORDER.filter(k=>m[k]);
@@ -60,16 +60,24 @@ const rowsOf=(s,e)=>e.n!=null?e.n:Math.max(setsFor(xinfo(s,e).plan.ns,s.week),e.
 const musName=k=>MUS[k];
 const setDone=x=>x.ok||num(x.r)!==null;           // подход засчитан: отмечен или есть повторы (вес не обязателен)
 const doneOf=e=>e.sets.filter(setDone).length;
+// Тип подхода: "" обычный, "myo" миоповторы, "drop" дропсет. Мио и дропсет в объёме по мышцам считаются за два подхода
+const SET_T={myo:{s:"М",l:"Миоповторы"},drop:{s:"Д",l:"Дропсет"}};
+const effOf=e=>e.sets.reduce((a,x)=>a+(setDone(x)?(SET_T[x.t]?2:1):0),0);
 const hasData=s=>s.ex&&s.ex.some(e=>e.sets.some(x=>x.w||x.r||x.ok));
 const defSession=k=>({day:k,ex:P[k].ex.map((_,i)=>({base:i,uid:"p"+i,sets:[]}))});
 function blankSession(date,day){
   const wk=weekFromDate(date);
-  return {kind:"session",lvVer:LV_VER,date,day,week:wk,bw:"",note:"",done:false,
+  return {kind:"session",lvVer:LV_VER,pv:PV,date,day,week:wk,bw:"",note:"",done:false,
     ex:P[day].ex.map((e,i)=>({base:i,uid:"p"+i,sets:Array.from({length:setsFor(e[1],wk)},blankSet),note:""}))};
 }
 function normDoc(v){
+  if(v&&v.kind==="session"&&Array.isArray(v.ex)&&!v.pv){   // записано до смены программы
+    if(hasData(v)||!P[v.day]) v.pv=1;                          // с подходами — оставить старые упражнения
+    else { v.pv=PV; v.ex=blankSession(v.date,v.day).ex; delete v.applied; }   // пустую — по новой программе
+  }
   if(v&&v.kind==="session"&&Array.isArray(v.ex)) v.ex.forEach((e,i)=>{
-    if(e.base===undefined) e.base=(P[v.day]&&i<P[v.day].ex.length)?i:-1;
+    const pp=progOf(v).P;
+    if(e.base===undefined) e.base=(pp[v.day]&&i<pp[v.day].ex.length)?i:-1;
     if(!e.uid) e.uid=e.base>=0?"p"+e.base:"c"+i;
     if(!Array.isArray(e.sets)) e.sets=[];
   });
@@ -206,10 +214,10 @@ function migrateLv(){
 /* Что не доделано относительно программы и куда это перенести */
 const upcomingDays=day=>[1,2,3].map(k=>ORDER[(ORDER.indexOf(day)+k)%4]);
 function deficits(s){
-  const out=[];
-  P[s.day].ex.forEach((row,bi)=>{
+  const out=[], pr=progOf(s);
+  pr.P[s.day].ex.forEach((row,bi)=>{
     const e=s.ex.find(x=>x.base===bi), plan=setsFor(row[1],s.week), done=e?doneOf(e):0;
-    if(done<plan) out.push({bi,name:e?xinfo(s,e).name:row[0],missed:plan-done,lv:e?xinfo(s,e).lv:LV[s.day][bi],removed:!e});
+    if(done<plan) out.push({bi,name:e?xinfo(s,e).name:row[0],missed:plan-done,lv:e?xinfo(s,e).lv:pr.LV[s.day][bi],removed:!e});
   });
   return out;
 }
@@ -230,7 +238,7 @@ function suggestMods(s){
     }
     const day=after.find(k=>(added[k]||0)<CAP_NEW&&(load[k]||0)<CAP_SETS&&k[0]===s.day[0]);   // новое упражнение — только в день того же типа
     if(!day) return;
-    const row=P[s.day].ex[d.bi], n=Math.min(2,d.missed,CAP_SETS-(load[day]||0));
+    const row=progOf(s).P[s.day].ex[d.bi], n=Math.min(2,d.missed,CAP_SETS-(load[day]||0));
     res.push({id:rid(),day,type:"add",name:d.name,n,lo:row[2],hi:row[3],lv:d.lv,from:s.date,reason:why});
     load[day]=(load[day]||0)+n; added[day]=(added[day]||0)+1;
   });
@@ -294,7 +302,7 @@ function sessionPRs(s){
   return out;
 }
 // Блины на сторону для штанги (гриф 20 кг)
-const PLATES=[25,20,15,10,5,2.5,1.25];
+const PLATES=[20,15,10,5,2.5,1.25];   // блины в зале (25 нет)
 function platesFor(w,bar){ bar=bar||20; let side=(num(w)-bar)/2; if(!(side>0)) return null; const out=[];
   for(const p of PLATES){ while(side>=p-1e-9){ out.push(p); side-=p; } } return side>0.01?null:out; }
 const isBarbell=name=>/штанг|присед|станов|румынск|bench|squat|deadlift|barbell/.test(normName(name))&&!/гантел|тренаж|смит|блок/.test(normName(name));
@@ -307,7 +315,7 @@ function sessionBlock(s,numbered){
   const d=P[s.day]; let t=`${s.date} · ${d.name}`+(s.bw?` · вес утром ${s.bw} кг`:"")+(s.dur?` · ${s.dur} мин`:"")+"\n";
   s.ex.forEach((e,i)=>{
     const inf=xinfo(s,e), {ns,lo,hi,rir}=inf.plan, mt=lvText(inf.lv);
-    const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${x.ok?"":" (не отмечен)"}`).join(", ");
+    const sets=e.sets.filter(x=>x.w||x.r).map(x=>`${x.w||"б/в"}×${x.r||"?"}${x.q?" (запас "+x.q+")":""}${SET_T[x.t]?" ("+SET_T[x.t].l.toLowerCase()+", считается за 2)":""}${x.ok?"":" (не отмечен)"}`).join(", ");
     t+=`${numbered?(i+1)+".":"-"} ${inf.name}${e.alt&&!inf.custom?` [замена для «${inf.base}»]`:""}${inf.custom?" [добавлено]":""} · план ${rowsOf(s,e)}×${lo}–${hi}, RIR ${rirFor(rir,s.week)}`+
       `${mt?` · нагрузка на мышцы (0–10): ${mt}`:""} · факт: ${sets||"не выполнено"}${e.rir?` · реальный RIR: ${e.rir}`:""}${e.note?` · заметка: ${e.note}`:""}\n`;
   });
@@ -468,22 +476,32 @@ function beep(){
 /* ---------- Иконки ---------- */
 const I={
   summ:"M12 4a8 8 0 1 0 .01 0M12 7v5l3 2", star:"M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z",
-  spark:"M12 2.5l1.8 5.2 5.2 1.8-5.2 1.8L12 16.5l-1.8-5.2L5 9.5l5.2-1.8zM18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z",
+  spark:"M10.5 3.5C11 8.5 12.5 10 17.5 10.5 12.5 11 11 12.5 10.5 17.5 10 12.5 8.5 11 3.5 10.5 8.5 10 10 8.5 10.5 3.5zM18 14.5c.25 2 1 2.75 3 3-2 .25-2.75 1-3 3-.25-2-1-2.75-3-3 2-.25 2.75-1 3-3z",
   trash:"M4 7h16M9 7V4.5h6V7M18 7l-.8 12.5H6.8L6 7M10 11v5.5M14 11v5.5",
   up:"M6 15l6-6 6 6", down:"M6 9l6 6 6-6", close:"M6 6l12 12M18 6L6 18", send:"M4 12l16-8-6 16-2.5-6.5z",
   check:"M5 12.5l4.5 4.5L19 7.5", arrowUp:"M12 19V5M6 11l6-6 6 6",
   more:"M5 12h.01M12 12h.01M19 12h.01", plus:"M12 5v14M5 12h14", minus:"M5 12h14",
   dumbbell:"M3 12h2M19 12h2M7 7v10M17 7v10M5 9v6M19 9v6M7 12h10", bars:"M5 20V11M12 20V4M19 20v-6",
   clock:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", ruler:"M4 16L16 4l4 4L8 20zM8 12l2 2M11 9l2 2M14 6l2 2",
-  swap:"M7 7h12l-3-3M17 17H5l3 3", rings:"M12 3a9 9 0 1 0 .01 0M12 8a4 4 0 1 0 .01 0", history:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01"
+  swap:"M7 7h12l-3-3M17 17H5l3 3", rings:"M12 3a9 9 0 1 0 .01 0M12 8a4 4 0 1 0 .01 0", history:"M12 7v5l3 2M3.5 12a8.5 8.5 0 1 0 2.5-6M3 4v4h4", left:"M15 6l-6 6 6 6", right:"M9 6l6 6-6 6", pen:"M4 20h4L19 9l-4-4L4 16zM14 6l4 4", list:"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01", target:"M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01", info:"M12 11v6M12 7h.01",
+  book:"M6 3.5h11a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6zM6 3.5v17M9.5 8h5.5M9.5 11.5h5.5", chart:"M4 4v16h16M7.5 15l3.5-4 3 2.5 4.5-6",
+  infoc:"M12 3.5a8.5 8.5 0 1 1 0 17a8.5 8.5 0 0 1 0-17zM12 11v5.5M12 7.8h.01",
+  copy:"M9 9h10v11H9zM5 15V4h10",
+  stop:"M7 7h10v10H7z",
+  coach:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM12 8l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z",
+  chat:"M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H10l-4 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5zM8.5 11.3h.01M12 11.3h.01M15.5 11.3h.01",
+  sliders:"M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4", cal:"M5 6h14v14H5zM5 10h14M9 4v4M15 4v4", flag:"M6 21V4M6 4.5h11l-2.5 4 2.5 4H6",
+  vmore:"M12 5h.01M12 12h.01M12 19h.01", user:"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4.5 20.5a7.5 7.5 0 0 1 15 0", timer:"M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4.5M9.5 2.5h5",
+  scale:"M5 4h14l1.5 16h-17zM9 9.5a3.5 3.5 0 0 1 6 0M12 9.5l1.5-1.5", search:"M11 4a7 7 0 1 0 .01 0M20 20l-4-4"
 };
-const PC={UA:"var(--p-blue)",LA:"var(--p-red)",UB:"var(--p-yellow)",LB:"var(--p-green)"};
+const PC={UA:"var(--d-ua)",LA:"var(--d-la)",UB:"var(--d-ub)",LB:"var(--d-lb)"};
+const PC_INK={UA:"#000",LA:"#000",UB:"#000",LB:"#000"};   // текст на цвете дня: все цвета яркие, текст чёрный
 const Plate=({k})=>html`<i class="plate" style=${{"--c":PC[k]}} aria-hidden="true"></i>`;
 // Motion (motion.dev): пружинные анимации; без библиотеки или при reduced motion — просто без анимации
 const calm=()=>{ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } };
 function anim(el,kf,o){ try{ if(el&&window.Motion&&!calm()) window.Motion.animate(el,kf,Object.assign({type:"spring",bounce:.22,duration:.45},o||{})); }catch(e){} }
-const TAB_I={summ:1,star:1,dumbbell:1,bars:1};
-const Icon=({n,size=20})=>n==="spark"
-  ? html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d=${I.spark}/></svg>`
-  : html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"?3.5:TAB_I[n]?2:2.25} stroke-linecap=${n==="more"||TAB_I[n]?"round":"square"} stroke-linejoin=${TAB_I[n]?"round":"miter"} aria-hidden="true"><path d=${I[n]}/></svg>`;
+const TAB_I={infoc:1,copy:1,stop:1,coach:1,summ:1,star:1,dumbbell:1,bars:1,book:1,chart:1,chat:1,sliders:1,cal:1,flag:1,user:1,timer:1,scale:1,history:1,ruler:1,list:1,target:1};
+// Одна семья иконок, как SF Symbols: контур, круглые концы и стыки, линия ~1,8 px при любом размере (non-scaling-stroke).
+// Многоточие рисуется круглыми точками. Размер задаёт контекст: панель 24, кнопки шапки 22, чипсы 18, кнопки на карточке 18–22.
+const Icon=({n,size=20})=>html`<svg class="ic" width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=${n==="more"||n==="vmore"?3.4:1.8} stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d=${I[n]} vector-effect="non-scaling-stroke"/></svg>`;
 const Rich=({text})=>html`<div class="rich" dangerouslySetInnerHTML=${{__html:md(text)}}></div>`;

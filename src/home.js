@@ -1,11 +1,11 @@
 /* Вкладка «Сводка» (как Summary в Apple Health / Fitness) и экран «История упражнения». */
 
-// Концентрические кольца: rings = [{p: 0..1, color, track}], снаружи внутрь
-function Rings({size,stroke,rings,label}){
+// Концентрические кольца: rings = [{p: 0..1, color, track}], снаружи внутрь; без track дорожка — тот же цвет, приглушённый
+function Rings({size,stroke,rings,label,gap=3}){
   const c=size/2;
   return html`<svg class="rings" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} role="img" aria-label=${label}>
-    ${rings.map((r,k)=>{ const rad=c-stroke/2-k*(stroke+3), C=2*Math.PI*rad, p=Math.max(0,Math.min(1,r.p||0));
-      return html`<g key=${k}><circle cx=${c} cy=${c} r=${rad} fill="none" stroke=${r.track} stroke-width=${stroke}/>
+    ${rings.map((r,k)=>{ const rad=c-stroke/2-k*(stroke+gap), C=2*Math.PI*rad, p=Math.max(0,Math.min(1,r.p||0));
+      return html`<g key=${k}><circle cx=${c} cy=${c} r=${rad} fill="none" stroke=${r.track||r.color} stroke-opacity=${r.track?1:.24} stroke-width=${stroke}/>
         ${p>0?html`<circle cx=${c} cy=${c} r=${rad} fill="none" stroke=${r.color} stroke-width=${stroke} stroke-linecap="round" stroke-dasharray=${C} stroke-dashoffset=${C*(1-p)} transform=${"rotate(-90 "+c+" "+c+")"}/>`:null}</g>`; })}
   </svg>`;
 }
@@ -36,81 +36,141 @@ function weekData(date){
   ORDER.forEach(k=>{ const real=inWeek.filter(x=>x.day===k).sort((a,b)=>b.date.localeCompare(a.date))[0], s=real||defSession(k);
     const cnt=e=>real?rowsOf(s,e):setsFor(xinfo(s,e).plan.ns,wk);
     muscleCount(s,cnt).forEach((c,m)=>{ plan[m]+=c.f; }); pSets+=s.ex.reduce((a,e)=>a+cnt(e),0); });
-  inWeek.forEach(x=>{ muscleCount(x,doneOf).forEach((c,m)=>{ fact[m]+=c.f; }); dSets+=x.ex.reduce((a,e)=>a+doneOf(e),0); if(hasData(x)) done++; });
+  inWeek.forEach(x=>{ muscleCount(x,effOf).forEach((c,m)=>{ fact[m]+=c.f; }); dSets+=x.ex.reduce((a,e)=>a+doneOf(e),0); if(hasData(x)) done++; });
   const used=MUS_ORDER.filter(m=>plan[m]>0), full=used.filter(m=>fact[m]>=plan[m]-0.01);
   return {wk,ws,we,plan,fact,pSets,dSets,done:Math.min(done,4),used,full};
 }
 
-// Сводка — по экрану «Сводка» макета
-function HomeView({date,setDate,day,go,openHistory,openSession,toast}){
-  const [bodyOpen,setBodyOpen]=useState(false);
-  const s=getSession(date,day), w=weekData(date);
-  const rows=s.ex.reduce((a,e)=>a+rowsOf(s,e),0), doneSets=s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0);
-  const started=hasData(s);
-  const prs=sessions().filter(x=>x.date<=date).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).flatMap(sessionPRs).slice(0,3);
-  const lifts=[...new Set(ORDER.map(k=>P[k].ex[0][0]))].map(n=>({name:n,h:exerciseHistory(n)})).filter(x=>x.h.length);
-  const main=lifts.slice().sort((a,b)=>b.h[b.h.length-1].date.localeCompare(a.h[a.h.length-1].date))[0];
-  const body=Object.values(S.data).filter(v=>v&&v.kind==="body"&&num(v.w)!==null).sort((a,b)=>a.date.localeCompare(b.date));
-  const topSet=h=>h.sets.reduce((b,x)=>e1rm(x.w,x.r)>e1rm(b.w,b.r)?x:b,h.sets[0]);
-  return html`<div class="home">
-    <header class="large">
-      <h1>Прогресс</h1>
-      <label class="datepick"><span>${longDate(date)}</span><${Icon} n="down" size=${16}/>
-        <input type="date" value=${date} aria-label="Сменить дату" onChange=${ev=>ev.target.value&&setDate(ev.target.value)}/></label>
-      ${date!==todayStr()?html`<button class="linkbtn today-back" onClick=${()=>setDate(todayStr())}>Вернуться к сегодня</button>`:null}
+// Шапка экрана по референсу: слева круглая кнопка, по центру заголовок (и подпись), справа действие
+// Шапка как в Apple Fitness (iOS 26): заголовок слева, подпись под ним, справа стеклянные кнопки (две и больше — одной капсулой).
+// Когда страницу прокрутили, сверху появляется компактная полоса: заголовок по центру, те же кнопки на том же месте,
+// под ней контент уходит в размытие (край прокрутки). Полоса скрыта через visibility — её кнопки не дублируются для читалки экрана.
+function AppBar({left,title,sub,onTitle,right,label}){
+  const t=onTitle?html`<button class="pg-t" onClick=${onTitle} aria-label=${label}>${title}<${Icon} n="down" size=${18}/></button>`:title;
+  return html`<${React.Fragment}>
+    <header class="pg-h">
+      <div class="pg-c"><h1>${t}</h1>${sub?html`<small>${sub}</small>`:null}</div>
+      <span class="pg-act">${left}${right}</span>
     </header>
+    ${ReactDOM.createPortal(html`<div class="navmini">
+      <div class="nm-c">${onTitle?html`<button class="nm-t" onClick=${onTitle} aria-label=${label}><b>${title}</b><${Icon} n="down" size=${14}/></button>`:html`<b>${title}</b>`}${sub?html`<small>${sub}</small>`:null}</div>
+      <span class="pg-act">${left}${right}</span>
+    </div>`,document.body)}
+  <//>`;
+}
+// признак «страницу прокрутили» для компактной шапки (один слушатель на всё приложение)
+(()=>{ const f=()=>{ const r=document.documentElement, on=window.scrollY>40; if(on!==(r.dataset.scrolled==="1")){ if(on) r.dataset.scrolled="1"; else delete r.dataset.scrolled; } };
+  window.addEventListener("scroll",f,{passive:true}); })();
+const AbLink=({icon,label,onClick})=>html`<button class="ab-link" aria-label=${label} onClick=${onClick}><${Icon} n=${icon} size=${20}/><span>${label}</span></button>`;
+const CoachBtn=({onClick})=>html`<button class="ab-coach" aria-label="Спросить тренера" onClick=${onClick}><${Icon} n="spark" size=${22}/></button>`;
+const AbIcon=({n,label,onClick})=>html`<button class="ab-i" aria-label=${label} onClick=${onClick}><${Icon} n=${n} size=${20}/></button>`;
+const SecHead=({title,onClick,children})=>onClick
+  ?html`<button class="sec2" onClick=${onClick}><span>${title}</span>${children}<${Icon} n="right" size=${18}/></button>`
+  :html`<h2 class="sec2"><span>${title}</span>${children}</h2>`;
+// Полоса «значение / норма». Сверх нормы — как в референсе: полоса полная, а розовый отрезок в начале показывает долю перебора
+const Meter=({v,max,color})=>{ const p=max?v/max:0, ex=p>1.001?Math.min(1,p-1):0;
+  return html`<span class="meter"><i style=${{width:Math.min(100,p*100)+"%",background:color||"var(--accf)"}}></i>${ex?html`<i class="ex" style=${{width:Math.max(4,ex*100)+"%"}}></i>`:null}</span>`; };
+const shiftDate=(d,n)=>{ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n); return t.toLocaleDateString("sv-SE"); };
+const navDate=d=>{ const t=todayStr(), w=d===t?"Сегодня":d===shiftDate(t,-1)?"Вчера":d===shiftDate(t,1)?"Завтра":RU_DAYS[new Date(d+"T00:00:00").getDay()]; return w+", "+dayMonth(d); };
+// Линейный график на тёмной карточке: сетка, подписи осей, точка на последнем значении
+function LineChart({pts,w,h}){
+  w=w||340; h=h||160; const L=30,R=14,T=16,B=22;
+  // «круглый» шаг сетки (1, 2, 5, 10…), чтобы подписи оси не повторялись
+  const vs=pts.map(p=>p.v), lo0=Math.min(...vs), hi0=Math.max(...vs), raw=Math.max(1,(hi0-lo0)/3), mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,5,10].map(k=>k*mag).find(x=>x>=raw), lo=Math.floor(lo0/step)*step-(hi0===lo0?step*2:0), hi=lo+step*4<hi0?Math.ceil(hi0/step)*step:lo+step*4;
+  const ys=Array.from({length:Math.round((hi-lo)/step)+1},(_,k)=>lo+k*step);
+  const X=i=>pts.length>1?L+i*(w-L-R)/(pts.length-1):(L+w-R)/2, Y=v=>T+(h-T-B)*(1-(v-lo)/(hi-lo||1));
+  const last=pts.length-1, every=Math.ceil(pts.length/6);
+  return html`<svg class="lchart" viewBox=${"0 0 "+w+" "+h} role="img" aria-label=${"График: последнее значение "+fmt(Math.round(vs[last]))}>
+    ${ys.map((v,k)=>html`<g key=${k}><line x1=${L} x2=${w-R} y1=${Y(v)} y2=${Y(v)} stroke="var(--grid)" stroke-width=".6"/><text x=${L-6} y=${Y(v)+3} text-anchor="end">${fmt(Math.round(v))}</text></g>`)}
+    ${pts.map((p,i)=>i%every===0||i===last?html`<text key=${i} x=${X(i)} y=${h-6} text-anchor="middle">${p.x}</text>`:null)}
+    ${pts.length>1?html`<polyline points=${pts.map((p,i)=>X(i)+","+Y(p.v)).join(" ")} fill="none" stroke="var(--teal)" stroke-width="1.6" stroke-linejoin="round"/>`:null}
+    <text x=${X(last)} y=${Y(vs[last])-9} text-anchor="middle" class="lc-v">${fmt(Math.round(vs[last]*10)/10)}</text>
+    <circle cx=${X(last)} cy=${Y(vs[last])} r="4" fill="var(--teal)"/>
+  </svg>`;
+}
+// Плитки дней недели: как «Приёмы пищи» в референсе
+function weekDays(date){
+  const wk=weekFromDate(date), ws=weekStart(date), we=weekEnd(date);
+  const inWeek=sessions().filter(x=>x.date>=ws&&x.date<=we);
+  return ORDER.map(k=>{ const real=inWeek.filter(x=>x.day===k).sort((a,b)=>b.date.localeCompare(a.date))[0], s=real||defSession(k);
+    const rows=real?s.ex.reduce((a,e)=>a+rowsOf(s,e),0):s.ex.reduce((a,e)=>a+setsFor(xinfo(s,e).plan.ns,wk),0);
+    const done=real?s.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(s,e)),0):0;
+    return {k,real,rows,done}; });
+}
 
-    <section class="card today">
-      <div class="card-h"><span class="card-t acc">${date===todayStr()?"Тренировка сегодня":"Тренировка "+dm(date)}</span></div>
-      <div class="today-main">
-        <${Rings} size=${76} stroke=${10} label=${"Сделано подходов: "+doneSets+" из "+rows} rings=${[{p:rows?doneSets/rows:0,color:"var(--acc)",track:"var(--acc-track)"}]}/>
-        <div class="today-txt">
-          <b>${P[day].name}</b>
-          <span>${s.ex.length} упражнений · ${rows} подходов</span>
-          <small>${s.done?"Тренировка завершена":started?"Сделано "+doneSets+" из "+rows+" подходов":"Ещё не начата"}</small>
-        </div>
+// Простой график тренда: две линии сетки, линия, точка на последнем значении, подписи первого и последнего
+function TrendChart({vals,unit,w,h}){
+  w=w||350; h=h||100; const pad=8, lo=Math.min(...vals), hi=Math.max(...vals), span=hi-lo||1;
+  const X=i=>vals.length>1?pad+i*(w-2*pad)/(vals.length-1):w/2, Y=v=>h-22-(v-lo)/span*(h-44);
+  const last=vals.length-1;
+  return html`<svg class="trend" viewBox=${"0 0 "+w+" "+h} role="img" aria-label=${"С "+fmt(Math.round(vals[0]))+" до "+fmt(Math.round(vals[last]))+" "+unit}>
+    <line x1="0" x2=${w} y1=${Y(hi)} y2=${Y(hi)} class="tr-g"/><line x1="0" x2=${w} y1=${Y(lo)} y2=${Y(lo)} class="tr-g"/>
+    ${vals.length>1?html`<polyline points=${vals.map((v,i)=>X(i)+","+Y(v)).join(" ")} class="tr-l"/>`:null}
+    <circle cx=${X(last)} cy=${Y(vals[last])} r="5" class="tr-d"/>
+    <text x="0" y=${h-4} class="tr-t">${fmt(Math.round(vals[0]))} ${unit}</text>
+    <text x=${w} y=${Math.max(12,Y(vals[last])-10)} text-anchor="end" class="tr-t tr-v">${fmt(Math.round(vals[last]))} ${unit}</text>
+  </svg>`;
+}
+const WDS=["вс","пн","вт","ср","чт","пт","сб"];
+// Прогресс: сверху сегодняшняя тренировка (всегда сегодня), ниже неделя кольцами, график, рекорды, вес
+function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}){
+  const w=weekData(date), days=weekDays(date);
+  const today=todayStr(), onToday=date===today, tday=onToday?day:defaultDay(today), ts=getSession(today,tday);
+  const rows=ts.ex.reduce((a,e)=>a+rowsOf(ts,e),0), doneSets=ts.ex.reduce((a,e)=>a+Math.min(doneOf(e),rowsOf(ts,e)),0);
+  const thisWeek=weekStart(date)===weekStart(today);
+  const prs=sessions().filter(x=>x.date<=today).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8).flatMap(sessionPRs).slice(0,3);
+  const lifts=[...new Set(ORDER.map(k=>P[k].ex[0][0]))].map(n=>({name:n,h:exerciseHistory(n)})).filter(x=>x.h.length);
+  const main=lifts.slice().sort((a,b)=>b.h.length-a.h.length||b.h[b.h.length-1].date.localeCompare(a.h[a.h.length-1].date))[0];
+  const mh=main?main.h.slice(-8).filter(x=>x.best>0):[], gain=mh.length>1?Math.round((mh[mh.length-1].best-mh[0].best)*2)/2:0;
+  const body=Object.values(S.data).filter(v=>v&&v.kind==="body"&&num(v.w)!==null).sort((a,b)=>a.date.localeCompare(b.date));
+  const bw=body.length?num(body[body.length-1].w):null, bw0=body.length?num(body[0].w):null, waist=body.slice().reverse().find(x=>num(x.waist)!==null);
+  const cur=ts.ex.findIndex(e=>doneOf(e)<rowsOf(ts,e));
+  const goToday=()=>{ if(!onToday) setDate(today); go("train"); };
+  return html`<div class="home">
+    <${AppBar} title="Прогресс" left=${html`<${AbIcon} n="sliders" label="Вес и замеры" onClick=${openBody}/>`} right=${html`<${CoachBtn} onClick=${openAsk}/>`}/>
+    <section class="thero" style=${{"--c":PC[tday]}}>
+      <div class="th-row">
+        <button class="th-day" onClick=${goToday} aria-label=${"Сегодня: "+P[tday].name}>${P[tday].name}</button>
+        ${ts.ex.length?html`<span class="th-cnt" aria-hidden="true"><b>${doneSets}<em>/${rows}</em></b><small>подходов</small></span>`:null}
       </div>
-      <ul class="plist">${s.ex.slice(0,3).map(e=>{ const inf=xinfo(s,e); return html`<li key=${e.uid}><span>${inf.name}</span><span class="num">${rowsOf(s,e)} × ${inf.plan.lo}–${inf.plan.hi}</span></li>`; })}</ul>
-      ${s.ex.length>3?html`<span class="card-s">и ещё ${s.ex.length-3} упражнения</span>`:null}
-      <button class="cta" onClick=${()=>go("train")}>${s.done?"Посмотреть итог":started?"Продолжить тренировку":"Начать тренировку"}</button>
+      ${ts.ex.length?html`<${ProgressBar} done=${doneSets} total=${rows}/>`:null}
+      <button class="th-go" onClick=${goToday}>${ts.done?"Посмотреть итог":hasData(ts)?"Продолжить":"Начать тренировку"}</button>
     </section>
 
-    <h2 class="sec">Эта неделя</h2>
-    <button class="card week-card" onClick=${()=>go("week")} aria-label="Открыть неделю">
-      <${Rings} size=${112} stroke=${11} label="Кольца недели" rings=${[
-        {p:w.done/4,color:"var(--acc)",track:"var(--acc-track)"},
-        {p:w.pSets?w.dSets/w.pSets:0,color:"var(--grn)",track:"var(--grn-track)"},
-        {p:w.used.length?w.full.length/w.used.length:0,color:"var(--pur)",track:"var(--pur-track)"}]}/>
-      <dl class="ringlegend">
-        <div><dt>Тренировки</dt><dd class="num" style=${{color:"var(--acc)"}}>${w.done}/4</dd></div>
-        <div><dt>Подходы</dt><dd class="num" style=${{color:"var(--grn)"}}>${w.dSets}/${w.pSets}</dd></div>
-        <div><dt>Объём набран</dt><dd class="num" style=${{color:"var(--pur)"}}>${w.full.length}/${w.used.length} мышц</dd></div>
-      </dl>
-    </button>
-
-    ${main?html`<h2 class="sec">Динамика</h2>
-    <button class="card prog" onClick=${()=>openHistory(main.name)}>
-      <div class="card-h"><span class="card-t">${main.name}</span><span class="card-s">${main.h.length} ${main.h.length===1?"тренировка":main.h.length<5?"тренировки":"тренировок"}</span></div>
-      <div class="prog-row">
-        <div class="prog-n"><b class="big">${topSet(main.h[main.h.length-1]).w?fmt(num(topSet(main.h[main.h.length-1]).w)):"б/в"}</b><span>${topSet(main.h[main.h.length-1]).w?"кг × ":"× "}${topSet(main.h[main.h.length-1]).r}</span></div>
-        <${Spark} values=${main.h.map(x=>x.best)} w=${150} h=${44}/>
+    <section class="wkcard">
+      <${Rings} size=${140} stroke=${12} gap=${3} rings=${days.map(d=>({p:d.rows?d.done/d.rows:0,color:PC[d.k]}))}
+        label=${"Неделя: "+days.map(d=>P[d.k].name+" "+d.done+" из "+d.rows).join(", ")}/>
+      <div class="wk-b">
+        <div class="wk-h">
+          <button class="wk-t" onClick=${()=>go("week")}><b>${thisWeek?"Неделя":dayMonth(w.ws)+" – "+dayMonth(w.we)}</b><small>${w.dSets} из ${w.pSets}</small></button>
+          <span class="wk-nav">
+            <button class="dn-a" aria-label="Прошлая неделя" onClick=${()=>setDate(shiftDate(date,-7))}><${Icon} n="left" size=${18}/></button>
+            <button class="dn-a" aria-label="Следующая неделя" disabled=${thisWeek} onClick=${()=>setDate(shiftDate(date,7))}><${Icon} n="right" size=${18}/></button>
+          </span>
+        </div>
+        ${days.map(d=>html`<button key=${d.k} class="wl" onClick=${()=>openSession(d.real?d.real.date:today,d.k)} aria-label=${P[d.k].name+": "+d.done+" из "+d.rows}>
+          <i style=${{background:PC[d.k]}}></i><span>${P[d.k].name}</span><b class=${d.done?"":"z"}>${d.done}/${d.rows}</b></button>`)}
       </div>
-    </button>`:null}
+    </section>
+    ${!thisWeek?html`<button class="linkbtn today-back" onClick=${()=>setDate(today)}>К этой неделе</button>`:null}
 
-    ${prs.length?html`<h2 class="sec">Рекорды</h2>
-    <div class="card list">${prs.map((r,k)=>html`<button key=${k} class="lrow" onClick=${()=>openHistory(r.name)}>
-        <span class="badge">${I_TROPHY}</span>
-        <span class="lmain"><b>${r.name}</b><small>${dm(r.date)} · ${r.w?fmt(num(r.w))+" кг × ":""}${r.r} · 1ПМ ≈ ${kgf(r.v)} кг</small></span>
-        <${Icon} n="right" size=${18}/></button>`)}</div>`:null}
+    ${main&&mh.length>1?html`<div class="tr-h"><button class="sec2" onClick=${()=>openHistory(main.name)}><span>${main.name}</span></button>
+      <span class=${gain>0?"tr-up":gain<0?"tr-dn":"mute"}>${gain?(gain>0?"+":"")+fmt(gain)+" кг 1ПМ":"без изменений"}</span></div>
+    <${TrendChart} vals=${mh.map(x=>x.best)} unit="кг"/>`:null}
 
-    <h2 class="sec">Вес и замеры</h2>
-    <div class="tiles4 bodytiles">
-      <button onClick=${()=>setBodyOpen(true)}><span>Вес</span><b class="big">${body.length?fmt(num(body[body.length-1].w)):"–"}<small> кг</small></b>
-        <small class="bt-s">${body.length?dm(body[body.length-1].date)+(body.length>1?" · "+(num(body[body.length-1].w)-num(body[0].w)>=0?"+":"")+fmt(Math.round((num(body[body.length-1].w)-num(body[0].w))*10)/10)+" кг":""):"Нажми, чтобы внести"}</small></button>
-      <button onClick=${()=>setBodyOpen(true)}><span>Замеры</span><b class="big">${body.length}</b>
-        <small class="bt-s">${body.length?"записей · добавить":"Добавить первый"}</small></button>
-    </div>
-    ${bodyOpen?html`<${BodySheet} toast=${toast} onClose=${()=>setBodyOpen(false)}/>`:null}
+    ${prs.length?html`<${SecHead} title="Рекорды"/>
+    <div class="plist3">${prs.map((r,k)=>html`<button key=${k} onClick=${()=>openHistory(r.name)}>
+        <span>${r.name}<small>${dm(r.date)}</small></span><b>${r.w?fmt(num(r.w))+" × ":""}${r.r}</b></button>`)}</div>`:null}
+
+    <${SecHead} title="Вес"/>
+    <button class="gcard" onClick=${openBody}>
+      <b class=${"gc-v"+(bw===null?" gc-empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
+      ${bw!==null?html`<span class="gc-cells">
+        <span><small>Изменение</small><b>${(bw-bw0>0?"+":"")+fmt(Math.round((bw-bw0)*10)/10)} кг</b></span>
+        <span><small>Талия</small><b>${waist?fmt(num(waist.waist))+" см":"–"}</b></span>
+      </span>`:html`<span class="gc-r"><span>Мерь утром, натощак, в одинаковых условиях</span></span>`}
+    </button>
   </div>`;
 }
 
@@ -133,47 +193,59 @@ function lagTip(date){
   return {m:best.m,fact:w.fact[best.m],plan:w.plan[best.m],gap:best.gap,
     mod:day?{id:rid(),day,type:"add_sets",base:bi,n,from:inWeek.map(x=>x.date).sort().slice(-1)[0],reason:`не добрано ${fmt(best.gap)} подх. на «${MUS[best.m]}»`}:null};
 }
+// порядок плиток: сначала самые важные для гипертрофии мышцы, мелкие — в конце
+const TILE_ORDER=[0,1,7,8,9,3,2,4,6,5,11,10,12,15,16,13,14,17,18];
+// Подсказка-поповер из стекла: растёт из кнопки «?» в правом верхнем углу, закрывается касанием вне её или Esc
+function GlassTip({children,onClose}){
+  const ref=useRef(null);
+  useEffect(()=>{ anim(ref.current,{transform:["scale(.86)","scale(1)"],opacity:[0,1],filter:["blur(6px)","blur(0px)"]},{bounce:0,duration:.35});
+    const k=ev=>{ if(ev.key==="Escape") onClose(); }; document.addEventListener("keydown",k); return ()=>document.removeEventListener("keydown",k); },[]);
+  return ReactDOM.createPortal(html`<div class="gtip-wrap" onClick=${onClose}><div class="gtip" role="dialog" ref=${ref} onClick=${ev=>ev.stopPropagation()}>${children}</div></div>`,document.body);
+}
 function WeekScreen({date,toast}){
-  const [mode,setMode]=useState("now"), [all,setAll]=useState(false);
+  const [mode,setMode]=useState("now");
   const d=new Date(date+"T00:00:00"); if(mode==="prev") d.setDate(d.getDate()-7);
   const ref=d.toLocaleDateString("sv-SE"), w=weekData(ref), tip=mode==="now"?lagTip(date):null;
-  // мезоцикл: среднее в неделю по неделям, где были тренировки
-  let rows=MUS_ORDER.map(m=>({m,v:w.fact[m],plan:w.plan[m]}));
-  const max=16;
-  const zero=rows.filter(r=>r.plan>0&&!(r.v>0)).length;
-  const groups=MUS_GROUPS.map(([g,ks])=>[g,rows.filter(r=>ks.includes(r.m)&&(r.v>0||(all&&r.plan>0)))]).filter(g=>g[1].length);
+  // плитки — только основные мышцы (по плану недели от 4 подходов): набрано / цель (10 или сколько даёт программа).
+  // «Недобор» — в завершённых тренировках этой недели (идущая сегодня не считается) по плану было больше подходов, чем сделано.
+  const inWeek=sessions().filter(x=>x.date>=w.ws&&x.date<=w.we&&hasData(x)&&(x.done||x.date<todayStr())), doneDays=new Set(inWeek.map(x=>x.day)), planDone=MUS.map(()=>0);
+  ORDER.filter(k=>doneDays.has(k)).forEach(k=>{ const real=inWeek.filter(x=>x.day===k).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    muscleCount(real,e=>rowsOf(real,e)).forEach((c,m)=>{ planDone[m]+=c.f; }); });
+  const q4=v=>fmt(Math.round(v*4)/4);
+  const tiles=w.used.filter(m=>w.plan[m]>=4).map(m=>{ const target=Math.min(10,w.plan[m]), v=w.fact[m], gap=Math.round((planDone[m]-v)*2)/2;
+    return {m,v,target,p:v/target,ok:v>=target-0.01,gap:gap>=1?gap:0}; }).sort((a,b)=>TILE_ORDER.indexOf(a.m)-TILE_ORDER.indexOf(b.m));
+  const minor=w.used.filter(m=>w.plan[m]<4);
+  const nOk=tiles.filter(x=>x.ok).length, nLow=tiles.filter(x=>x.gap).length, left=4-w.done;
   const sent=tip&&tip.mod&&modsList(tip.mod.day).some(x=>x.type==="add_sets"&&x.base===tip.mod.base&&x.reason===tip.mod.reason);
+  const [hideTip,setHideTip]=useState(false), [help,setHelp]=useState(false);
+  const ru=(n,a,b,c)=>{ const k=n%100>10&&n%100<20?c:n%10===1?a:n%10>=2&&n%10<=4?b:c; return n+" "+k; };
   return html`<div class="weekscr">
-    <header class="large">
-      <span class="eyebrow">${dayMonth(w.ws)} – ${dayMonth(w.we)}</span>
-      <h1>${mode==="prev"?"Прошлая неделя":"Эта неделя"}</h1>
-    </header>
-    <div class="seg3" role="group" aria-label="Период">
-      ${[["now","Эта неделя"],["prev","Прошлая"]].map(([k,l])=>html`<button key=${k} aria-pressed=${String(mode===k)} onClick=${()=>setMode(k)}>${l}</button>`)}
-    </div>
-    <section class="card eff">
-      <div class="card-h"><span class="card-t">Эффективные подходы</span><span class="card-s">цель 10–16</span></div>
-      ${!groups.length?html`<p class="st">Пока нет данных.</p>`:groups.map(([g,rs])=>html`<div key=${g} class="effg">
-        <span class="effg-t">${g}</span>
-        ${rs.map(r=>{ const target=Math.min(10,r.plan||10), ok=r.v>=target-0.01; return html`<div key=${r.m} class="effr">
-          <span>${MUS[r.m]}</span>
-          <span class="effb"><i style=${{width:Math.min(100,r.v/max*100)+"%",background:ok?"var(--grn)":"var(--acc)"}}></i></span>
-          <b class="num">${fmt(Math.round(r.v*4)/4)}</b>
-        </div>`; })}
-      </div>`)}
-      ${zero?html`<button class="linkbtn effmore" onClick=${()=>setAll(!all)}>${all?"Скрыть мышцы без подходов":"Ещё без подходов: "+zero}</button>`:null}
-      <div class="efflg"><span><i style=${{background:"var(--acc)"}}></i>ниже нормы</span><span><i style=${{background:"var(--grn)"}}></i>в норме</span></div>
+    <${AppBar} title="Неделя" sub=${dayMonth(w.ws)+" – "+dayMonth(w.we)} left=${html`<label class="pillsel"><${Icon} n="cal" size=${16}/><span>${mode==="prev"?"Прошлая":"Эта неделя"}</span><${Icon} n="down" size=${14}/>
+          <select aria-label="Период" value=${mode} onChange=${ev=>setMode(ev.target.value)}><option value="now">Эта неделя</option><option value="prev">Прошлая</option></select></label>`}
+      right=${html`<button class=${"ab-i ab-q"+(help?" on":"")} aria-label="Как читать экран" aria-expanded=${String(help)} onClick=${()=>setHelp(!help)}><${Icon} n="infoc" size=${22}/></button>`}/>
+    ${help?html`<${GlassTip} onClose=${()=>setHelp(false)}>
+      <b>Как читать</b>
+      <p>Кольцо — подходы за неделю против цели: 10 или сколько даёт программа. Полное кольцо и подсвеченная плитка — цель набрана.</p>
+      <p><em class="tip-warn">недобор</em> — в прошедших тренировках сделано меньше, чем было по плану.</p>
+      <p>Подходы эффективные: нагрузка на мышцу 7–10 = 1, 4–6 = 0,5, 1–3 = 0,25.</p>
+    <//>`:null}
+    ${!tiles.length?html`<p class="st">На этой неделе ещё нет плана по мышцам.</p>`:html`<div class="mtiles">${tiles.map(x=>html`<div key=${x.m} class=${"mtile"+(x.ok?" ok":"")}
+        aria-label=${MUS[x.m]+": "+q4(x.v)+" из "+fmt(x.target)+(x.ok?", норма":"")+(x.gap?", недобор "+fmt(x.gap):"")}>
+        <span class="mt-r"><${Rings} size=${50} stroke=${5} rings=${[{p:x.p,color:"var(--acc)"}]} label=""/><b class=${"n"+Math.min(q4(x.v).length,5)}>${q4(x.v)}</b>${x.gap?html`<i class="mt-badge" aria-hidden="true">${fmt(x.gap)}</i>`:null}</span>
+        <span class="mt-t"><span>${MUS[x.m]}</span>${x.ok?null:html`<small>из ${fmt(x.target)}</small>`}</span></div>`)}</div>`}
+    <section class="wkstats" aria-label="Итог недели">
+      <div><b>${w.dSets}<em>/${w.pSets}</em></b><span>подходов</span></div>
+      <div><b>${nOk}<em>/${tiles.length}</em></b><span>в норме</span></div>
+      ${mode==="now"?html`<div><b>${Math.max(0,left)}</b><span>осталось</span></div>`:html`<div><b class=${nLow?"warn":""}>${nLow}</b><span>с недобором</span></div>`}
     </section>
-    ${tip?html`<section class="card tip">
-      <span class="tip-i">${I_SPARK}</span>
-      <div class="tip-b">
-        <b>${MUS[tip.m]} отстаёт</b>
-        <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>
-        ${tip.mod?(sent?html`<span class="mute">Добавлено в план</span>`:html`<button class="softbtn" onClick=${()=>{ addMods([tip.mod]); toast({text:"Добавлено в план: "+P[tip.mod.day].name}); }}>Добавить в план</button>`):null}
-      </div>
+    ${mode==="now"&&nLow?html`<p class="wk-low"><i class="mt-badge">N</i>недобор: в прошедших тренировках у ${ru(nLow,"мышцы","мышц","мышц")} сделано меньше, чем по плану</p>`:null}
+    ${tip&&!hideTip?html`<section class="banner">
+      <div class="bn-h"><b>${MUS[tip.m]} отстаёт</b><button class="ibtn" aria-label="Скрыть" onClick=${()=>setHideTip(true)}><${Icon} n="close" size=${18}/></button></div>
+      <span>${fmt(Math.round(tip.fact*4)/4)} из ${fmt(Math.round(tip.plan*4)/4)} подходов за неделю.${tip.mod?" Тренер предлагает +"+tip.mod.n+" подх. «"+P[tip.mod.day].ex[tip.mod.base][0]+"» в "+P[tip.mod.day].name+".":" В оставшихся тренировках этой недели нет подходящего упражнения."}</span>
+      ${tip.mod?(sent?html`<span class="mute">Добавлено в план</span>`:html`<button class="capsule sm" onClick=${()=>{ addMods([tip.mod]); toast({text:"Добавлено в план: "+P[tip.mod.day].name}); }}>Добавить в план</button>`):null}
     </section>`:null}
     <details class="grp more">
-      <summary class="grp-row">Подробно по дням</summary>
+      <summary class="grp-row"><span><${Icon} n="list" size=${16}/>Подробно по дням</span><${Icon} n="right" size=${16}/></summary>
       <${WeekView} date=${ref} embedded=${true}/>
     </details>
   </div>`;
