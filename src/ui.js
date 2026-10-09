@@ -246,7 +246,7 @@ function AddSheet({edit,onClose}){
   return html`<${Sheet} title="Добавить упражнение" onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${add}>Добавить в тренировку</button>`}>
     <div class="adform">${inp("name","Название","text")}${inp("n","Подходы","numeric")}${inp("lo","Повт. от","numeric")}${inp("hi","Повт. до","numeric")}</div>
     <div class="seg" role="group" aria-label="Как указать мышцы">
-      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Нагрузка автоматически</button>
+      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Автоматически</button>
       <button aria-pressed=${String(mode==="manual")} onClick=${()=>setMode("manual")}>Вручную</button>
     </div>
     ${mode==="manual"?html`<${LevelPicker} value=${mus} onChange=${setMus}/>`:html`<div class="st">Нагрузка на мышцы (0–10) определится сама после добавления. Поправить можно через «⋯ → Нагрузка на мышцы».</div>`}
@@ -325,16 +325,6 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Кольцо из сегментов: один сегмент — один подход; сделанные — цветом дня, остальные — его тенью
-function SetRing({n,done,size=36,stroke=5}){
-  const c=size/2, r=c-stroke/2-1, gap=n>1?6:0, len=(100-gap*n)/Math.max(1,n);
-  return html`<svg class="setring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
-    <g fill="none" stroke="var(--c)" stroke-width=${stroke} transform=${"rotate(-90 "+c+" "+c+")"}>
-      ${Array.from({length:Math.max(1,n)},(_,k)=>html`<circle key=${k} cx=${c} cy=${c} r=${r} pathLength="100" stroke-opacity=${k<done?1:.24}
-        stroke-dasharray=${len+" "+(100-len)} stroke-dashoffset=${-(gap/2+k*(len+gap))}/>`)}
-    </g></svg>`;
-}
-// Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
 // Кольцо прогресса как в Activity: сплошная дуга с круглыми концами на тёмной дорожке цвета дня
 function ActRing({p,size=36,stroke=5}){
   const c=size/2, r=c-stroke/2-.5, v=Math.max(0,Math.min(1,p))*100;
@@ -344,25 +334,17 @@ function ActRing({p,size=36,stroke=5}){
       stroke-dasharray=${(v>=100?100:Math.max(.01,v-.01))+" 100"} transform=${"rotate(-90 "+c+" "+c+")"}/>`:null}
   </svg>`;
 }
-// Упражнения тренировки: ряд колец (вариант задаётся data-rings на <html>: a — сегменты по подходам, b — кольца Activity, c — капсулы).
+// Упражнения тренировки: ряд колец Activity — дуга заполняется по сделанным подходам, внутри номер, у сделанного галочка.
 // Раскладка — сетка из равных колонок, поэтому края слева и справа одинаковые. Нажатие ведёт к упражнению.
 function Barbell({s,day,cur,onPick,bare}){
-  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null, v=document.documentElement.dataset.rings||"b";
-  const lab=(x,i,r,d)=>(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов";
+  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
   return html`<div class="bbwrap">
-    ${v==="c"?html`<div class="xcaps" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
-      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
-        return html`<button key=${x.uid||i} class=${"xc"+(i===c?" cur":"")+(r&&d>=r?" full":"")} style=${{flexGrow:Math.max(1,r)}} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${lab(x,i,r,d)}>
-          <span class="xc-bar">${Array.from({length:Math.max(1,r)},(_,k)=>html`<i key=${k} class=${k<d?"on":""}></i>`)}</span><small>${i+1}</small></button>`; })}
-    </div>`
-    :html`<div class=${"xrings v-"+v} role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day],"--n":Math.max(n,1)}}>
+    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day],"--n":Math.max(n,1)}}>
       ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)), full=r&&d>=r;
         return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(full?" full":"")} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${lab(x,i,r,d)}>
-          ${v==="b"?html`<span class="xr-in"><${ActRing} p=${r?d/r:0}/><b>${full?html`<${Icon} n="check" size=${14}/>`:i+1}</b></span>`
-            :html`<${SetRing} n=${r} done=${d}/><small>${i+1}</small>`}</button>`; })}
-    </div>`}
+          aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
+          <span class="xr-in"><${ActRing} p=${r?d/r:0}/><b>${full?html`<${Icon} n="check" size=${14}/>`:i+1}</b></span></button>`; })}
+    </div>
     ${bare?null:html`<span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>`}
   </div>`;
 }
@@ -736,7 +718,7 @@ function Timer({t,onStop,onShift}){
       onTouchStart=${ev=>{ y0.current=ev.touches[0].clientY; }} onTouchEnd=${ev=>{ if(y0.current!==null&&ev.changedTouches[0].clientY-y0.current<-24) setMini(true); y0.current=null; }}>
     <button onClick=${()=>onShift(-15)} aria-label="Минус 15 секунд">−15</button>
     <div class="t">${time}</div>
-    <div class="l">${done?"Пора!":"Отдых · "+t.label}</div>
+    <div class="l">${done?"Пора!":"Отдых"}</div>
     <button onClick=${()=>onShift(15)} aria-label="Плюс 15 секунд">+15</button>
     <button onClick=${()=>setMini(true)} aria-label="Свернуть таймер"><${Icon} n="up" size=${16}/></button>
     <button onClick=${onStop} aria-label="Остановить таймер"><${Icon} n="close" size=${16}/></button>
@@ -769,7 +751,8 @@ function App(){
   // капля растягивается в сторону движения и собирается на месте; в полёте чуть приподнимается (iOS 26)
   const placeInd=animate=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
     const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
-    const L=b.offsetLeft, R=nav.clientWidth-b.offsetLeft-b.offsetWidth, prevL=parseFloat(ind.style.left);
+    const lab=b.querySelector(".tb-l"), w=Math.min(nav.clientWidth-6,Math.max(b.offsetWidth,(lab?lab.offsetWidth:0)+30)), cx=b.offsetLeft+b.offsetWidth/2;
+    const L=Math.max(3,Math.round(cx-w/2)), R=Math.max(3,Math.round(nav.clientWidth-(cx+w/2))), prevL=parseFloat(ind.style.left);
     ind.classList.remove("to-l","to-r","moving");
     if(!animate||isNaN(prevL)||calm()){ ind.style.transition="none"; ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1"; ind.getBoundingClientRect(); ind.style.transition=""; return; }
     if(Math.abs(prevL-L)<1) return;
@@ -788,7 +771,7 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["add","Быстрое добавление","plus"],["train","Тренировка","dumbbell"],["hist","История","history"]];
+  const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["train","Тренировка","dumbbell"],["hist","История","history"]];
   const go=v=>{ setView(v); document.body.style.minHeight=""; window.scrollTo(0,0); };
   const openSession=(d,k)=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(k); go("train"); };
   useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
@@ -804,11 +787,11 @@ function App(){
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
         :html`<${HistoryView} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openHistory=${setHist}/>`}
     </main>
-    <nav class="tabbar lg" role="tablist" ref=${navRef}>
+    <nav class="tabbar lg" role="tablist" aria-label="Разделы" ref=${navRef}>
       <span class="lg-ind" aria-hidden="true" ref=${indRef}></span>
-      ${tabs.map(([k,l,ic])=>k==="add"?html`<button key=${k} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть":l} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>`
-        :html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
+      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
     </nav>
+    <button class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть быстрое добавление":"Быстрое добавление"} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${26}/></span></button>
     ${quick?html`<${QuickAdd} onClose=${()=>setQuick(false)} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}
       startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }}/>`:null}
     ${body?html`<${BodySheet} toast=${showToast} onClose=${()=>setBody(false)}/>`:null}

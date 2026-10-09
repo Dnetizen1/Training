@@ -1964,7 +1964,7 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .wk-low i.mt-badge{position:static}
 
 /* «Фокус»: пустой вес — ровное тире по центру, без единицы */
-.tile-v .big.empty{color:var(--mute2);font-weight:500}
+.tile-v .big.tile-empty{color:var(--mute2);font-weight:500}
 
 /* ===== Liquid Glass для полей и мелких кнопок (поверх карточек — лёгкая «стеклянная» заливка с бликом по краю) ===== */
 :root{--gl-fill:rgba(255,255,255,.07);--gl-fill-on:rgba(255,255,255,.12);--gl-rim:inset 0 0 0 .5px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.1)}
@@ -1989,10 +1989,10 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 /* значок недобора — как уведомление на иконке: в правом верхнем углу кольца */
 .mtile .mt-r i.mt-badge{position:absolute;top:-6px;right:-8px;left:auto;bottom:auto;z-index:2;min-width:20px;height:20px;padding:0 5px;font-size:11px;border-radius:10px;background:var(--warn);color:#000;box-shadow:0 0 0 2px var(--card)}
 .mtile:has(.mt-badge) .mt-t{padding-right:0}
-.tile-v .big.empty{display:inline-block;transform:translateY(-6px)}
+.tile-v .big.tile-empty{display:inline-block;transform:translateY(-6px)}
 
 /* «Фокус»: пустой вес — тире той же высоты, единица остаётся, кнопки ± на одной линии */
-.tile-v .big.empty{display:inline;transform:none;color:var(--mute2);font-weight:500}
+.tile-v .big.tile-empty{display:inline;transform:none;color:var(--mute2);font-weight:500}
 
 /* тип подхода — стеклянный сегмент со скользящей подсветкой, как «Сколько ещё мог сделать» */
 .sttype{display:grid;gap:6px}
@@ -2028,10 +2028,10 @@ body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:calc(110px 
 .ask .sheet-body{padding-top:12px}
 /* «Фокус»: число и тире не переносятся и не сжимаются — обе плитки одной высоты */
 .tile-v .big{flex:none;white-space:nowrap}
-.tile-v .big.empty{display:block;transform:none}
+.tile-v .big.tile-empty{display:block;transform:none}
 /* пустой вес: тире рисуем полоской, а не символом — символ из запасного шрифта раздувал строку и сдвигал ± */
-.tile-v .big.empty{display:flex;align-items:center;justify-content:center;width:44px;height:64px;line-height:64px}
-.tile-v .big.empty::before{content:"";width:36px;height:6px;border-radius:3px;background:var(--mute2)}
+.tile-v .big.tile-empty{display:flex;align-items:center;justify-content:center;width:44px;height:64px;line-height:64px}
+.tile-v .big.tile-empty::before{content:"";width:36px;height:6px;border-radius:3px;background:var(--mute2)}
 
 /* нижняя панель: «капля» тянется в сторону движения (передний край быстрее заднего) и чуть приподнимается в полёте */
 .tabbar .lg-ind{left:0;right:auto;width:auto;transform:none;
@@ -2218,7 +2218,7 @@ body::after{height:calc(var(--tb-b) + var(--tb-h) + 34px);background:linear-grad
 /* --- кольца упражнений: равные колонки сеткой, края слева и справа одинаковые --- */
 .xrings{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));justify-items:center;gap:0;overflow:visible}
 .xr{min-width:0}
-/* b — кольца Activity: сплошная дуга, номер внутри, у сделанного — галочка */
+/* кольца Activity: сплошная дуга, номер внутри, у сделанного — галочка */
 .xr-in{position:relative;display:grid;place-items:center;width:36px;height:36px}
 .xr-in .actring{position:absolute;inset:0;transition:transform .15s var(--ease)}
 .xr-in b{position:relative;font:600 13px/1 var(--num);color:var(--mute);font-variant-numeric:tabular-nums}
@@ -2226,22 +2226,83 @@ body::after{height:calc(var(--tb-b) + var(--tb-h) + 34px);background:linear-grad
 .xr.full .xr-in b{color:var(--c)}
 .xr.cur .actring{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 50%,transparent))}
 .xr:active .actring{transform:scale(.9)}
-/* c — капсулы: длина по числу подходов, сегмент — подход */
-.xcaps{display:flex;gap:6px;align-items:flex-start}
-.xc{flex-basis:0;min-width:16px;display:grid;justify-items:center;gap:6px;padding:10px 0 2px;border:0;background:none;color:var(--mute);font:500 11px/13px var(--num)}
-.xc-bar{display:flex;gap:2px;width:100%;height:8px}
-.xc-bar i{flex:1;border-radius:4px;background:color-mix(in srgb,var(--c) 26%,transparent)}
-.xc-bar i.on{background:var(--c)}
-.xc.cur .xc-bar{height:10px;margin-top:-1px}
-.xc.cur{color:var(--ink);font-weight:700}
-.xc:active .xc-bar{transform:scaleY(1.3)}
 /* «Вес» — карточка как «Step Count»: значение SF Rounded 26; пусто — лаймовое действие и серая подсказка слева */
 .gcard{background:var(--surface);border-radius:var(--r-card);padding:var(--pad);text-align:left}
 .gcard .gc-v{font:600 26px/31px var(--num);letter-spacing:-.01em}
-.gcard .gc-v.empty{font:600 17px/22px var(--font);color:var(--acc);letter-spacing:0}
+.gcard .gc-v.gc-empty{font:600 17px/22px var(--font);color:var(--acc);letter-spacing:0}
 .gcard .gc-r,.gcard .gc-r span{justify-content:flex-start;text-align:left;font-size:15px;line-height:20px;color:var(--mute)}
 .cal-h h2{font:700 21px/26px var(--disp);letter-spacing:0}
 .mtile{gap:11px}
+
+/* нижнее меню как в iOS 26 (Telegram, Health, Photos): капсула с вкладками + отдельная круглая кнопка справа — у нас «+» */
+.tabbar{right:calc(var(--g) + var(--tb-h) + 10px);grid-template-columns:repeat(4,minmax(0,1fr))}
+.tb-fab{position:fixed;z-index:12;right:var(--g);bottom:var(--tb-b);width:var(--tb-h);height:var(--tb-h);padding:0;border:0;border-radius:50%;
+  display:grid;place-items:center;background:var(--acc);color:#000;box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.55);transition:transform .15s var(--ease)}
+.tb-fab > span{display:grid;place-items:center;width:auto;height:auto;background:none;color:inherit;box-shadow:none;transition:transform .3s var(--lg-spring)}
+.tb-fab > span svg{width:26px;height:26px;stroke-width:2.4}
+.tb-fab:active{transform:scale(.92)}
+.tb-fab.open > span{transform:rotate(45deg)}
+:root[data-quick="1"] .tb-fab{z-index:41}
+.tabbar .lg-ind{border-radius:26px}
+
+/* ===== доводка: шторки, списки, таймер, мелочи ===== */
+/* кнопка действия шторки («Готово», «Добавить в тренировку») — внизу, как в iOS, а не над содержимым */
+.sheet-foot{order:3}
+.sheet-body{order:2}
+.sheet-head{order:1}
+/* меню в шторке — сгруппированный список: общий фон, строки с тонкими разделителями */
+.sheet .menu{background:var(--on-card);border-radius:var(--r-card);overflow:hidden;gap:0}
+.sheet .menu .mitem{background:none;border-radius:0;min-height:50px}
+.sheet .menu .mitem + .mitem{border-top:.5px solid rgba(255,255,255,.08)}
+.sheet .menu .mitem:active{background:rgba(255,255,255,.06)}
+/* заметка в итоге: поле без второй подложки внутри плитки */
+.notetile textarea{background:none!important;box-shadow:none!important;padding:2px 0 0;border-radius:0}
+.notetile:focus-within{box-shadow:inset 0 0 0 1.5px var(--acc)}
+/* шеврон в круге — только у стрелки справа, не у иконки слева */
+.weekscr details.grp.more > summary span svg,.done-ex > summary span svg{width:16px;height:16px;padding:0;background:none;border-radius:0;color:var(--mute)}
+/* закрытые раскрывающиеся строки — капсулы, как «Show All Health Data» */
+.weekscr details.grp.more:not([open]),.done-ex:not([open]){border-radius:26px}
+.weekscr details.grp.more > summary,.done-ex > summary{min-height:52px}
+/* «Вес» на «Прогрессе»: содержимое слева сверху, без пустоты */
+.gcard{display:grid;justify-items:start;align-content:start;gap:4px;min-height:0}
+/* поиск — капсула 40, как в Telegram */
+.hsearch{height:40px;border-radius:20px;margin-top:14px}
+/* таймер отдыха — плавающая стеклянная капсула */
+.timer{border-radius:26px;background:rgba(30,30,32,.62);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
+  box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.14);color:var(--ink)}
+.timer .l{color:var(--mute);font-size:15px}
+.timer button{background:rgba(255,255,255,.1);color:var(--ink)}
+.timer.done{background:var(--acc);color:#000}
+.timer.done .l,.timer.done .t{color:#000}
+.timer.done button{background:rgba(0,0,0,.12);color:#000}
+.topbar{margin-inline:calc(-1*var(--g) + 8px)}
+/* когда сверху таймер — компактная шапка опускается под него */
+body:has(.topbar .timer) .navmini{top:62px}
+/* страницы-сетки не растягивают последнюю карточку на свободное место экрана */
+.home,.weekscr,.histv,.fx,.finish{align-content:start}
+/* иконка слева в раскрывающихся строках — без круга (круг только у шеврона справа) */
+.weekscr details.grp.more > summary > span > svg:last-child,.done-ex > summary > span > svg:last-child{width:16px;height:16px;padding:0;background:none;border-radius:0;color:var(--mute)}
+/* нагрузка на мышцы: спокойные оттенки вместо насыщенных полос, заголовки групп без чёрных плашек */
+.sheet .lv{background:var(--on-card);border-radius:var(--r-card)}
+.sheet .lvg{background:none;padding:14px 16px 6px}
+.sheet .lvrow{background:none;border-top-color:rgba(255,255,255,.07)}
+.sheet .lvrow.hi{background:color-mix(in srgb,var(--pink) 16%,transparent)}
+.sheet .lvrow.mid{background:color-mix(in srgb,var(--blue) 12%,transparent)}
+.sheet .lvtotal{border-top-color:rgba(255,255,255,.08)}
+
+/* свёрнутый таймер — стеклянная капсула над нижним меню (как мини-плеер в iOS 26), не занимает строку над шапкой */
+.timer-mini{position:fixed;z-index:12;left:var(--g);bottom:calc(var(--tb-b) + var(--tb-h) + 10px);margin:0;height:40px;padding:0 16px 0 12px;border:0;border-radius:20px;
+  display:inline-flex;align-items:center;gap:6px;color:var(--acc);font:600 17px var(--num);
+  background:rgba(30,30,32,.62);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
+  box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.14)}
+.timer-mini.done{background:var(--acc);color:#000}
+.timer-mini:active{transform:scale(.95)}
+.topbar:has(> .timer-mini:only-child){display:contents}
+body:has(.timer-mini){padding-bottom:calc(var(--tb-b) + var(--tb-h) + 78px)}
+/* всплывашка «… убрано · Вернуть» — тоже стеклянная капсула */
+.toast{border-radius:22px;background:rgba(30,30,32,.62);-webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
+  box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.14);color:var(--ink)}
+.toast button{color:var(--acc)}
 </style>
 <div id="root"><div class="splash" role="status" aria-label="Загружаю дневник">Дневник<br>тренировок</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -3198,7 +3259,7 @@ function AddSheet({edit,onClose}){
   return html`<${Sheet} title="Добавить упражнение" onClose=${onClose} foot=${html`<button class="btn primary wide" onClick=${add}>Добавить в тренировку</button>`}>
     <div class="adform">${inp("name","Название","text")}${inp("n","Подходы","numeric")}${inp("lo","Повт. от","numeric")}${inp("hi","Повт. до","numeric")}</div>
     <div class="seg" role="group" aria-label="Как указать мышцы">
-      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Нагрузка автоматически</button>
+      <button aria-pressed=${String(mode==="auto")} disabled=${!S.sample} onClick=${()=>setMode("auto")}>Автоматически</button>
       <button aria-pressed=${String(mode==="manual")} onClick=${()=>setMode("manual")}>Вручную</button>
     </div>
     ${mode==="manual"?html`<${LevelPicker} value=${mus} onChange=${setMus}/>`:html`<div class="st">Нагрузка на мышцы (0–10) определится сама после добавления. Поправить можно через «⋯ → Нагрузка на мышцы».</div>`}
@@ -3277,16 +3338,6 @@ function useSession(date,day,toast){
   const finish=()=>edit(ss=>{ ss.done=!ss.done; if(ss.done){ ss.end=Date.now(); if(!ss.dur&&ss.start) ss.dur=String(Math.max(1,Math.round((ss.end-ss.start)/60000))); } });
   return {s,edit,remove,setWeek,finish};
 }
-// Кольцо из сегментов: один сегмент — один подход; сделанные — цветом дня, остальные — его тенью
-function SetRing({n,done,size=36,stroke=5}){
-  const c=size/2, r=c-stroke/2-1, gap=n>1?6:0, len=(100-gap*n)/Math.max(1,n);
-  return html`<svg class="setring" width=${size} height=${size} viewBox=${"0 0 "+size+" "+size} aria-hidden="true">
-    <g fill="none" stroke="var(--c)" stroke-width=${stroke} transform=${"rotate(-90 "+c+" "+c+")"}>
-      ${Array.from({length:Math.max(1,n)},(_,k)=>html`<circle key=${k} cx=${c} cy=${c} r=${r} pathLength="100" stroke-opacity=${k<done?1:.24}
-        stroke-dasharray=${len+" "+(100-len)} stroke-dashoffset=${-(gap/2+k*(len+gap))}/>`)}
-    </g></svg>`;
-}
-// Упражнения тренировки кольцами: сделанная доля подходов — закрашенные сегменты, текущее подписано под рядом. Нажатие ведёт к упражнению.
 // Кольцо прогресса как в Activity: сплошная дуга с круглыми концами на тёмной дорожке цвета дня
 function ActRing({p,size=36,stroke=5}){
   const c=size/2, r=c-stroke/2-.5, v=Math.max(0,Math.min(1,p))*100;
@@ -3296,25 +3347,17 @@ function ActRing({p,size=36,stroke=5}){
       stroke-dasharray=${(v>=100?100:Math.max(.01,v-.01))+" 100"} transform=${"rotate(-90 "+c+" "+c+")"}/>`:null}
   </svg>`;
 }
-// Упражнения тренировки: ряд колец (вариант задаётся data-rings на <html>: a — сегменты по подходам, b — кольца Activity, c — капсулы).
+// Упражнения тренировки: ряд колец Activity — дуга заполняется по сделанным подходам, внутри номер, у сделанного галочка.
 // Раскладка — сетка из равных колонок, поэтому края слева и справа одинаковые. Нажатие ведёт к упражнению.
 function Barbell({s,day,cur,onPick,bare}){
-  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null, v=document.documentElement.dataset.rings||"b";
-  const lab=(x,i,r,d)=>(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов";
+  const n=s.ex.length, c=cur>=0&&cur<n?cur:-1, e=c>=0?s.ex[c]:null;
   return html`<div class="bbwrap">
-    ${v==="c"?html`<div class="xcaps" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day]}}>
-      ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x));
-        return html`<button key=${x.uid||i} class=${"xc"+(i===c?" cur":"")+(r&&d>=r?" full":"")} style=${{flexGrow:Math.max(1,r)}} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${lab(x,i,r,d)}>
-          <span class="xc-bar">${Array.from({length:Math.max(1,r)},(_,k)=>html`<i key=${k} class=${k<d?"on":""}></i>`)}</span><small>${i+1}</small></button>`; })}
-    </div>`
-    :html`<div class=${"xrings v-"+v} role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day],"--n":Math.max(n,1)}}>
+    <div class="xrings" role="group" aria-label="Упражнения тренировки" style=${{"--c":PC[day],"--n":Math.max(n,1)}}>
       ${s.ex.map((x,i)=>{ const r=rowsOf(s,x), d=Math.min(r,doneOf(x)), full=r&&d>=r;
         return html`<button key=${x.uid||i} class=${"xr"+(i===c?" cur":"")+(full?" full":"")} onClick=${()=>onPick&&onPick(i)}
-          aria-current=${i===c?"step":null} aria-label=${lab(x,i,r,d)}>
-          ${v==="b"?html`<span class="xr-in"><${ActRing} p=${r?d/r:0}/><b>${full?html`<${Icon} n="check" size=${14}/>`:i+1}</b></span>`
-            :html`<${SetRing} n=${r} done=${d}/><small>${i+1}</small>`}</button>`; })}
-    </div>`}
+          aria-current=${i===c?"step":null} aria-label=${(i+1)+". "+xinfo(s,x).name+": "+d+" из "+r+" подходов"}>
+          <span class="xr-in"><${ActRing} p=${r?d/r:0}/><b>${full?html`<${Icon} n="check" size=${14}/>`:i+1}</b></span></button>`; })}
+    </div>
     ${bare?null:html`<span class="bb-now">${e?html`<span>Сейчас:</span> ${xinfo(s,e).name} · подход ${Math.min(rowsOf(s,e),doneOf(e)+1)} из ${rowsOf(s,e)}`:n?"Все упражнения сделаны":""}</span>`}
   </div>`;
 }
@@ -3688,7 +3731,7 @@ function Timer({t,onStop,onShift}){
       onTouchStart=${ev=>{ y0.current=ev.touches[0].clientY; }} onTouchEnd=${ev=>{ if(y0.current!==null&&ev.changedTouches[0].clientY-y0.current<-24) setMini(true); y0.current=null; }}>
     <button onClick=${()=>onShift(-15)} aria-label="Минус 15 секунд">−15</button>
     <div class="t">${time}</div>
-    <div class="l">${done?"Пора!":"Отдых · "+t.label}</div>
+    <div class="l">${done?"Пора!":"Отдых"}</div>
     <button onClick=${()=>onShift(15)} aria-label="Плюс 15 секунд">+15</button>
     <button onClick=${()=>setMini(true)} aria-label="Свернуть таймер"><${Icon} n="up" size=${16}/></button>
     <button onClick=${onStop} aria-label="Остановить таймер"><${Icon} n="close" size=${16}/></button>
@@ -3721,7 +3764,8 @@ function App(){
   // капля растягивается в сторону движения и собирается на месте; в полёте чуть приподнимается (iOS 26)
   const placeInd=animate=>{ const nav=navRef.current, ind=indRef.current; if(!nav||!ind) return;
     const b=nav.querySelector('button[aria-selected="true"]'); if(!b){ ind.style.opacity="0"; return; }
-    const L=b.offsetLeft, R=nav.clientWidth-b.offsetLeft-b.offsetWidth, prevL=parseFloat(ind.style.left);
+    const lab=b.querySelector(".tb-l"), w=Math.min(nav.clientWidth-6,Math.max(b.offsetWidth,(lab?lab.offsetWidth:0)+30)), cx=b.offsetLeft+b.offsetWidth/2;
+    const L=Math.max(3,Math.round(cx-w/2)), R=Math.max(3,Math.round(nav.clientWidth-(cx+w/2))), prevL=parseFloat(ind.style.left);
     ind.classList.remove("to-l","to-r","moving");
     if(!animate||isNaN(prevL)||calm()){ ind.style.transition="none"; ind.style.left=L+"px"; ind.style.right=R+"px"; ind.style.opacity="1"; ind.getBoundingClientRect(); ind.style.transition=""; return; }
     if(Math.abs(prevL-L)<1) return;
@@ -3740,7 +3784,7 @@ function App(){
   // сигнал, когда отдых закончился (звук + вибрация, если устройство позволяет)
   useEffect(()=>{ if(!timer) return; const ms=timer.end-Date.now(); if(ms<=0) return;
     const h=setTimeout(()=>beep(),ms); return ()=>clearTimeout(h); },[timer&&timer.end]);
-  const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["add","Быстрое добавление","plus"],["train","Тренировка","dumbbell"],["hist","История","history"]];
+  const tabs=[["home","Прогресс","book"],["week","Неделя","chart"],["train","Тренировка","dumbbell"],["hist","История","history"]];
   const go=v=>{ setView(v); document.body.style.minHeight=""; window.scrollTo(0,0); };
   const openSession=(d,k)=>{ setDateRaw(d); setAuto(d===todayStr()); setPicked(k); go("train"); };
   useEffect(()=>{ document.documentElement.dataset.view=view; },[view]);
@@ -3756,11 +3800,11 @@ function App(){
         :view==="week"?html`<${WeekScreen} date=${date} toast=${showToast}/>`
         :html`<${HistoryView} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openHistory=${setHist}/>`}
     </main>
-    <nav class="tabbar lg" role="tablist" ref=${navRef}>
+    <nav class="tabbar lg" role="tablist" aria-label="Разделы" ref=${navRef}>
       <span class="lg-ind" aria-hidden="true" ref=${indRef}></span>
-      ${tabs.map(([k,l,ic])=>k==="add"?html`<button key=${k} class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть":l} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${24}/></span></button>`
-        :html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
+      ${tabs.map(([k,l,ic])=>html`<button key=${k} role="tab" data-tab=${k} aria-selected=${String(view===k)} onClick=${()=>{ setQuick(false); go(k); }}><${Icon} n=${ic} size=${24}/><span class="tb-l">${l}</span></button>`)}
     </nav>
+    <button class=${"tb-fab"+(quick?" open":"")} onClick=${()=>setQuick(!quick)} aria-label=${quick?"Закрыть быстрое добавление":"Быстрое добавление"} aria-expanded=${String(quick)}><span><${Icon} n="plus" size=${26}/></span></button>
     ${quick?html`<${QuickAdd} onClose=${()=>setQuick(false)} openSession=${openSession} openAsk=${()=>setAsk({focus:null})} openBody=${()=>setBody(true)}
       startTimer=${(sec,label)=>{ unlockSound(); setTimer({end:Date.now()+sec*1000,total:sec,label}); }}/>`:null}
     ${body?html`<${BodySheet} toast=${showToast} onClose=${()=>setBody(false)}/>`:null}
@@ -3938,7 +3982,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
 
     <${SecHead} title="Вес"/>
     <button class="gcard" onClick=${openBody}>
-      <b class=${"gc-v"+(bw===null?" empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
+      <b class=${"gc-v"+(bw===null?" gc-empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
       ${bw!==null?html`<span class="gc-cells">
         <span><small>Изменение</small><b>${(bw-bw0>0?"+":"")+fmt(Math.round((bw-bw0)*10)/10)} кг</b></span>
         <span><small>Талия</small><b>${waist?fmt(num(waist.waist))+" см":"–"}</b></span>
@@ -4057,7 +4101,7 @@ function Tile({label,hint,unit,value,step,dec,onChange}){
   return html`<div class="tile">
     <span class="tile-l">${label}${hint?html`<i> · ${hint}</i>`:null}</span>
     ${editing?html`<input class="tile-in" autoFocus type="text" inputmode="decimal" value=${value} aria-label=${label} onChange=${ev=>onChange(ev.target.value)} onBlur=${()=>setEditing(false)} onKeyDown=${ev=>{ if(ev.key==="Enter") setEditing(false); }}/>`
-      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big empty" aria-hidden="true"></b>`:html`<b class="big">${nfmt(value)}</b>`}<small>${unit}</small></button>`}
+      :html`<button class="tile-v" onClick=${()=>setEditing(true)} aria-label=${label+": "+(value||"не задано")+". Нажми, чтобы ввести"}>${value===""?html`<b class="big tile-empty" aria-hidden="true"></b>`:html`<b class="big">${nfmt(value)}</b>`}<small>${unit}</small></button>`}
     <div class="tile-b">
       <button class="round" aria-label=${"Меньше: "+label} onClick=${()=>set((v??0)-step)}>−</button>
       <button class="round" aria-label=${"Больше: "+label} onClick=${()=>set((v??0)+step)}>+</button>

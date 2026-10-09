@@ -165,7 +165,7 @@ function HomeView({date,setDate,day,go,openHistory,openSession,openAsk,openBody}
 
     <${SecHead} title="Вес"/>
     <button class="gcard" onClick=${openBody}>
-      <b class=${"gc-v"+(bw===null?" empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
+      <b class=${"gc-v"+(bw===null?" gc-empty":"")}>${bw!==null?fmt(bw)+" кг":"Внести вес"}</b>
       ${bw!==null?html`<span class="gc-cells">
         <span><small>Изменение</small><b>${(bw-bw0>0?"+":"")+fmt(Math.round((bw-bw0)*10)/10)} кг</b></span>
         <span><small>Талия</small><b>${waist?fmt(num(waist.waist))+" см":"–"}</b></span>
